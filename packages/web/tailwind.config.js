@@ -1,0 +1,73 @@
+module.exports = {
+  important: true,
+  purge: {
+    // Specify the paths to all of the template files in your project
+    content: [
+      "./src/components/**/*.res",
+      "./src/layouts/**/*.res",
+      "./src/*.res",
+    ],
+    options: {
+      safelist: ["html", "body"],
+    },
+  },
+  darkMode: false, // or 'media' or 'class'
+  theme: {
+    extend: {},
+    backgroundColor:{
+      primary: '#BF360C'
+    },
+    textColor: {
+      darkPrimary: 'rgba(0, 0, 0, .87)',
+      darkSecondary: 'rgba(0, 0, 0, .60)',
+      darkDisabled: 'rgba(0, 0, 0, .38)',
+      lightPrimary: 'rgba(255, 255, 255, .87)',
+      lightSecondary: 'rgba(255, 255, 255, .60)',
+      lightDisabled: 'rgba(255, 255, 255, .38)',
+    },
+    fontSize: {
+      xs: ".75rem",
+      sm: ".875rem",
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem",
+      "6xl": "4rem",
+    },
+    fontFamily: {
+      sans: [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Helvetica Neue",
+        "Arial",
+        "sans-serif",
+      ],
+      serif: [
+        "Georgia",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "Helvetica Neue",
+        "Arial",
+        "sans-serif",
+      ],
+      mono: [
+        "Roboto Mono",
+        "Menlo",
+        "Monaco",
+        "Consolas",
+        "Roboto Mono",
+        "SFMono-Regular",
+        "Segoe UI",
+        "Courier",
+        "monospace",
+      ],
+    },
+  },
+  variants: {
+    width: ["responsive"],
+  },
+  plugins: [],
+};

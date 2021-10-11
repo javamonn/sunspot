@@ -1,0 +1,16 @@
+out
+
+.DS_Store
+*.swp
+*.swo
+
+node_modules/
+.next/
+
+yarn-error.log
+
+.bsb.lock
+.merlin
+lib/
+
+**/**.mjs

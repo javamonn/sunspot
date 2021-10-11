@@ -1,0 +1,47 @@
+{
+  "name": "@sunspot/web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "next start -p $PORT",
+    "start:dev": "npm run res:build && concurrently -k -n \"res,next\" \"npm run res:dev\" \"npm run next:dev\"",
+    "build": "npm run res:build && npm run next:build",
+    "next:dev": "next",
+    "next:build": "next build",
+    "res:dev": "rescript build -w",
+    "res:clean": "rescript clean",
+    "res:build": "rescript build"
+  },
+  "devDependencies": {
+    "@davatar/react": "^1.8.1",
+    "@fontsource/roboto-mono": "^4.5.0",
+    "@rescript/react": "^0.10.3",
+    "assert": "^2.0.0",
+    "autoprefixer": "^10.3.4",
+    "concurrently": "^6.3.0",
+    "crypto-browserify": "^3.12.0",
+    "cssnano": "^5.0.8",
+    "gentype": "^4.2.0",
+    "https-browserify": "^1.0.0",
+    "next-transpile-modules": "^8.0.0",
+    "os-browserify": "^0.3.0",
+    "postcss": "^8.3.6",
+    "postcss-cli": "^8.3.1",
+    "rescript": "^9.1.4",
+    "rescript-classnames": "^6.0.0",
+    "rescript-material-ui": "^2.1.2",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.1.1",
+    "tailwindcss": "^2.2.15"
+  },
+  "dependencies": {
+    "@metamask/detect-provider": "^1.2.0",
+    "next": "^11.1.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "web3": "^1.6.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

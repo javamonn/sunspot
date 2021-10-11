@@ -1,0 +1,26 @@
+{
+  "name": "@sunspot/web",
+  "namespace": false,
+  "reason": { "react-jsx": 3 },
+  "refmt": 3,
+  "bs-dependencies": [
+    "@rescript/react",
+    "rescript-classnames",
+    "rescript-material-ui"
+  ],
+  "ppx-flags": [],
+  "sources": [{ "dir": "src", "subdirs": true }],
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".mjs",
+  "warnings": {
+    "number": "-3",
+    "error": "+101+8"
+  },
+  "gentypeconfig": {
+    "language": "untyped",
+    "shims": []
+  }
+}
