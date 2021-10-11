@@ -11,11 +11,14 @@
     "next:build": "next build",
     "res:dev": "rescript build -w",
     "res:clean": "rescript clean",
-    "res:build": "rescript build"
+    "res:build": "rescript build",
+    "amplify:pull:production": "./scripts/amplify-pull-production.sh",
+    "amplify:graphql-sync-schema:production": "API_ID=zf3mrnp6enh3dit2ahfsofwv2a ./scripts/graphql-sync-schema.sh"
   },
   "devDependencies": {
     "@davatar/react": "^1.8.1",
     "@fontsource/roboto-mono": "^4.5.0",
+    "@reasonml-community/graphql-ppx": "^1.2.2",
     "@rescript/react": "^0.10.3",
     "assert": "^2.0.0",
     "autoprefixer": "^10.3.4",
