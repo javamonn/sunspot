@@ -36,3 +36,4 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+.graphql_ppx_cache

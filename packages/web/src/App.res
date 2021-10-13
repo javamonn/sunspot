@@ -27,5 +27,13 @@ let default = (props: props): React.element => {
 
   let elem = React.createElement(component, pageProps)
 
-  <MaterialUi.ThemeProvider theme={theme}> {elem} </MaterialUi.ThemeProvider>
+  <MaterialUi.ThemeProvider theme={theme}> 
+    <Contexts.Eth>
+      <Contexts.Auth>
+        <Contexts.Apollo>
+          {elem}
+        </Contexts.Apollo>
+      </Contexts.Auth>
+    </Contexts.Eth>
+  </MaterialUi.ThemeProvider>
 }

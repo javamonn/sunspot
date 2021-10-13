@@ -3,12 +3,25 @@
   "namespace": false,
   "reason": { "react-jsx": 3 },
   "refmt": 3,
+  "graphql": {
+    "apolloMode": true,
+    "extendMutation": "ApolloClient.GraphQL_PPX.ExtendMutation",
+    "extendQuery": "ApolloClient.GraphQL_PPX.ExtendQuery",
+    "extendSubscription": "ApolloClient.GraphQL_PPX.ExtendSubscription",
+    "templateTagReturnType": "ApolloClient.GraphQL_PPX.templateTagReturnType",
+    "templateTagImport": "gql",
+    "templateTagLocation": "@apollo/client"
+  },
   "bs-dependencies": [
     "@rescript/react",
+    "@reasonml-community/graphql-ppx",
+    "rescript-apollo-client",
     "rescript-classnames",
     "rescript-material-ui"
   ],
-  "ppx-flags": [],
+  "ppx-flags": [
+    ["@reasonml-community/graphql-ppx/ppx", "-schema ./graphql-schema.json"]
+  ],
   "sources": [{ "dir": "src", "subdirs": true }],
   "package-specs": {
     "module": "es6",
