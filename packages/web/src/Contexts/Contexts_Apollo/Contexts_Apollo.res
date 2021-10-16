@@ -1,19 +1,13 @@
 @react.component
 let make = (~children) => {
-  let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
+  let {authentication, refreshCredentials}: Contexts_Auth.t = React.useContext(
+    Contexts_Auth.context,
+  )
+
   let makeClient = () =>
     switch authentication {
-    | Authenticated({accessKeyId, secretKey, sessionToken, identityId}) =>
-      Contexts_Apollo_Client.make(
-        ~credentials={
-          Externals.AWSAmplify.Credentials.accessKeyId: accessKeyId,
-          secretAccessKey: secretKey,
-          sessionToken: sessionToken,
-          identityId: identityId,
-          authenticated: true,
-        },
-        (),
-      )
+    | Authenticated(credentials) =>
+      Contexts_Apollo_Client.make(~credentials, ~refreshCredentials, ())
     | _ =>
       Contexts_Apollo_Client.make(
         ~apiKey=?Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncApiKeyGet,

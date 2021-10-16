@@ -1,5 +1,5 @@
-@deriving(accessors)
-type t = {
+@decco @deriving(accessors)
+type awsCredentials = {
   identityId: string,
   accessKeyId: string,
   secretKey: string,
@@ -7,15 +7,82 @@ type t = {
   expiration: string,
 }
 
-let make = (~accessKeyId, ~secretKey, ~sessionToken, ~expiration, ~identityId) => {
-  accessKeyId: accessKeyId,
-  secretKey: secretKey,
-  sessionToken: sessionToken,
-  expiration: expiration,
-  identityId: identityId,
+module JWT = {
+  @decco @deriving(accessors)
+  type t = {
+    exp: float,
+    iat: float,
+    identityId: string,
+    accountAddress: string,
+    raw: string
+  }
+
+  let decode = t_decode
+  let encode = t_encode
+
+  let makeFromString = s =>
+    s
+    ->Externals.JWTDecode.decode
+    ->Js.Json.decodeObject
+    ->Belt.Option.flatMap(o => {
+      switch (
+        o->Js.Dict.get("exp")->Belt.Option.flatMap(Js.Json.decodeNumber),
+        o->Js.Dict.get("iat")->Belt.Option.flatMap(Js.Json.decodeNumber),
+        o->Js.Dict.get("identityId")->Belt.Option.flatMap(Js.Json.decodeString),
+        o->Js.Dict.get("accountAddress")->Belt.Option.flatMap(Js.Json.decodeString)
+      ) {
+        | (Some(exp), Some(iat), Some(identityId), Some(accountAddress)) => Some({
+          exp: exp,
+          iat: iat,
+          identityId: identityId,
+          accountAddress: accountAddress,
+          raw: s
+        })
+        | _ => None
+      }
+    })
 }
 
-external unsafeOfJson: Js.Json.t => t = "%identity"
+@decco @deriving(accessors)
+type t = {
+  awsCredentials: awsCredentials,
+  jwt: JWT.t,
+}
+
+let decode = t_decode
+let encode = t_encode
+
+let make = (
+  ~accessKeyId,
+  ~secretKey,
+  ~sessionToken,
+  ~expiration,
+  ~identityId,
+  ~jwt,
+) => {
+  jwt: jwt,
+  awsCredentials: {
+    accessKeyId: accessKeyId,
+    secretKey: secretKey,
+    sessionToken: sessionToken,
+    expiration: expiration,
+    identityId: identityId,
+  },
+}
+
+let isAwsCredentialValid = (~skew=0., awsCredentials) => {
+  let exp = awsCredentials->expiration->Js.Date.fromString->Js.Date.valueOf
+  let now = Js.Date.make()->Js.Date.valueOf
+
+  now +. skew < exp
+}
+
+let isJwtValid = (~skew=0., jwt) => {
+  let exp = JWT.exp(jwt) *. 1000.
+  let now = Js.Date.make()->Js.Date.valueOf
+
+  now +. skew < exp
+}
 
 module LocalStorage = {
   let key = "__sunspot__credentials"
@@ -35,13 +102,17 @@ module LocalStorage = {
       | _ => None
       }
     )
-    ->Belt.Option.map(unsafeOfJson)
+    ->Belt.Option.flatMap(o =>
+      switch decode(o) {
+      | Ok(d) => Some(d)
+      | Error(_) => None
+      }
+    )
 
-  let write = (credentials: t) =>
-    switch (getLocalStorage(), Js.Json.stringifyAny(credentials)) {
-    | (Some(s), Some(json)) => Dom.Storage2.setItem(s, key, json)
-    | _ => ()
-    }
+  let write = (inst: t) =>
+    getLocalStorage()->Belt.Option.forEach(localStorage => {
+      Dom.Storage2.setItem(localStorage, key, inst->encode->Js.Json.stringify)
+    })
 
   let clear = () => getLocalStorage()->Belt.Option.forEach(s => Dom.Storage2.removeItem(s, key))
 }

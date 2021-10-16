@@ -1,12 +1,40 @@
+exception CredentialsExpired
+
 let _ = Externals.AWSAmplify.configure(Externals.AWSAmplify.inst, Config.awsAmplifyConfig)
 
-let makeAppSyncLink = (~credentials=?, ~apiKey=?, ()) => {
-  let auth = switch (credentials, apiKey) {
-  | (Some(credentials), _) =>
-    Some(
-      Externals.AWSAppSync.Client.authWithIAM(~credentials=() => credentials->Js.Promise.resolve),
-    )
-  | (_, Some(apiKey)) => Some(Externals.AWSAppSync.Client.authWithAPIKey(~apiKey))
+let makeAmplifyCredentials = awsCredentials => {
+  Externals_AWSAmplify.Credentials.accessKeyId: awsCredentials->Contexts_Auth_Credentials.accessKeyId,
+  secretAccessKey: awsCredentials->Contexts_Auth_Credentials.secretKey,
+  sessionToken: awsCredentials->Contexts_Auth_Credentials.sessionToken,
+  identityId: awsCredentials->Contexts_Auth_Credentials.identityId,
+  authenticated: true,
+}
+
+let makeAppSyncLink = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
+  let auth = switch (credentials, apiKey, refreshCredentials) {
+  | (Some({awsCredentials, jwt}: Contexts_Auth_Credentials.t), _, Some(refreshCredentials)) =>
+    Externals.AWSAppSync.Client.authWithIAM(~credentials=() => {
+      if Contexts_Auth_Credentials.isAwsCredentialValid(awsCredentials) {
+        awsCredentials->makeAmplifyCredentials->Js.Promise.resolve
+      } else if Contexts_Auth_Credentials.isJwtValid(jwt) {
+        jwt
+        |> Contexts_Auth_Credentials.JWT.raw
+        |> refreshCredentials
+        |> Js.Promise.then_(credentials =>
+          switch credentials {
+          | Some(credentials) =>
+            credentials
+            ->Contexts_Auth_Credentials.awsCredentials
+            ->makeAmplifyCredentials
+            ->Js.Promise.resolve
+          | None => Js.Promise.reject(CredentialsExpired)
+          }
+        )
+      } else {
+        Js.Promise.reject(CredentialsExpired)
+      }
+    })->Js.Option.some
+  | (_, Some(apiKey), _) => Some(Externals.AWSAppSync.Client.authWithAPIKey(~apiKey))
   | _ => None
   }
 
@@ -23,7 +51,7 @@ let makeAppSyncLink = (~credentials=?, ~apiKey=?, ()) => {
   Externals.AWSAppSync.Client.createAppSyncLink(options)
 }
 
-let make = (~credentials=?, ~apiKey=?, ()) => {
+let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
   open ApolloClient
 
   make(
@@ -35,14 +63,11 @@ let make = (~credentials=?, ~apiKey=?, ()) => {
       ~watchQuery=DefaultWatchQueryOptions.make(~fetchPolicy=NetworkOnly, ~errorPolicy=All, ()),
       (),
     ),
-    ~link=makeAppSyncLink(~credentials?, ~apiKey?, ()),
-    ()
+    ~link=makeAppSyncLink(~credentials?, ~apiKey?, ~refreshCredentials?, ()),
+    (),
   )
 }
 
 let inst = ref(
-  make(
-    ~apiKey=?Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncApiKeyGet,
-    (),
-  ),
+  make(~apiKey=?Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncApiKeyGet, ()),
 )

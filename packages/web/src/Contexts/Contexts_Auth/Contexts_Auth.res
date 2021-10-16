@@ -3,21 +3,25 @@ exception InvalidState_Web3Unavailable
 exception InvalidState_Uninitalized
 exception InvalidState_Desync
 exception AuthenticationChallengeFailed
+exception UnableToRefreshCredentials
 exception UserDecline_ConnectFailed
 
 type authentication =
   | Unauthenticated
   | AuthenticationChallengeRequired
+  | RefreshRequired(Contexts_Auth_Credentials.t)
   | Authenticated(Contexts_Auth_Credentials.t)
 
 type t = {
   authentication: authentication,
   signIn: unit => Js.Promise.t<unit>,
+  refreshCredentials: string => Js.Promise.t<option<Contexts_Auth_Credentials.t>>,
 }
 
 let context = React.createContext({
   authentication: Unauthenticated,
   signIn: () => Js.Promise.reject(InvalidState_Uninitalized),
+  refreshCredentials: _ => Js.Promise.reject(InvalidState_Uninitalized),
 })
 
 module ContextProvider = {
@@ -42,6 +46,23 @@ module Mutation_AuthenticationChallengeCreate = %graphql(`
 module Mutation_AuthenticationChallengeVerify = %graphql(`
     mutation AuthenticationChallengeVerify($input: AuthenticationChallengeVerifyInput!) {
       credentials: authenticationChallengeVerify(input: $input) {
+        jwt
+        credentials {
+          identityId
+          accessKeyId
+          secretKey
+          sessionToken
+          expiration
+        }
+      }
+    }
+  `)
+
+module Mutation_AuthenticationCredentialsRefresh = %graphql(`
+  mutation AuthenticationCredentialsRefresh($input: AuthenticationCredentialsRefreshInput!) {
+    credentials: authenticationCredentialsRefresh(input: $input) {
+      jwt
+      credentials {
         identityId
         accessKeyId
         secretKey
@@ -49,7 +70,8 @@ module Mutation_AuthenticationChallengeVerify = %graphql(`
         expiration
       }
     }
-  `)
+  }
+`)
 
 @react.component
 let make = (~children) => {
@@ -57,10 +79,16 @@ let make = (~children) => {
   let (authentication, setAuthentication) = React.useState(() =>
     Contexts_Auth_Credentials.LocalStorage.read()
     ->Belt.Option.map(credentials => {
-      let credentialExp =
-        credentials->Contexts_Auth_Credentials.expiration->Js.Date.fromString->Js.Date.valueOf
-      let now = Js.Date.make()->Js.Date.valueOf
-      if credentialExp > now {
+      let isAwsCredentialValid =
+        credentials
+        ->Contexts_Auth_Credentials.awsCredentials
+        ->Contexts_Auth_Credentials.isAwsCredentialValid
+      let isJwtValid =
+        credentials->Contexts_Auth_Credentials.jwt->Contexts_Auth_Credentials.isJwtValid
+
+      if !isAwsCredentialValid && isJwtValid {
+        RefreshRequired(credentials)
+      } else if !isAwsCredentialValid && !isJwtValid {
         AuthenticationChallengeRequired
       } else {
         Authenticated(credentials)
@@ -68,6 +96,54 @@ let make = (~children) => {
     })
     ->Belt.Option.getWithDefault(Unauthenticated)
   )
+
+  let handleRefreshCredentials = jwt =>
+    Contexts_Apollo_Client.inst.contents.mutate(
+      ~mutation=module(Mutation_AuthenticationCredentialsRefresh),
+      {input: {jwt: jwt}},
+    )
+    |> Js.Promise.then_(result => {
+      switch result {
+      | Ok(
+          {
+            data: {
+              credentials: {
+                credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
+                jwt,
+              },
+            },
+          }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
+            Mutation_AuthenticationCredentialsRefresh.t,
+          >,
+        ) =>
+        switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
+        | Some(jwt) =>
+          Js.Promise.resolve(
+            Contexts_Auth_Credentials.make(
+              ~identityId,
+              ~accessKeyId,
+              ~secretKey,
+              ~sessionToken,
+              ~expiration,
+              ~jwt,
+            ),
+          )
+        | None => Js.Promise.reject(UnableToRefreshCredentials)
+        }
+      | Ok(_)
+      | Error(_) =>
+        Js.Promise.reject(UnableToRefreshCredentials)
+      }
+    })
+    |> Js.Promise.then_(credentials => {
+      setAuthentication(_ => Authenticated(credentials))
+      Js.Promise.resolve(Some(credentials))
+    })
+    |> Js.Promise.catch(err => {
+      Services.Logger.promiseError("Contexts_Auth", "Unable to refresh credentials.", err)
+      setAuthentication(_ => AuthenticationChallengeRequired)
+      Js.Promise.resolve(None)
+    })
 
   let _ = React.useEffect1(() => {
     Services.Logger.logWithData(
@@ -81,6 +157,7 @@ let make = (~children) => {
               switch authentication {
               | Unauthenticated => "Unauthenticated"
               | AuthenticationChallengeRequired => "AuthenticationChallengeRequired"
+              | RefreshRequired(_) => "RefreshRequired"
               | Authenticated(_) => "Authenticated"
               },
             ),
@@ -92,10 +169,28 @@ let make = (~children) => {
     switch authentication {
     | Authenticated(credentials) => Contexts_Auth_Credentials.LocalStorage.write(credentials)
     | Unauthenticated => Contexts_Auth_Credentials.LocalStorage.clear()
+    | RefreshRequired({jwt}) =>
+      let _ =
+        jwt
+        |> Contexts_Auth_Credentials.JWT.raw
+        |> handleRefreshCredentials
+        |> Js.Promise.then_(credentials => {
+          let _ = switch credentials {
+          | Some(credentials) => setAuthentication(_ => Authenticated(credentials))
+          | None => ()
+          }
+          Js.Promise.resolve()
+        })
+        |> Js.Promise.catch(err => {
+          Services.Logger.promiseError("Contexts_Auth", "Unable to refresh credentials.", err)
+          let _ = setAuthentication(_ => AuthenticationChallengeRequired)
+          Js.Promise.resolve()
+        })
     | _ => ()
     }
     None
   }, [authentication])
+
   let _ = React.useEffect1(() => {
     switch (eth, authentication) {
     | (NotConnected(_), Authenticated(_))
@@ -142,20 +237,30 @@ let make = (~children) => {
       switch result {
       | Ok(
           {
-            data: {credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration}},
+            data: {
+              credentials: {
+                credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
+                jwt,
+              },
+            },
           }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
             Mutation_AuthenticationChallengeVerify.t,
           >,
         ) =>
-        Js.Promise.resolve(
-          Contexts_Auth_Credentials.make(
-            ~identityId,
-            ~accessKeyId,
-            ~secretKey,
-            ~sessionToken,
-            ~expiration,
-          ),
-        )
+        switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
+        | Some(jwt) =>
+          Js.Promise.resolve(
+            Contexts_Auth_Credentials.make(
+              ~identityId,
+              ~accessKeyId,
+              ~secretKey,
+              ~sessionToken,
+              ~expiration,
+              ~jwt,
+            ),
+          )
+        | None => Js.Promise.reject(AuthenticationChallengeFailed)
+        }
       | Ok(_)
       | Error(_) =>
         Js.Promise.reject(AuthenticationChallengeFailed)
@@ -165,17 +270,31 @@ let make = (~children) => {
   let handleSignIn = () => {
     switch (authentication, eth) {
     | (Unauthenticated, NotConnected({provider, web3})) =>
-      handleRequestAccount(~provider) |> Js.Promise.then_(address =>
-        handleAuthenticationChallenge(~web3, ~address) |> Js.Promise.then_(credentials => {
-          setAuthentication(_ => Authenticated(credentials))
-          Js.Promise.resolve()
-        })
-      )
-    | (AuthenticationChallengeRequired, Connected({provider, web3, address})) =>
-      handleAuthenticationChallenge(~web3, ~address) |> Js.Promise.then_(credentials => {
+      handleRequestAccount(~provider)
+      |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address))
+      |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
         Js.Promise.resolve()
       })
+      |> Js.Promise.catch(err => {
+        Services_Logger.promiseError("Contexts_Auth", "Unable to sign in.", err)
+        Js.Promise.resolve()
+      })
+    | (AuthenticationChallengeRequired, Connected({provider, web3, address})) =>
+      handleAuthenticationChallenge(~web3, ~address)
+      |> Js.Promise.then_(credentials => {
+        setAuthentication(_ => Authenticated(credentials))
+        Js.Promise.resolve()
+      })
+      |> Js.Promise.catch(err => {
+        Services.Logger.promiseError("Contexts_Auth", "Failed authentication challenge.", err)
+        Js.Promise.resolve()
+      })
+    | (RefreshRequired({jwt}), _) =>
+      jwt
+      |> Contexts_Auth_Credentials.JWT.raw
+      |> handleRefreshCredentials
+      |> Js.Promise.then_(_ => Js.Promise.resolve())
     | (_, Web3Unavailable)
     | (_, Unknown) =>
       Js.Promise.reject(InvalidState_Web3Unavailable)
@@ -190,6 +309,7 @@ let make = (~children) => {
     value={
       authentication: authentication,
       signIn: handleSignIn,
+      refreshCredentials: handleRefreshCredentials,
     }>
     {children}
   </ContextProvider>

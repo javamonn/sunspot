@@ -17,10 +17,12 @@
     "@reasonml-community/graphql-ppx",
     "rescript-apollo-client",
     "rescript-classnames",
-    "rescript-material-ui"
+    "rescript-material-ui",
+    "decco"
   ],
   "ppx-flags": [
-    ["@reasonml-community/graphql-ppx/ppx", "-schema ./graphql-schema.json"]
+    ["@reasonml-community/graphql-ppx/ppx", "-schema ./graphql-schema.json"],
+    "decco/ppx"
   ],
   "sources": [{ "dir": "src", "subdirs": true }],
   "package-specs": {
