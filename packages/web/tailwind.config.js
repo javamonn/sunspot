@@ -14,9 +14,6 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {},
-    backgroundColor:{
-      primary: '#BF360C'
-    },
     textColor: {
       darkPrimary: 'rgba(0, 0, 0, .87)',
       darkSecondary: 'rgba(0, 0, 0, .60)',

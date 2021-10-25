@@ -15,7 +15,9 @@ let default = () => {
         "content-between",
         "flex-1",
         "overflow-y-auto",
-        "bg-primary",
+        "bg-white",
+        "max-w-6xl",
+        "mx-auto"
       ])}>
       <QueryRenderers_Alerts />
     </main>

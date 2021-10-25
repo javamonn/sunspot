@@ -27,12 +27,20 @@ let make = () => {
     | _ => {accountAddress: "", limit: None, nextToken: None}
     },
   )
+  let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
 
   let handleConnectWalletClicked = _ => {
     let _ = signIn()
   }
 
-  Js.log2("queryData", query.data)
-
-  <AlertsHeader eth onConnectWalletClicked={handleConnectWalletClicked} />
+  <>
+    <AlertsHeader
+      eth
+      onConnectWalletClicked={handleConnectWalletClicked}
+      onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
+    />
+    <Containers.CreateAlertModal
+      isOpen={createAlertModalIsOpen} onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+    />
+  </>
 }

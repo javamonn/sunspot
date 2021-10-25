@@ -18,6 +18,7 @@
     "rescript-apollo-client",
     "rescript-classnames",
     "rescript-material-ui",
+    "rescript-material-ui-lab",
     "decco"
   ],
   "ppx-flags": [
