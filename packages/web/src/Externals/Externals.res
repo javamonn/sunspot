@@ -11,3 +11,4 @@ module Lodash = Externals_Lodash
 module UUID = Externals_UUID
 module ServiceWorkerGlobalScope = Externals_ServiceWorkerGlobalScope
 module Webapi = Externals_Webapi
+module Std = Externals_Std

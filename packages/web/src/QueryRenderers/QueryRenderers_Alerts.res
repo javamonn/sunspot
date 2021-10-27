@@ -37,10 +37,16 @@ let make = () => {
     <AlertsHeader
       eth
       onConnectWalletClicked={handleConnectWalletClicked}
+      onWalletButtonClicked={handleConnectWalletClicked}
       onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
     />
     <Containers.CreateAlertModal
-      isOpen={createAlertModalIsOpen} onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+      isOpen={createAlertModalIsOpen}
+      onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+      accountAddress=?{switch authentication {
+      | Authenticated({jwt: {accountAddress}}) => Some(accountAddress)
+      | _ => None
+      }}
     />
   </>
 }

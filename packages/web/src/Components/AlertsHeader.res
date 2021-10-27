@@ -1,5 +1,10 @@
 @react.component
-let make = (~eth: Contexts.Eth.state, ~onConnectWalletClicked, ~onCreateAlertClicked) =>
+let make = (
+  ~eth: Contexts.Eth.state,
+  ~onConnectWalletClicked,
+  ~onWalletButtonClicked,
+  ~onCreateAlertClicked,
+) =>
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold"])}>
       {React.string("sunspot / alerts")}
@@ -18,7 +23,8 @@ let make = (~eth: Contexts.Eth.state, ~onConnectWalletClicked, ~onCreateAlertCli
         {React.string("create")}
       </MaterialUi.Button>
       {switch eth {
-      | Connected({address, provider}) => <WalletButton address provider />
+      | Connected({address, provider}) =>
+        <WalletButton address provider onClick={onWalletButtonClicked} />
       | _ => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}
     </div>

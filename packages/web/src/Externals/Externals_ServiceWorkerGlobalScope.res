@@ -22,12 +22,28 @@ external addEventListener: (
 ) => unit = "addEventListener"
 
 module PushSubscription = {
+  @deriving(accessors)
   type t = {
     endpoint: string,
-    expirationTime: string,
+    expirationTime: Js.Nullable.t<float>,
     options: Js.Json.t,
     subscriptionId: string,
   }
+  
+  @deriving(accessors)
+  type keys = {
+    p256dh: string,
+    auth: string,
+  }
+
+  @deriving(accessors)
+  type serialized = {
+    endpoint: string,
+    expirationTime: Js.Nullable.t<float>,
+    keys: keys,
+  }
+
+  @send external getSerialized: t => serialized = "toJSON"
 }
 
 module ServiceWorkerRegistration = {

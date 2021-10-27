@@ -14,7 +14,7 @@
     "res:build": "rescript build",
     "sw:build": "webpack --config ./service-worker-webpack.config.js",
     "amplify:pull:production": "./scripts/amplify-pull-production.sh",
-    "amplify:graphql-sync-schema:production": "API_ID=zf3mrnp6enh3dit2ahfsofwv2a ./scripts/graphql-sync-schema.sh"
+    "amplify:graphql-sync-schema:production": "API_ID=xsl57gm4mretxhjbnuj2hyhui4 ./scripts/graphql-sync-schema.sh"
   },
   "devDependencies": {
     "@apollo/client": "^3.4.16",

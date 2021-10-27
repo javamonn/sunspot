@@ -1,1 +1,1 @@
-amplify pull --appId diplb4zl8jy5c --envName production
+amplify pull --appId d370vlp4yg452p --envName production

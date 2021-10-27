@@ -40,7 +40,7 @@ let getSubscription = () =>
   )
   |> Js.Promise.then_(subscription => subscription->Js.Nullable.toOption->Js.Promise.resolve)
 
-let subscribe = applicationServerKey => {
+let subscribe = () => {
   open Externals.ServiceWorkerGlobalScope
 
   Js.Promise.all2((

@@ -7,6 +7,47 @@ module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
         name
         slug
         imageUrl
+        contractAddress
+      }
+    }
+  }
+`)
+
+module Mutation_CreateAlertRule = %graphql(`
+  mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
+    alertRule: createAlertRule(input: $input) {
+      id 
+      contractAddress
+      accountAddress
+      collectionSlug
+      destination {
+        ... on WebPushAlertDestination {
+          endpoint
+        }
+        ...on DiscordAlertDestination {
+          endpoint
+        }
+      }
+      eventFilters {
+        ... on AlertPriceThresholdEventFilter {
+          value
+          direction
+          paymentToken {
+            id
+          }
+        }
+        ... on AlertAttributesEventFilter {
+          attributes {
+            ... on OpenSeaAssetNumberAttribute {
+              traitType
+              numberValue: value
+            }
+            ... on OpenSeaAssetStringAttribute {
+              traitType
+              stringValue: value
+            }
+          }
+        }
       }
     }
   }
@@ -18,13 +59,14 @@ module CollectionOption = {
     name: option<string>,
     slug: string,
     imageUrl: option<string>,
+    contractAddress: string,
   }
   let make = t
   external unsafeFromJs: Js.t<'a> => t = "%identity"
 }
 
 @react.component
-let make = (~isOpen, ~onClose) => {
+let make = (~isOpen, ~onClose, ~accountAddress=?) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionNamePrefix, setCollectionNamePrefix) = React.useState(_ => "")
   let (collection, setCollection) = React.useState(_ => None)
@@ -33,6 +75,7 @@ let make = (~isOpen, ~onClose) => {
     executeCollectionNamePrefixQuery,
     collectionNamePrefixQueryResult,
   ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
+  let (createAlertRuleMutation, createAlertRuleMutationResult) = Mutation_CreateAlertRule.use()
   let throttledExecuteCollectionNamePrefixQuery = React.useMemo0(() =>
     Externals.Lodash.Throttle1.make(
       (. collectionNamePrefix) =>
@@ -79,11 +122,91 @@ let make = (~isOpen, ~onClose) => {
     result
   }
 
-  let handleCreate = () =>
-    switch handleValidate() {
-    | None => onClose()
-    | Some(_) => ()
+  let handleCreate = () => {
+    let _ = switch (handleValidate(), collection, accountAddress) {
+    | (None, Some(collection), Some(accountAddress)) =>
+      let subscriptionP =
+        Services.PushNotification.getSubscription() |> Js.Promise.then_(subscription => {
+          switch subscription {
+          | Some(subscription) => Js.Promise.resolve(subscription)
+          | None => Services.PushNotification.subscribe()
+          }
+        })
+
+      subscriptionP |> Js.Promise.then_(pushSubscription => {
+        open Mutation_CreateAlertRule
+
+        Js.log2("pushSubscription", Js.Json.stringifyAny(pushSubscription))
+
+        let eventFilters =
+          rules
+          ->Belt.Map.String.valuesToArray
+          ->Belt.Array.keepMap(rule => {
+            let direction = switch CreateAlertRule.Price.modifier(rule) {
+            | ">" => Some(#ALERT_ABOVE)
+            | "<" => Some(#ALERT_BELOW)
+            | _ => None
+            }
+            let value =
+              rule
+              ->CreateAlertRule.Price.value
+              ->Belt.Option.map(value =>
+                value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
+              )
+
+            switch (direction, value) {
+            | (Some(direction), Some(value)) =>
+              Some({
+                alertPriceThresholdEventFilter: Some({
+                  direction: direction,
+                  value: value,
+                  paymentToken: {
+                    id: Services.PaymentToken.id(Services.PaymentToken.ethPaymentToken),
+                    decimals: Services.PaymentToken.decimals(Services.PaymentToken.ethPaymentToken),
+                    name: Services.PaymentToken.name(Services.PaymentToken.ethPaymentToken),
+                    symbol: Services.PaymentToken.symbol(Services.PaymentToken.ethPaymentToken),
+                  },
+                }),
+                alertAttributesEventFilter: None,
+              })
+            | _ => None
+            }
+          })
+
+        let destination = {
+          open Externals.ServiceWorkerGlobalScope.PushSubscription
+          let s = getSerialized(pushSubscription)
+
+          {
+            webPushAlertDestination: Some({
+              endpoint: s->endpoint,
+              keys: {
+                p256dh: s->keys->p256dh,
+                auth: s->keys->auth,
+              },
+            }),
+            discordAlertDestination: None,
+          }
+        }
+        let input = {
+          id: Externals.UUID.make(),
+          accountAddress: accountAddress,
+          collectionSlug: CollectionOption.slugGet(collection),
+          contractAddress: CollectionOption.contractAddressGet(collection),
+          eventFilters: eventFilters,
+          destination: destination,
+        }
+
+        createAlertRuleMutation({
+          input: input,
+        }) |> Js.Promise.then_(_result => {
+          onClose()
+          Js.Promise.resolve()
+        })
+      })
+    | _ => Js.Promise.resolve()
     }
+  }
 
   let _ = React.useEffect1(() => {
     if Js.String2.length(collectionNamePrefix) > 0 {
@@ -101,6 +224,7 @@ let make = (~isOpen, ~onClose) => {
           ~name=itemConnection.name,
           ~slug=itemConnection.slug,
           ~imageUrl=itemConnection.imageUrl,
+          ~contractAddress=itemConnection.contractAddress,
         )
       )
     )
@@ -111,6 +235,10 @@ let make = (~isOpen, ~onClose) => {
   | Unexecuted(_) => (true, React.string("Filter by name..."))
   | Executed({loading: true}) => (true, React.string("Loading..."))
   | _ => (false, React.null)
+  }
+  let isCreating = switch createAlertRuleMutationResult {
+  | {loading: true} => true
+  | _ => false
   }
 
   <MaterialUi.Dialog
@@ -210,6 +338,7 @@ let make = (~isOpen, ~onClose) => {
       <MaterialUi.Button
         variant=#Text
         color=#Primary
+        disabled={isCreating}
         onClick={_ => onClose()}
         classes={MaterialUi.Button.Classes.make(
           ~root=Cn.make(["mr-2"]),
@@ -221,12 +350,15 @@ let make = (~isOpen, ~onClose) => {
       <MaterialUi.Button
         variant=#Contained
         color=#Primary
+        disabled={isCreating}
         onClick={_ => handleCreate()}
         classes={MaterialUi.Button.Classes.make(
-          ~label=Cn.make(["normal-case", "leading-none", "py-1"]),
+          ~label=Cn.make(["normal-case", "leading-none", "py-1", "w-16"]),
           (),
         )}>
-        {React.string("create")}
+        {isCreating
+          ? <MaterialUi.CircularProgress size={MaterialUi.CircularProgress.Size.int(18)} />
+          : React.string("create")}
       </MaterialUi.Button>
     </MaterialUi.DialogActions>
   </MaterialUi.Dialog>

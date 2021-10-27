@@ -1,9 +1,5 @@
 @react.component
-let make = (~address, ~provider) => {
-  let handleClick = _ => {
-    Js.log("WalletButton clicked")
-  }
-
+let make = (~address, ~provider, ~onClick) => {
   let formattedAddress =
     Js.String2.slice(address, ~from=0, ~to_=6) ++
     "..." ++
@@ -12,13 +8,16 @@ let make = (~address, ~provider) => {
   <div className={Cn.make(["border-b", "border-solid", "border-black"])}>
     <MaterialUi.Button
       variant=#Text
-      onClick={handleClick}
-      classes={MaterialUi.Button.Classes.make(
-        ~label=Cn.make(["py-1"]),
-        (),
-      )}>
+      onClick={onClick}
+      classes={MaterialUi.Button.Classes.make(~label=Cn.make(["py-1"]), ())}>
       <span
-        className={Cn.make(["font-bold", "text-darkPrimary", "mr-2", "leading-none", "normal-case"])}>
+        className={Cn.make([
+          "font-bold",
+          "text-darkPrimary",
+          "mr-2",
+          "leading-none",
+          "normal-case",
+        ])}>
         {React.string(formattedAddress)}
       </span>
       <Externals.Davatar address={address} size={16} provider={provider} />
