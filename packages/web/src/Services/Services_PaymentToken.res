@@ -20,4 +20,18 @@ let formatPrice = (price, paymentToken) =>
   | [whole] => whole ++ Js.String2.repeat("0", paymentToken.decimals)
   | _ => Js.String2.repeat("0", paymentToken.decimals)
   }
-        
+
+let parsePrice = (price, decimals) => {
+  let paddedPrice = Externals.Std.String.padStart(
+    price,
+    Js.Math.max_int(decimals - Js.String2.length(price), 0),
+    "0",
+  )
+  let decimalIdx = Js.String2.length(paddedPrice) - decimals
+
+  Belt.Float.fromString(
+    Js.String2.substring(paddedPrice, ~from=0, ~to_=decimalIdx) ++
+    "." ++
+    Js.String2.substringToEnd(paddedPrice, ~from=decimalIdx),
+  )
+}

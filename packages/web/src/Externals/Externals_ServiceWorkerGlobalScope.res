@@ -1,6 +1,24 @@
 type t
 @val external self: t = "self"
 
+module Notification = {
+  @deriving(accessors)
+  type t = {data: Js.Json.t}
+
+  @send external close: t => unit = "close"
+}
+
+module WindowClient = {
+  type t
+}
+
+module Clients = {
+  type t
+
+  @send
+  external openWindow: (t, string) => Js.Promise.t<Js.Nullable.t<WindowClient.t>> = "openWindow"
+}
+
 module PushEvent = {
   type data
 
@@ -15,10 +33,21 @@ module InstallEvent = {
   type t
 }
 
+module NotificationClickEvent = {
+  @deriving(accessors)
+  type t = {notification: Notification.t}
+  @send external waitUntil: (t, Js.Promise.t<unit>) => unit = "waitUntil"
+}
+
 @send
 external addEventListener: (
   t,
-  @string [#push(PushEvent.t => unit) | #install(InstallEvent.t => unit)],
+  @string
+  [
+    | #push(PushEvent.t => unit)
+    | #install(InstallEvent.t => unit)
+    | #notificationclick(NotificationClickEvent.t => unit)
+  ],
 ) => unit = "addEventListener"
 
 module PushSubscription = {
@@ -29,7 +58,7 @@ module PushSubscription = {
     options: Js.Json.t,
     subscriptionId: string,
   }
-  
+
   @deriving(accessors)
   type keys = {
     p256dh: string,
@@ -93,3 +122,5 @@ module ServiceWorkerRegistration = {
 
 @get
 external registration: t => ServiceWorkerRegistration.t = "registration"
+@get
+external clients: t => Clients.t = "clients"

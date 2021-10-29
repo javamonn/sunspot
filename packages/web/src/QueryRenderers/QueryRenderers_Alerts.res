@@ -3,12 +3,27 @@ module Query_AlertRulesByAccountAddress = %graphql(`
     alertRules: alertRulesByAccountAddress(accountAddress: $accountAddress, limit: $limit, nextToken: $nextToken) {
       items {
         id
+        collection {
+          slug
+          name
+          imageUrl
+          contractAddress
+        }
+        eventFilters {
+          ... on AlertPriceThresholdEventFilter {
+            value
+            direction
+            paymentToken {
+              id
+              decimals
+            }
+          }
+        }
       }
       nextToken
     }
   }
 `)
-
 @react.component
 let make = () => {
   let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
@@ -33,6 +48,39 @@ let make = () => {
     let _ = signIn()
   }
 
+  let rows = switch query {
+  | {data: Some({alertRules: Some({items: Some(items)})})} =>
+    items->Belt.Array.keepMap(item =>
+      item->Belt.Option.map(item => {
+        AlertsTable.id: item.id,
+        collectionName: item.collection.name,
+        collectionSlug: item.collection.slug,
+        collectionImageUrl: item.collection.imageUrl,
+        event: "list",
+        rule: item.eventFilters
+        ->Belt.Array.get(0)
+        ->Belt.Option.flatMap(eventFilter =>
+          switch eventFilter {
+          | #AlertPriceThresholdEventFilter(eventFilter) =>
+            let modifier = switch eventFilter.direction {
+            | #ALERT_ABOVE => ">"
+            | #ALERT_BELOW => "<"
+            | #FutureAddedValue(v) => v
+            }
+            let formattedPrice =
+              Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
+              ->Belt.Option.map(Belt.Float.toString)
+              ->Belt.Option.getExn
+
+            Some({AlertsTable.modifier: modifier, price: formattedPrice})
+          | #FutureAddedValue(_) => None
+          }
+        ),
+      })
+    )
+  | _ => []
+  }
+
   <>
     <AlertsHeader
       eth
@@ -48,5 +96,6 @@ let make = () => {
       | _ => None
       }}
     />
+    <AlertsTable rows />
   </>
 }

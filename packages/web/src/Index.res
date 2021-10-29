@@ -11,8 +11,6 @@ let default = () => {
         "py-8",
         "flex",
         "flex-col",
-        "justify-between",
-        "content-between",
         "flex-1",
         "overflow-y-auto",
         "bg-white",
