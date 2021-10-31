@@ -1,1 +1,2 @@
 module CreateAlertModal = Containers_CreateAlertModal
+module UpdateAlertModal = Containers_UpdateAlertModal

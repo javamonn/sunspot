@@ -14,9 +14,24 @@ module PushEventData = {
 }
 
 let handlePushEvent = pushEvent => {
-  Js.log2("handlePushEvent", pushEvent)
   switch pushEvent->PushEvent.data->PushEvent.json->PushEventData.decode {
   | Ok(pushEventData) =>
+    Services.Logger.logWithData(
+      "ServiceWorker",
+      "handle event push",
+      Js.Dict.fromArray([
+        (
+          "tag",
+          pushEventData
+          ->PushEventData.options
+          ->Js.Json.decodeObject
+          ->Belt.Option.flatMap(o => o->Js.Dict.get("tag"))
+          ->Belt.Option.flatMap(Js.Json.decodeString)
+          ->Belt.Option.getWithDefault("")
+          ->Js.Json.string,
+        ),
+      ])->Js.Json.object_,
+    )
     PushEvent.waitUntil(
       pushEvent,
       self
@@ -26,21 +41,34 @@ let handlePushEvent = pushEvent => {
         pushEventData->PushEventData.options->PushEventData.unsafeOptionsAsShowNotificationOptions,
       ) |> Js.Promise.then_(_ => Js.Promise.resolve()),
     )
+  | exception e => Services.Logger.jsExn("ServiceWorker", "Unable to decode push event data", e)
   | Error(e) => Services.Logger.deccoError("ServiceWorker", "Unable to decode push event data.", e)
   }
 }
 
 let handleInstallEvent = _ => {
-  Services.Logger.log("ServiceWorker", "Installed.")
+  Services.Logger.log("ServiceWorker", "install")
+}
+
+let handleNotificationCloseEvent = event => {
+  Services.Logger.logWithData(
+    "ServiceWorker",
+    "handle event notificationclose",
+    Js.Dict.fromArray([
+      ("tag", event->NotificationCloseEvent.notification->Notification.tag->Js.Json.string),
+    ])->Js.Json.object_,
+  )
 }
 
 let handleNotificationClickEvent = event => {
-  let _ = event->NotificationClickEvent.notification->Notification.close
-
-  Js.log2(
-    "handleNotificationClickEvent",
-    event->NotificationClickEvent.notification->Notification.data,
+  Services.Logger.logWithData(
+    "ServiceWorker",
+    "handle event notificationclick",
+    Js.Dict.fromArray([
+      ("tag", event->NotificationClickEvent.notification->Notification.tag->Js.Json.string),
+    ])->Js.Json.object_,
   )
+  let _ = event->NotificationClickEvent.notification->Notification.close
 
   let openP =
     event
@@ -60,3 +88,4 @@ let handleNotificationClickEvent = event => {
 let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#install(handleInstallEvent))
 let _ = self->addEventListener(#notificationclick(handleNotificationClickEvent))
+let _ = self->addEventListener(#notificationclose(handleNotificationCloseEvent))

@@ -3,7 +3,7 @@ type t
 
 module Notification = {
   @deriving(accessors)
-  type t = {data: Js.Json.t}
+  type t = {data: Js.Json.t, tag: string}
 
   @send external close: t => unit = "close"
 }
@@ -27,10 +27,17 @@ module PushEvent = {
 
   @send external waitUntil: (t, Js.Promise.t<unit>) => unit = "waitUntil"
   @send external json: data => Js.Json.t = "json"
+  @send external text: data => string = "text"
 }
 
 module InstallEvent = {
   type t
+}
+
+module NotificationCloseEvent = {
+  @deriving(accessors)
+  type t = {notification: Notification.t}
+  @send external waitUntil: (t, Js.Promise.t<unit>) => unit = "waitUntil"
 }
 
 module NotificationClickEvent = {
@@ -47,6 +54,7 @@ external addEventListener: (
     | #push(PushEvent.t => unit)
     | #install(InstallEvent.t => unit)
     | #notificationclick(NotificationClickEvent.t => unit)
+    | #notificationclose(NotificationCloseEvent.t => unit)
   ],
 ) => unit = "addEventListener"
 

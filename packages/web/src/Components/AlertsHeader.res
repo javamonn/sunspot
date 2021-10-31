@@ -4,6 +4,7 @@ let make = (
   ~onConnectWalletClicked,
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
+  ~authenticationChallengeRequired,
 ) =>
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold"])}>
@@ -24,7 +25,12 @@ let make = (
       </MaterialUi.Button>
       {switch eth {
       | Connected({address, provider}) =>
-        <WalletButton address provider onClick={onWalletButtonClicked} />
+        <WalletButton
+          address
+          provider
+          onClick={onWalletButtonClicked}
+          authenticationChallengeRequired={authenticationChallengeRequired}
+        />
       | _ => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}
     </div>

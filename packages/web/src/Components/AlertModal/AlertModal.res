@@ -1,4 +1,4 @@
-let styles = %raw("require('./CreateAlertModal.module.css')")
+let styles = %raw("require('./AlertModal.module.css')")
 
 module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
   query OpenSeaCollectionsByNamePrefix($input: OpenSeaCollectionsByNamePrefixInput!) {
@@ -13,7 +13,6 @@ module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
   }
 `)
 
-
 module CollectionOption = {
   @deriving(abstract)
   type t = {
@@ -26,13 +25,61 @@ module CollectionOption = {
   external unsafeFromJs: Js.t<'a> => t = "%identity"
 }
 
-type value = {
-  collection: option<CollectionOption.t>,
-  rules: Belt.Map.String.t<CreateAlertRule.Price.t>
+module Value = {
+  @deriving(accessors)
+  type t = {
+    collection: option<CollectionOption.t>,
+    rules: Belt.Map.String.t<CreateAlertRule.Price.t>,
+  }
+
+  let make = (~collection, ~rules) => {
+    collection: collection,
+    rules: rules,
+  }
+
+  let empty = () => {
+    collection: None,
+    rules: Belt.Map.String.empty,
+  }
+}
+
+let validate = value => {
+  let collectionValid = 
+    value
+    ->Value.collection
+    ->Js.Option.isSome
+  let rulesValid =
+    value
+    ->Value.rules
+    ->Belt.Map.String.valuesToArray
+    ->Belt.Array.every(rule =>
+      rule
+      ->CreateAlertRule.Price.value
+      ->Belt.Option.flatMap(Belt.Float.fromString)
+      ->Belt.Option.map(value => value >= 0.0)
+      ->Belt.Option.getWithDefault(false)
+    )
+
+  if !collectionValid {
+    Some("collection is required.")
+  } else if !rulesValid {
+    Some("price rule value must be a positive number.")
+  } else {
+    None
+  }
 }
 
 @react.component
-let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActioning, ~onAction, ~actionLabel) => {
+let make = (
+  ~isOpen,
+  ~onClose,
+  ~onExited=?,
+  ~value,
+  ~onChange,
+  ~isActioning,
+  ~onAction,
+  ~actionLabel,
+) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionNamePrefix, setCollectionNamePrefix) = React.useState(_ => "")
   let (
@@ -46,17 +93,17 @@ let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActionin
       200,
     )
   )
+  let (validationError, setValidationError) = React.useState(_ => None)
 
   let handleRuleChange = rule =>
     onChange({
       ...value,
-      rules: value.rules->Belt.Map.String.set(rule->CreateAlertRule.Price.id, rule)
+      Value.rules: value->Value.rules->Belt.Map.String.set(rule->CreateAlertRule.Price.id, rule),
     })
-
   let handleRuleRemove = ruleId =>
     onChange({
       ...value,
-      rules: value.rules->Belt.Map.String.remove(ruleId)
+      rules: value.rules->Belt.Map.String.remove(ruleId),
     })
   let _ = React.useEffect1(() => {
     if Js.String2.length(collectionNamePrefix) > 0 {
@@ -64,6 +111,19 @@ let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActionin
     }
     None
   }, [collectionNamePrefix])
+  let handleExited = () => {
+    setCollectionNamePrefix(_ => "")
+    setValidationError(_ => None)
+    onExited->Belt.Option.forEach(fn => fn())
+  }
+  let handleAction = () => {
+    let validationResult = validate(value)
+    setValidationError(_ => validationResult)
+    switch validationResult {
+    | None => onAction()
+    | Some(_) => ()
+    }
+  }
 
   let collectionOptions = switch collectionNamePrefixQueryResult {
   | Unexecuted(_) | Executed({loading: true}) => []
@@ -90,15 +150,12 @@ let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActionin
   <MaterialUi.Dialog
     _open={isOpen}
     onClose={(_, _) => onClose()}
-    onExited={_ => {
-      setCollectionNamePrefix(_ => "")
-      onExited()
-    }}
+    onExited={_ => handleExited()}
     classes={MaterialUi.Dialog.Classes.make(~paper=styles["dialogPaper"], ())}>
     <MaterialUi.DialogTitle> {React.string("create alert")} </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
-      {error
+      {validationError
       ->Belt.Option.map(error =>
         <MaterialUi_Lab.Alert
           severity=#Error classes={MaterialUi_Lab.Alert.Classes.make(~root=Cn.make(["mb-6"]), ())}>
@@ -113,7 +170,7 @@ let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActionin
         onChange={(_, collection, _) => {
           onChange({
             ...value,
-            collection: collection->Obj.magic
+            collection: collection->Obj.magic,
           })
         }}
         onInputChange={(_, collectionNamePrefix, _) => {
@@ -196,7 +253,7 @@ let make = (~isOpen, ~onClose, ~onExited, ~error, ~value, ~onChange, ~isActionin
         variant=#Contained
         color=#Primary
         disabled={isActioning}
-        onClick={_ => onAction()}
+        onClick={_ => handleAction()}
         classes={MaterialUi.Button.Classes.make(
           ~label=Cn.make(["normal-case", "leading-none", "py-1", "w-16"]),
           (),

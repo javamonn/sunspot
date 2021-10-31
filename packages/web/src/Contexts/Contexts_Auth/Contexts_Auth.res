@@ -191,15 +191,16 @@ let make = (~children) => {
     None
   }, [authentication])
 
-  let _ = React.useEffect1(() => {
+  let _ = React.useEffect2(() => {
     switch (eth, authentication) {
     | (NotConnected(_), Authenticated(_))
     | (NotConnected(_), AuthenticationChallengeRequired) =>
       setAuthentication(_ => Unauthenticated)
+    | (Connected(_), Unauthenticated) => setAuthentication(_ => AuthenticationChallengeRequired)
     | _ => ()
     }
     None
-  }, [eth])
+  }, (eth, authentication))
 
   let handleRequestAccount = (~provider) =>
     provider
@@ -280,7 +281,7 @@ let make = (~children) => {
         Services_Logger.promiseError("Contexts_Auth", "Unable to sign in.", err)
         Js.Promise.resolve()
       })
-    | (AuthenticationChallengeRequired, Connected({provider, web3, address})) =>
+    | (AuthenticationChallengeRequired, Connected({web3, address})) =>
       handleAuthenticationChallenge(~web3, ~address)
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))

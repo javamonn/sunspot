@@ -24,6 +24,11 @@ module Query_AlertRulesByAccountAddress = %graphql(`
     }
   }
 `)
+
+type updateAlertModalState =
+  | UpdateAlertModalOpen(AlertModal.Value.t)
+  | UpdateAlertModalClosed
+
 @react.component
 let make = () => {
   let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
@@ -43,6 +48,7 @@ let make = () => {
     },
   )
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
+  let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
   let handleConnectWalletClicked = _ => {
     let _ = signIn()
@@ -87,10 +93,29 @@ let make = () => {
       onConnectWalletClicked={handleConnectWalletClicked}
       onWalletButtonClicked={handleConnectWalletClicked}
       onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
+      authenticationChallengeRequired={switch authentication {
+      | AuthenticationChallengeRequired => true
+      | _ => false
+      }}
     />
     <Containers.CreateAlertModal
       isOpen={createAlertModalIsOpen}
       onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+      accountAddress=?{switch authentication {
+      | Authenticated({jwt: {accountAddress}}) => Some(accountAddress)
+      | _ => None
+      }}
+    />
+    <Containers.UpdateAlertModal
+      isOpen={switch updateAlertModal {
+      | UpdateAlertModalOpen(_) => true
+      | _ => false
+      }}
+      value=?{switch updateAlertModal {
+      | UpdateAlertModalOpen(v) => Some(v)
+      | _ => None
+      }}
+      onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
       accountAddress=?{switch authentication {
       | Authenticated({jwt: {accountAddress}}) => Some(accountAddress)
       | _ => None

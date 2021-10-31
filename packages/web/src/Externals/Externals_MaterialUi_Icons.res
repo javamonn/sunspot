@@ -9,3 +9,13 @@ module Close = {
   external make: (~color: string=?, ~className: string=?, ~fontSize: string=?) => React.element =
     "default"
 }
+
+module Error = {
+  @react.component @module("@material-ui/icons/Error")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

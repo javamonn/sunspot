@@ -40,46 +40,16 @@ module Mutation_CreateAlertRule = %graphql(`
 
 @react.component
 let make = (~isOpen, ~onClose, ~accountAddress=?) => {
-  let (validationError, setValidationError) = React.useState(_ => None)
   let (createAlertRuleMutation, createAlertRuleMutationResult) = Mutation_CreateAlertRule.use()
-
-  let (value, setValue) = React.useState(() => {
-    CreateAlertModal.collection: None,
-    rules: Belt.Map.String.empty,
-  })
+  let (value, setValue) = React.useState(() => AlertModal.Value.empty())
 
   let handleExited = () => {
-    setValue(_ => {rules: Belt.Map.String.empty, collection: None})
-    setValidationError(_ => None)
-  }
-  let handleValidate = () => {
-    let collectionValid = Js.Option.isSome(value.collection)
-    let rulesValid =
-      value.rules
-      ->Belt.Map.String.valuesToArray
-      ->Belt.Array.every(rule =>
-        rule
-        ->CreateAlertRule.Price.value
-        ->Belt.Option.flatMap(Belt.Float.fromString)
-        ->Belt.Option.map(value => value >= 0.0)
-        ->Belt.Option.getWithDefault(false)
-      )
-
-    let result = if !collectionValid {
-      Some("collection is required.")
-    } else if !rulesValid {
-      Some("price rule value must be a positive number.")
-    } else {
-      None
-    }
-
-    setValidationError(_ => result)
-    result
+    setValue(_ => AlertModal.Value.empty())
   }
 
   let handleCreate = () => {
-    let _ = switch (handleValidate(), value.collection, accountAddress) {
-    | (None, Some(collection), Some(accountAddress)) =>
+    let _ = switch (value->AlertModal.Value.collection, accountAddress) {
+    | (Some(collection), Some(accountAddress)) =>
       let subscriptionP =
         Services.PushNotification.getSubscription() |> Js.Promise.then_(subscription => {
           switch subscription {
@@ -92,7 +62,8 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
         open Mutation_CreateAlertRule
 
         let eventFilters =
-          value.rules
+          value
+          ->AlertModal.Value.rules
           ->Belt.Map.String.valuesToArray
           ->Belt.Array.keepMap(rule => {
             let direction = switch CreateAlertRule.Price.modifier(rule) {
@@ -144,8 +115,8 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
         let input = {
           id: Externals.UUID.make(),
           accountAddress: accountAddress,
-          collectionSlug: CreateAlertModal.CollectionOption.slugGet(collection),
-          contractAddress: CreateAlertModal.CollectionOption.contractAddressGet(collection),
+          collectionSlug: AlertModal.CollectionOption.slugGet(collection),
+          contractAddress: AlertModal.CollectionOption.contractAddressGet(collection),
           eventFilters: eventFilters,
           destination: destination,
         }
@@ -166,13 +137,12 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
   | _ => false
   }
 
-  <CreateAlertModal
+  <AlertModal
     isOpen
     onClose
     onExited={handleExited}
     value={value}
     onChange={newValue => setValue(_ => newValue)}
-    error={validationError}
     isActioning={isCreating}
     onAction={handleCreate}
     actionLabel="create"
