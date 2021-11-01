@@ -11,3 +11,10 @@ module Throttle2 = {
   @module
   external make: ((. 'a, 'b) => 'c, int) => t<'a, 'b, 'c> = "lodash/throttle"
 }
+
+module Debounce1 = {
+  type t<'a, 'b> = (. 'a) => 'b
+  @send external flush: t<'a, 'b> => unit = "flush"
+  @module
+  external make: ((. 'a) => 'b, int) => t<'a, 'b> = "lodash/debounce"
+}

@@ -28,26 +28,26 @@ module CollectionOption = {
 module Value = {
   @deriving(accessors)
   type t = {
+    id: string,
     collection: option<CollectionOption.t>,
     rules: Belt.Map.String.t<CreateAlertRule.Price.t>,
   }
 
-  let make = (~collection, ~rules) => {
+  let make = (~id, ~collection, ~rules) => {
+    id: id,
     collection: collection,
     rules: rules,
   }
 
   let empty = () => {
+    id: Externals.UUID.make(),
     collection: None,
     rules: Belt.Map.String.empty,
   }
 }
 
 let validate = value => {
-  let collectionValid = 
-    value
-    ->Value.collection
-    ->Js.Option.isSome
+  let collectionValid = value->Value.collection->Js.Option.isSome
   let rulesValid =
     value
     ->Value.rules
@@ -79,6 +79,7 @@ let make = (
   ~isActioning,
   ~onAction,
   ~actionLabel,
+  ~title,
 ) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionNamePrefix, setCollectionNamePrefix) = React.useState(_ => "")
@@ -87,7 +88,7 @@ let make = (
     collectionNamePrefixQueryResult,
   ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
   let throttledExecuteCollectionNamePrefixQuery = React.useMemo0(() =>
-    Externals.Lodash.Throttle1.make(
+    Externals.Lodash.Debounce1.make(
       (. collectionNamePrefix) =>
         executeCollectionNamePrefixQuery({input: {namePrefix: collectionNamePrefix}}),
       200,
@@ -152,7 +153,7 @@ let make = (
     onClose={(_, _) => onClose()}
     onExited={_ => handleExited()}
     classes={MaterialUi.Dialog.Classes.make(~paper=styles["dialogPaper"], ())}>
-    <MaterialUi.DialogTitle> {React.string("create alert")} </MaterialUi.DialogTitle>
+    <MaterialUi.DialogTitle> {React.string(title)} </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
       {validationError

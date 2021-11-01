@@ -1,5 +1,12 @@
 @react.component
-let make = (~imageUrl, ~primary, ~secondary, ~bare=false) => {
+let make = (
+  ~imageUrl,
+  ~primary,
+  ~secondary,
+  ~bare=false,
+  ~disableGutters=false,
+  ~listItemClasses=?,
+) => {
   let contents =
     <>
       <MaterialUi.Avatar>
@@ -14,5 +21,9 @@ let make = (~imageUrl, ~primary, ~secondary, ~bare=false) => {
       />
     </>
 
-  bare ? contents : <MaterialUi.ListItem> {contents} </MaterialUi.ListItem>
+  bare
+    ? contents
+    : <MaterialUi.ListItem disableGutters classes=?{listItemClasses}>
+        {contents}
+      </MaterialUi.ListItem>
 }

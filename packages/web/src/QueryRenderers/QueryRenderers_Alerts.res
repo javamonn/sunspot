@@ -50,42 +50,91 @@ let make = () => {
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
+  let queryItems = switch query {
+  | {data: Some({alertRules: Some({items: Some(items)})})} =>
+    items->Belt.Array.keepMap(item => item)
+  | _ => []
+  }
+  let tableRows = queryItems->Belt.Array.map(item => {
+    AlertsTable.id: item.id,
+    collectionName: item.collection.name,
+    collectionSlug: item.collection.slug,
+    collectionImageUrl: item.collection.imageUrl,
+    event: "list",
+    rule: item.eventFilters
+    ->Belt.Array.get(0)
+    ->Belt.Option.flatMap(eventFilter =>
+      switch eventFilter {
+      | #AlertPriceThresholdEventFilter(eventFilter) =>
+        let modifier = switch eventFilter.direction {
+        | #ALERT_ABOVE => ">"
+        | #ALERT_BELOW => "<"
+        | #FutureAddedValue(v) => v
+        }
+        let formattedPrice =
+          Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
+          ->Belt.Option.map(Belt.Float.toString)
+          ->Belt.Option.getExn
+
+        Some({AlertsTable.modifier: modifier, price: formattedPrice})
+      | #FutureAddedValue(_) => None
+      }
+    ),
+  })
+
   let handleConnectWalletClicked = _ => {
     let _ = signIn()
   }
-
-  let rows = switch query {
-  | {data: Some({alertRules: Some({items: Some(items)})})} =>
-    items->Belt.Array.keepMap(item =>
-      item->Belt.Option.map(item => {
-        AlertsTable.id: item.id,
-        collectionName: item.collection.name,
-        collectionSlug: item.collection.slug,
-        collectionImageUrl: item.collection.imageUrl,
-        event: "list",
-        rule: item.eventFilters
-        ->Belt.Array.get(0)
+  let handleRowClick = row =>
+    queryItems
+    ->Belt.Array.getBy(item => AlertsTable.id(row) == item.id)
+    ->Belt.Option.forEach(item => {
+      let rules =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch eventFilter {
+          | #AlertPriceThresholdEventFilter(_) => true
+          | _ => false
+          }
+        )
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
           | #AlertPriceThresholdEventFilter(eventFilter) =>
-            let modifier = switch eventFilter.direction {
-            | #ALERT_ABOVE => ">"
-            | #ALERT_BELOW => "<"
-            | #FutureAddedValue(v) => v
-            }
-            let formattedPrice =
-              Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
-              ->Belt.Option.map(Belt.Float.toString)
-              ->Belt.Option.getExn
-
-            Some({AlertsTable.modifier: modifier, price: formattedPrice})
-          | #FutureAddedValue(_) => None
+            CreateAlertRule.Price.makeRule(
+              ~id="alert-rule-price",
+              ~modifier=switch eventFilter.direction {
+              | #ALERT_ABOVE => ">"
+              | #ALERT_BELOW => "<"
+              | #FutureAddedValue(v) => v
+              },
+              ~value=Services.PaymentToken.parsePrice(
+                eventFilter.value,
+                eventFilter.paymentToken.decimals,
+              )->Belt.Option.map(Belt.Float.toString),
+            )->Js.Option.some
+          | _ => None
           }
+        )
+        ->Belt.Option.map(priceRule =>
+          Belt.Map.String.fromArray([(priceRule->CreateAlertRule.Price.id, priceRule)])
+        )
+        ->Belt.Option.getWithDefault(Belt.Map.String.empty)
+
+      let alertModalValue = AlertModal.Value.make(
+        ~collection=Some(
+          AlertModal.CollectionOption.make(
+            ~name=item.collection.name,
+            ~slug=item.collection.slug,
+            ~imageUrl=item.collection.imageUrl,
+            ~contractAddress=item.collection.contractAddress,
+          ),
         ),
-      })
-    )
-  | _ => []
-  }
+        ~rules,
+        ~id=item.id,
+      )
+
+      setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
+    })
 
   <>
     <AlertsHeader
@@ -121,6 +170,6 @@ let make = () => {
       | _ => None
       }}
     />
-    <AlertsTable rows />
+    <AlertsTable rows={tableRows} onRowClick={handleRowClick} />
   </>
 }

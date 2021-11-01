@@ -32,6 +32,7 @@ let handlePushEvent = pushEvent => {
         ),
       ])->Js.Json.object_,
     )
+    Js.log(pushEventData)
     PushEvent.waitUntil(
       pushEvent,
       self

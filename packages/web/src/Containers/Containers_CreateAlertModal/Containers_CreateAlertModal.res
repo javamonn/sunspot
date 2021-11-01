@@ -50,15 +50,14 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
   let handleCreate = () => {
     let _ = switch (value->AlertModal.Value.collection, accountAddress) {
     | (Some(collection), Some(accountAddress)) =>
-      let subscriptionP =
-        Services.PushNotification.getSubscription() |> Js.Promise.then_(subscription => {
-          switch subscription {
-          | Some(subscription) => Js.Promise.resolve(subscription)
-          | None => Services.PushNotification.subscribe()
-          }
-        })
-
-      subscriptionP |> Js.Promise.then_(pushSubscription => {
+      Services.PushNotification.getSubscription()
+      |> Js.Promise.then_(subscription => {
+        switch subscription {
+        | Some(subscription) => Js.Promise.resolve(subscription)
+        | None => Services.PushNotification.subscribe()
+        }
+      })
+      |> Js.Promise.then_(pushSubscription => {
         open Mutation_CreateAlertRule
 
         let eventFilters =
@@ -113,7 +112,7 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
           }
         }
         let input = {
-          id: Externals.UUID.make(),
+          id: AlertModal.Value.id(value),
           accountAddress: accountAddress,
           collectionSlug: AlertModal.CollectionOption.slugGet(collection),
           contractAddress: AlertModal.CollectionOption.contractAddressGet(collection),
@@ -146,5 +145,6 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
     isActioning={isCreating}
     onAction={handleCreate}
     actionLabel="create"
+    title="create alert"
   />
 }
