@@ -1,29 +1,4 @@
-module Query_AlertRulesByAccountAddress = %graphql(`
-  query AlertRulesByAccountAddress($accountAddress: String!, $limit: Int, $nextToken: String) {
-    alertRules: alertRulesByAccountAddress(accountAddress: $accountAddress, limit: $limit, nextToken: $nextToken) {
-      items {
-        id
-        collection {
-          slug
-          name
-          imageUrl
-          contractAddress
-        }
-        eventFilters {
-          ... on AlertPriceThresholdEventFilter {
-            value
-            direction
-            paymentToken {
-              id
-              decimals
-            }
-          }
-        }
-      }
-      nextToken
-    }
-  }
-`)
+open QueryRenderers_Alerts_GraphQL
 
 type updateAlertModalState =
   | UpdateAlertModalOpen(AlertModal.Value.t)
@@ -33,18 +8,14 @@ type updateAlertModalState =
 let make = () => {
   let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let query = Query_AlertRulesByAccountAddress.use(
+  let query = Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.use(
     ~skip=switch authentication {
     | Authenticated(_) => false
     | _ => true
     },
     switch authentication {
-    | Authenticated({jwt: {accountAddress}}) => {
-        accountAddress: accountAddress,
-        limit: Some(32),
-        nextToken: None,
-      }
-    | _ => {accountAddress: "", limit: None, nextToken: None}
+    | Authenticated({jwt: {accountAddress}}) => makeVariables(~accountAddress)
+    | _ => makeVariables(~accountAddress="")
     },
   )
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
@@ -55,32 +26,44 @@ let make = () => {
     items->Belt.Array.keepMap(item => item)
   | _ => []
   }
-  let tableRows = queryItems->Belt.Array.map(item => {
-    AlertsTable.id: item.id,
-    collectionName: item.collection.name,
-    collectionSlug: item.collection.slug,
-    collectionImageUrl: item.collection.imageUrl,
-    event: "list",
-    rule: item.eventFilters
-    ->Belt.Array.get(0)
-    ->Belt.Option.flatMap(eventFilter =>
-      switch eventFilter {
-      | #AlertPriceThresholdEventFilter(eventFilter) =>
-        let modifier = switch eventFilter.direction {
-        | #ALERT_ABOVE => ">"
-        | #ALERT_BELOW => "<"
-        | #FutureAddedValue(v) => v
-        }
-        let formattedPrice =
-          Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
-          ->Belt.Option.map(Belt.Float.toString)
-          ->Belt.Option.getExn
 
-        Some({AlertsTable.modifier: modifier, price: formattedPrice})
-      | #FutureAddedValue(_) => None
-      }
-    ),
-  })
+  let tableRows =
+    queryItems
+    ->Externals.Lodash.sortBy(item =>
+      -.(
+        item.updatedAt
+        ->Js.Json.decodeString
+        ->Belt.Option.map(s => s->Js.Date.fromString->Js.Date.valueOf)
+        ->Belt.Option.getWithDefault(0.0)
+      )
+    )
+    ->Belt.Array.map(item => {
+      AlertsTable.id: item.id,
+      collectionName: item.collection.name,
+      collectionSlug: item.collection.slug,
+      collectionImageUrl: item.collection.imageUrl,
+      event: "list",
+      rule: item.eventFilters
+      ->Belt.Array.get(0)
+      ->Belt.Option.flatMap(eventFilter =>
+        switch eventFilter {
+        | #AlertPriceThresholdEventFilter(eventFilter) =>
+          let modifier = switch eventFilter.direction {
+          | #ALERT_ABOVE => ">"
+          | #ALERT_BELOW => "<"
+          | #FutureAddedValue(v) => v
+          }
+          let formattedPrice =
+            Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
+            ->Belt.Option.map(Belt.Float.toString)
+            ->Belt.Option.getExn
+
+          Some({AlertsTable.modifier: modifier, price: formattedPrice})
+        | #AlertAttributesEventFilter(_) => None
+        | #FutureAddedValue(_) => None
+        }
+      ),
+    })
 
   let handleConnectWalletClicked = _ => {
     let _ = signIn()

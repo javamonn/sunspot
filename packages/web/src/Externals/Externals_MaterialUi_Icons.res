@@ -19,3 +19,23 @@ module Error = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module MoreVert = {
+  @react.component @module("@material-ui/icons/MoreVert")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
+
+module Delete = {
+  @react.component @module("@material-ui/icons/Delete")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

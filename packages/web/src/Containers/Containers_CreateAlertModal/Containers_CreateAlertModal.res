@@ -1,39 +1,8 @@
+module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 module Mutation_CreateAlertRule = %graphql(`
   mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {
-      id 
-      contractAddress
-      accountAddress
-      collectionSlug
-      destination {
-        ... on WebPushAlertDestination {
-          endpoint
-        }
-        ...on DiscordAlertDestination {
-          endpoint
-        }
-      }
-      eventFilters {
-        ... on AlertPriceThresholdEventFilter {
-          value
-          direction
-          paymentToken {
-            id
-          }
-        }
-        ... on AlertAttributesEventFilter {
-          attributes {
-            ... on OpenSeaAssetNumberAttribute {
-              traitType
-              numberValue: value
-            }
-            ... on OpenSeaAssetStringAttribute {
-              traitType
-              stringValue: value
-            }
-          }
-        }
-      }
+      ...AlertRule
     }
   }
 `)
@@ -120,9 +89,41 @@ let make = (~isOpen, ~onClose, ~accountAddress=?) => {
           destination: destination,
         }
 
-        createAlertRuleMutation({
-          input: input,
-        }) |> Js.Promise.then_(_result => {
+        createAlertRuleMutation(
+          ~update=({writeQuery, readQuery}, {data}) => {
+            data
+            ->Belt.Option.flatMap(({alertRule}) => alertRule)
+            ->Belt.Option.forEach(alertRule => {
+              let newItems = switch readQuery(
+                ~query=module(
+                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress
+                ),
+                QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
+              ) {
+              | Some(Ok({alertRules: Some({items: Some(items)})})) =>
+                Belt.Array.concat([Some(alertRule)], items)
+              | _ => [Some(alertRule)]
+              }
+
+              let _ = writeQuery(
+                ~query=module(
+                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress
+                ),
+                ~data={
+                  alertRules: Some({
+                    __typename: "ModelAlertRuleConnection",
+                    nextToken: None,
+                    items: Some(newItems),
+                  }),
+                },
+                QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
+              )
+            })
+          },
+          {
+            input: input,
+          },
+        ) |> Js.Promise.then_(_result => {
           onClose()
           Js.Promise.resolve()
         })

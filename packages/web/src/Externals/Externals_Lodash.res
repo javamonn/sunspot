@@ -18,3 +18,5 @@ module Debounce1 = {
   @module
   external make: ((. 'a) => 'b, int) => t<'a, 'b> = "lodash/debounce"
 }
+
+@module external sortBy: (array<'a>, 'a => 'b) => array<'a> = "lodash/sortBy"

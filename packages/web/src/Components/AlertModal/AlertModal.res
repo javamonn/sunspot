@@ -80,6 +80,7 @@ let make = (
   ~onAction,
   ~actionLabel,
   ~title,
+  ~renderOverflowActionMenuItems=?,
 ) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionNamePrefix, setCollectionNamePrefix) = React.useState(_ => "")
@@ -153,7 +154,36 @@ let make = (
     onClose={(_, _) => onClose()}
     onExited={_ => handleExited()}
     classes={MaterialUi.Dialog.Classes.make(~paper=styles["dialogPaper"], ())}>
-    <MaterialUi.DialogTitle> {React.string(title)} </MaterialUi.DialogTitle>
+    <MaterialUi.DialogTitle
+      disableTypography=true
+      classes={MaterialUi.DialogTitle.Classes.make(
+        ~root=Cn.make(["flex", "justify-between", "items-center"]),
+        (),
+      )}>
+      <MaterialUi.Typography
+        color=#Primary
+        variant=#H6
+        classes={MaterialUi.Typography.Classes.make(~root=Cn.make(["leading-none"]), ())}>
+        {React.string(title)}
+      </MaterialUi.Typography>
+      {renderOverflowActionMenuItems
+      ->Belt.Option.map(renderOverflowActionMenuItems =>
+        <IconMenu
+          icon={<Externals.MaterialUi_Icons.MoreVert />}
+          renderItems={renderOverflowActionMenuItems}
+          anchorOrigin={
+            open MaterialUi.Menu
+            AnchorOrigin.make(
+              ~horizontal=Horizontal.enum(Horizontal_enum.left),
+              ~vertical=Vertical.enum(Vertical_enum.bottom),
+              (),
+            )
+          }
+          menuClasses={MaterialUi.Menu.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
+        />
+      )
+      ->Belt.Option.getWithDefault(React.null)}
+    </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
       {validationError

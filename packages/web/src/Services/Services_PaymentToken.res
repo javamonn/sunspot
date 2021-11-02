@@ -22,11 +22,7 @@ let formatPrice = (price, paymentToken) =>
   }
 
 let parsePrice = (price, decimals) => {
-  let paddedPrice = Externals.Std.String.padStart(
-    price,
-    Js.Math.max_int(decimals - Js.String2.length(price), 0),
-    "0",
-  )
+  let paddedPrice = Externals.Std.String.padStart(price, decimals, "0")
   let decimalIdx = Js.String2.length(paddedPrice) - decimals
 
   Belt.Float.fromString(
