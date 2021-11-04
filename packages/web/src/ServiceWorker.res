@@ -13,6 +13,10 @@ module PushEventData = {
     "%identity"
 }
 
+let handleActivateEvent = _ => {
+  Services.Logger.initialize()
+}
+
 let handlePushEvent = pushEvent => {
   switch pushEvent->PushEvent.data->PushEvent.json->PushEventData.decode {
   | Ok(pushEventData) =>
@@ -42,7 +46,7 @@ let handlePushEvent = pushEvent => {
         pushEventData->PushEventData.options->PushEventData.unsafeOptionsAsShowNotificationOptions,
       ) |> Js.Promise.then_(_ => Js.Promise.resolve()),
     )
-  | exception e => Services.Logger.jsExn("ServiceWorker", "Unable to decode push event data", e)
+  | exception e => Services.Logger.exn_("ServiceWorker", "Unable to decode push event data", e)
   | Error(e) => Services.Logger.deccoError("ServiceWorker", "Unable to decode push event data.", e)
   }
 }
@@ -86,7 +90,8 @@ let handleNotificationClickEvent = event => {
   NotificationClickEvent.waitUntil(event, openP)
 }
 
-let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#install(handleInstallEvent))
+let _ = self->addEventListener(#activate(handleActivateEvent))
+let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#notificationclick(handleNotificationClickEvent))
 let _ = self->addEventListener(#notificationclose(handleNotificationCloseEvent))

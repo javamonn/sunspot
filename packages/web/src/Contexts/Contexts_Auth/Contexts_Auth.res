@@ -167,7 +167,8 @@ let make = (~children) => {
     )
 
     switch authentication {
-    | Authenticated(credentials) => Contexts_Auth_Credentials.LocalStorage.write(credentials)
+    | Authenticated(credentials) =>
+      Contexts_Auth_Credentials.LocalStorage.write(credentials)
     | Unauthenticated => Contexts_Auth_Credentials.LocalStorage.clear()
     | RefreshRequired({jwt}) =>
       let _ =

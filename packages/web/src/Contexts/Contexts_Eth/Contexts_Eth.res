@@ -58,6 +58,11 @@ let make = (~children) => {
   })
 
   let _ = React.useEffect1(() => {
+    switch eth {
+    | Connected({address}) => Services.Logger.setUserId(Some(address))
+    | _ => Services.Logger.setUserId(None)
+    }
+
     let ethListeners = [
       #accountsChanged(
         addresses => {

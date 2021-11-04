@@ -38,6 +38,10 @@ let theme = MaterialUi.Theme.create({
 
 let default = (props: props): React.element => {
   let {component, pageProps} = props
+  let _ = React.useEffect0(() => {
+    Services.Logger.initialize()
+    None
+  })
 
   let elem = React.createElement(component, pageProps)
 

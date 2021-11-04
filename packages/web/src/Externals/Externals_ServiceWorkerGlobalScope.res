@@ -30,6 +30,10 @@ module PushEvent = {
   @send external text: data => string = "text"
 }
 
+module ActivateEvent = {
+  type t
+}
+
 module InstallEvent = {
   type t
 }
@@ -53,6 +57,7 @@ external addEventListener: (
   [
     | #push(PushEvent.t => unit)
     | #install(InstallEvent.t => unit)
+    | #activate(ActivateEvent.t => unit)
     | #notificationclick(NotificationClickEvent.t => unit)
     | #notificationclose(NotificationCloseEvent.t => unit)
   ],
