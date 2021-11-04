@@ -6,3 +6,5 @@ type t
 
 @scope(("eth", "personal")) @send
 external personalSign: (t, string, string) => Js.Promise.t<string> = "sign"
+
+@scope("utils") @send external toChecksumAddress: (t, string) => string = "toChecksumAddress"

@@ -8,6 +8,8 @@ module Query_WebPushApplicationServerKey = %graphql(`
   }
 `)
 
+let isSupported = () => %raw(`"PushManager" in globalThis`)
+
 let applicationServerKeyRef = ref(None)
 
 let getApplicationServerKey = () =>

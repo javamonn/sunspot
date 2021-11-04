@@ -119,6 +119,12 @@ let make = () => {
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
 
+  let isUnsupportedBrowser = !Services.PushNotification.isSupported()
+  let isLoading = switch query {
+  | {loading: true} => true
+  | _ => false
+  }
+
   <>
     <AlertsHeader
       eth
@@ -129,6 +135,7 @@ let make = () => {
       | AuthenticationChallengeRequired => true
       | _ => false
       }}
+      isUnsupportedBrowser={isUnsupportedBrowser}
     />
     <Containers.CreateAlertModal
       isOpen={createAlertModalIsOpen}
@@ -153,6 +160,11 @@ let make = () => {
       | _ => None
       }}
     />
-    <AlertsTable rows={tableRows} onRowClick={handleRowClick} />
+    <AlertsTable
+      isLoading={isLoading}
+      rows={isUnsupportedBrowser ? [] : tableRows}
+      onRowClick={handleRowClick}
+      isUnsupportedBrowser={isUnsupportedBrowser}
+    />
   </>
 }

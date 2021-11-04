@@ -40,7 +40,11 @@ let make = (~children) => {
           |> Js.Promise.then_(accounts => {
             let _ = switch Belt.Array.get(accounts, 0) {
             | Some(address) =>
-              setEth(_ => Connected({provider: provider, address: address, web3: web3}))
+              setEth(_ => Connected({
+                provider: provider,
+                address: Externals.Web3.toChecksumAddress(web3, address),
+                web3: web3,
+              }))
             | None => setEth(_ => NotConnected({web3: web3, provider: provider}))
             }
             Js.Promise.resolve()
@@ -67,9 +71,17 @@ let make = (~children) => {
             ),
           )
           switch (Belt.Array.get(addresses, 0), eth) {
-          | (Some(address), Connected(eth)) => setEth(_ => Connected({...eth, address: address}))
+          | (Some(address), Connected(eth)) =>
+            setEth(_ => Connected({
+              ...eth,
+              address: Externals.Web3.toChecksumAddress(eth.web3, address),
+            }))
           | (Some(address), NotConnected({provider, web3})) =>
-            setEth(_ => Connected({provider: provider, web3: web3, address: address}))
+            setEth(_ => Connected({
+              provider: provider,
+              web3: web3,
+              address: Externals.Web3.toChecksumAddress(web3, address),
+            }))
           | (None, Connected({provider, web3})) =>
             setEth(_ => NotConnected({provider: provider, web3: web3}))
           | _ => ()

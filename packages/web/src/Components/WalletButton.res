@@ -31,7 +31,7 @@ let make = (~address, ~provider, ~onClick, ~authenticationChallengeRequired=fals
     </div>
 
   if authenticationChallengeRequired {
-    <MaterialUi.Tooltip title={React.string("Authentication challenge required.")}>
+    <MaterialUi.Tooltip title={React.string("authentication challenge required.")}>
       {content}
     </MaterialUi.Tooltip>
   } else {
