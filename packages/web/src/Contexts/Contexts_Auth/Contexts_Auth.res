@@ -167,8 +167,7 @@ let make = (~children) => {
     )
 
     switch authentication {
-    | Authenticated(credentials) =>
-      Contexts_Auth_Credentials.LocalStorage.write(credentials)
+    | Authenticated(credentials) => Contexts_Auth_Credentials.LocalStorage.write(credentials)
     | Unauthenticated => Contexts_Auth_Credentials.LocalStorage.clear()
     | RefreshRequired({jwt}) =>
       let _ =
@@ -203,12 +202,12 @@ let make = (~children) => {
     None
   }, (eth, authentication))
 
-  let handleRequestAccount = (~provider) =>
+  let handleRequestAccount = (~provider, ~web3) =>
     provider
     |> Externals.Ethereum.requestAccounts
     |> Js.Promise.then_(addresses => {
       switch addresses->Externals.Ethereum.result->Belt.Array.get(0) {
-      | Some(address) => Js.Promise.resolve(address)
+      | Some(address) => Externals.Web3.toChecksumAddress(web3, address)->Js.Promise.resolve
       | None => Js.Promise.reject(UserDecline_ConnectFailed)
       }
     })
@@ -272,7 +271,7 @@ let make = (~children) => {
   let handleSignIn = () => {
     switch (authentication, eth) {
     | (Unauthenticated, NotConnected({provider, web3})) =>
-      handleRequestAccount(~provider)
+      handleRequestAccount(~provider, ~web3)
       |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address))
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
