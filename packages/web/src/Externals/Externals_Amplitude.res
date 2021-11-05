@@ -11,6 +11,7 @@ let getInstance: unit => instance = %raw(`
     } else {
       return {
         init: () => {},
+        logEvent: () => {},
         logWithEvent: () => {}
       }
     }
