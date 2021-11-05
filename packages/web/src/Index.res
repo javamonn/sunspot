@@ -2,7 +2,11 @@
 let default = () => {
   <>
     <Externals.Next.Head>
-      <title> {React.string("sunspot")} </title> <meta name="description" content="nft tooling" />
+      <title> {React.string("sunspot")} </title>
+      <meta
+        name="description"
+        content="sunspot alerts you when events occur within eth nft secondary markets."
+      />
     </Externals.Next.Head>
     <main
       className={Cn.make([
@@ -15,7 +19,7 @@ let default = () => {
         "overflow-y-auto",
         "bg-white",
         "max-w-6xl",
-        "mx-auto"
+        "mx-auto",
       ])}>
       <QueryRenderers_Alerts />
     </main>
