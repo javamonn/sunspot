@@ -6,7 +6,7 @@
   "scripts": {
     "start": "next start -p $PORT",
     "start:dev": "npm run res:build && concurrently -k -n \"res,next\" \"npm run res:dev\" \"npm run next:dev\"",
-    "build": "npm run res:build && sw:build && npm run next:build",
+    "build": "npm run res:build && npm run sw:build && npm run next:build",
     "next:dev": "next",
     "next:build": "next build",
     "res:dev": "rescript build -w",
