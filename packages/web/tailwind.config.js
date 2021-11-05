@@ -3,8 +3,10 @@ module.exports = {
   purge: {
     // Specify the paths to all of the template files in your project
     content: [
-      "./src/components/**/*.res",
-      "./src/layouts/**/*.res",
+      "./src/Contexts/**/*.res",
+      "./src/QueryRenderers/**/*.res",
+      "./src/Components/**/*.res",
+      "./src/Containers/**/*.res",
       "./src/*.res",
     ],
     options: {
