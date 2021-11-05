@@ -1,27 +1,41 @@
 exception DeccoDecodeError(string)
 
 let initialize = () => {
-  open Externals.Sentry
-  init(config(~dsn=Config.sentryDsn, ~normalizeDepth=10))
+  Externals.Sentry.init(Externals.Sentry.config(~dsn=Config.sentryDsn, ~normalizeDepth=10))
+  Externals.Amplitude.init(Externals.Amplitude.getInstance(), Config.amplitudeApiKey)
 }
 
-let setUserId = userId => {
-  switch userId {
-  | Some(userId) => Externals.Sentry.setUser(Externals.Sentry.user(~id=userId, ()))
-  | None =>
-    Externals.Sentry.configureScope(scope =>
-      Externals.Sentry.Scope.setUser(scope, Js.Nullable.null)
-    )
+let setUserId = userId =>
+  if Config.isProduction {
+    switch userId {
+    | Some(userId) => Externals.Sentry.setUser(Externals.Sentry.user(~id=userId, ()))
+    | None =>
+      Externals.Sentry.configureScope(scope =>
+        Externals.Sentry.Scope.setUser(scope, Js.Nullable.null)
+      )
+    }
+    Externals.Amplitude.setUserId(Externals.Amplitude.getInstance(), userId)
+  } else {
+    Js.log2("setUserId", userId)
   }
-}
 
-let log = (tag, message) => {
-  Js.log2(tag, message)
-}
+let log = (tag, message) =>
+  if Config.isProduction {
+    Externals.Amplitude.logEvent(Externals.Amplitude.getInstance(), `${tag} - ${message}`)
+  } else {
+    Js.log2(tag, message)
+  }
 
-let logWithData = (tag, message, data) => {
-  Js.log3(tag, message, data)
-}
+let logWithData = (tag, message, data) =>
+  if Config.isProduction {
+    Externals.Amplitude.logEventWithProperties(
+      Externals.Amplitude.getInstance(),
+      `${tag} - ${message}`,
+      data,
+    )
+  } else {
+    Js.log3(tag, message, data)
+  }
 
 let promiseError = (tag, message, e) =>
   if Config.isProduction {

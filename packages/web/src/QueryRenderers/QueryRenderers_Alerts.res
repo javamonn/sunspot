@@ -119,7 +119,7 @@ let make = () => {
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
 
-  let isUnsupportedBrowser = !Services.PushNotification.isSupported()
+  let isUnsupportedBrowser = Config.isBrowser && !Services.PushNotification.isSupported()
   let isLoading = switch query {
   | {loading: true} => true
   | _ => false
