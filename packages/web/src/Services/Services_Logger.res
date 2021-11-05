@@ -6,7 +6,7 @@ let initialize = () => {
 }
 
 let setUserId = userId =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     switch userId {
     | Some(userId) => Externals.Sentry.setUser(Externals.Sentry.user(~id=userId, ()))
     | None =>
@@ -20,14 +20,14 @@ let setUserId = userId =>
   }
 
 let log = (tag, message) =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     Externals.Amplitude.logEvent(Externals.Amplitude.getInstance(), `${tag} - ${message}`)
   } else {
     Js.log2(tag, message)
   }
 
 let logWithData = (tag, message, data) =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     Externals.Amplitude.logEventWithProperties(
       Externals.Amplitude.getInstance(),
       `${tag} - ${message}`,
@@ -38,7 +38,7 @@ let logWithData = (tag, message, data) =>
   }
 
 let promiseError = (tag, message, e) =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     Externals.Sentry.captureExceptionWithContext(
       Obj.magic(e),
       Externals.Sentry.exceptionContext(
@@ -53,7 +53,7 @@ let promiseError = (tag, message, e) =>
   }
 
 let deccoError = (tag, message, e: Decco.decodeError) => {
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     DeccoDecodeError(e.message)
     ->Js.Exn.asJsExn
     ->Belt.Option.getWithDefault(e->Obj.magic)
@@ -76,7 +76,7 @@ let deccoError = (tag, message, e: Decco.decodeError) => {
 }
 
 let exn_ = (tag, message, e) =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     e
     ->Js.Exn.asJsExn
     ->Belt.Option.getWithDefault(e->Obj.magic)
@@ -93,7 +93,7 @@ let exn_ = (tag, message, e) =>
   }
 
 let jsExn = (tag, message, e) =>
-  if Config.isProduction {
+  if Config.isProduction && Config.isBrowser {
     Externals.Sentry.captureExceptionWithContext(
       e,
       Externals.Sentry.exceptionContext(
