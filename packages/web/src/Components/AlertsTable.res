@@ -29,13 +29,17 @@ type row = {
   rule: option<priceRule>,
 }
 
-let loadingWidths =
-  Belt.Array.makeBy(7, i => i)->Belt.Array.map(idx => (
-    idx,
-    120 + Js.Math.random_int(0, 100),
-    60 + Js.Math.random_int(0, 100),
-    60 + Js.Math.random_int(0, 100),
-  ))
+
+// static widths to support ssr rehydration
+let loadingWidths = [
+  (0, 139, 131, 140),
+  (1, 217, 147, 140),
+  (2, 147, 141, 117),
+  (3, 190, 109, 113),
+  (4, 187, 154, 102),
+  (5, 126, 96, 108),
+  (6, 192, 127, 118),
+]
 
 @react.component
 let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
@@ -46,7 +50,7 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
         <MaterialUi.TableRow>
           {columns
           ->Belt.Array.map(column =>
-            <MaterialUi.TableCell id={column.label} align={#Left}>
+            <MaterialUi.TableCell key={column.label} align={#Left}>
               {React.string(column.label)}
             </MaterialUi.TableCell>
           )

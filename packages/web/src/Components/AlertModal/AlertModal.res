@@ -13,6 +13,17 @@ module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
   }
 `)
 
+module Query_OpenSeaCollectionByContractAddress = %graphql(`
+  query OpenSeaCollectionByContractAddress($input: OpenSeaCollectionByContractAddressInput!) {
+    collection: getOpenSeaCollectionByContractAddress(input: $input) {
+      name
+      slug
+      imageUrl
+      contractAddress
+    }
+  }
+`)
+
 module CollectionOption = {
   @deriving(abstract)
   type t = {
@@ -83,18 +94,27 @@ let make = (
   ~renderOverflowActionMenuItems=?,
 ) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
-  let (collectionNamePrefix, setCollectionNamePrefix) = React.useState(_ => "")
+  let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
   let (
     executeCollectionNamePrefixQuery,
     collectionNamePrefixQueryResult,
   ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
-  let throttledExecuteCollectionNamePrefixQuery = React.useMemo0(() =>
-    Externals.Lodash.Debounce1.make(
-      (. collectionNamePrefix) =>
-        executeCollectionNamePrefixQuery({input: {namePrefix: collectionNamePrefix}}),
-      200,
-    )
-  )
+  let (
+    executeContractAddressQuery,
+    contractAddressQueryResult,
+  ) = Query_OpenSeaCollectionByContractAddress.useLazy()
+  let resultsSource = React.useRef(None)
+
+  let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
+      let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42
+      if isAddress {
+        resultsSource.current = Some(#ContractAddress)
+        executeContractAddressQuery({input: {contractAddress: input}})
+      } else {
+        resultsSource.current = Some(#NamePrefix)
+        executeCollectionNamePrefixQuery({input: {namePrefix: input}})
+      }
+    }, 200))
   let (validationError, setValidationError) = React.useState(_ => None)
 
   let handleRuleChange = rule =>
@@ -108,13 +128,13 @@ let make = (
       rules: value.rules->Belt.Map.String.remove(ruleId),
     })
   let _ = React.useEffect1(() => {
-    if Js.String2.length(collectionNamePrefix) > 0 {
-      throttledExecuteCollectionNamePrefixQuery(. collectionNamePrefix)
+    if Js.String2.length(collectionQueryInput) > 0 {
+      debouncedExecuteQuery(. collectionQueryInput)
     }
     None
-  }, [collectionNamePrefix])
+  }, [collectionQueryInput])
   let handleExited = () => {
-    setCollectionNamePrefix(_ => "")
+    setCollectionQueryInput(_ => "")
     setValidationError(_ => None)
     onExited->Belt.Option.forEach(fn => fn())
   }
@@ -127,9 +147,21 @@ let make = (
     }
   }
 
-  let collectionOptions = switch collectionNamePrefixQueryResult {
-  | Unexecuted(_) | Executed({loading: true}) => []
-  | Executed({data: Some({collections: Some({items: Some(itemConnections)})})}) =>
+  let collectionOptions = switch (
+    resultsSource.current,
+    collectionNamePrefixQueryResult,
+    contractAddressQueryResult,
+  ) {
+  | (None, _, _)
+  | (Some(#NamePrefix), Unexecuted(_), _)
+  | (Some(#NamePrefix), Executed({loading: true}), _)
+  | (Some(#ContractAddress), _, Unexecuted(_))
+  | (Some(#ContractAddress), _, Executed({loading: true})) => []
+  | (
+      Some(#NamePrefix),
+      Executed({data: Some({collections: Some({items: Some(itemConnections)})})}),
+      _,
+    ) =>
     itemConnections->Belt.Array.keepMap(itemConnection =>
       itemConnection->Belt.Option.map(itemConnection =>
         CollectionOption.make(
@@ -140,12 +172,30 @@ let make = (
         )
       )
     )
+  | (Some(#ContractAddress), _, Executed({data: Some({collection})})) => [
+      CollectionOption.make(
+        ~name=collection.name,
+        ~slug=collection.slug,
+        ~imageUrl=collection.imageUrl,
+        ~contractAddress=collection.contractAddress,
+      ),
+    ]
   | _ => []
   }
 
-  let (isLoading, loadingText) = switch collectionNamePrefixQueryResult {
-  | Unexecuted(_) => (true, React.string("Filter by name..."))
-  | Executed({loading: true}) => (true, React.string("Loading..."))
+  let (isLoading, loadingText) = switch (
+    resultsSource.current,
+    collectionNamePrefixQueryResult,
+    contractAddressQueryResult,
+  ) {
+  | (None, _, _)
+  | (Some(#NamePrefix), Unexecuted(_), _)
+  | (Some(#ContractAddress), _, Unexecuted(_)) => (
+      true,
+      React.string("Filter by name or contract address..."),
+    )
+  | (Some(#NamePrefix), Executed({loading: true}), _)
+  | (Some(#ContractAddress), _, Executed({loading: true})) => (true, React.string("Loading..."))
   | _ => (false, React.null)
   }
 
@@ -195,6 +245,7 @@ let make = (
       )
       ->Belt.Option.getWithDefault(React.null)}
       <MaterialUi_Lab.Autocomplete
+        filterOptions={MaterialUi_Types.Any(i => i)}
         classes={MaterialUi_Lab.Autocomplete.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
         _open={autocompleteIsOpen}
         value={MaterialUi_Types.Any(Js.Null.fromOption(value.collection))}
@@ -204,8 +255,8 @@ let make = (
             collection: collection->Obj.magic,
           })
         }}
-        onInputChange={(_, collectionNamePrefix, _) => {
-          setCollectionNamePrefix(_ => collectionNamePrefix)
+        onInputChange={(_, value, _) => {
+          setCollectionQueryInput(_ => value)
         }}
         getOptionLabel={opt =>
           opt->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")}

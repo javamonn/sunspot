@@ -120,8 +120,11 @@ let make = () => {
     })
 
   let isUnsupportedBrowser = Config.isBrowser() && !Services.PushNotification.isSupported()
-  let isLoading = switch query {
-  | {loading: true} => true
+  let isLoading = switch (eth, query) {
+  | (_, {loading: true})
+  | (_, {called: false})
+  | (Unknown, _) => true
+  | _ if !Config.isBrowser() => true
   | _ => false
   }
 

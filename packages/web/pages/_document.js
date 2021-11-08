@@ -23,6 +23,7 @@ class SunspotDocument extends Document {
       <Html>
         <Head>
           <style id="jss-server-side">{this.props.jssServerSide}</style>
+
         </Head>
         <body>
           <Main />

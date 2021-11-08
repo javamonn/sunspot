@@ -41,9 +41,21 @@ let default = (props: props): React.element => {
   let {component, pageProps} = props
   let elem = React.createElement(component, pageProps)
 
-  <MaterialUi.ThemeProvider theme={theme}>
-    <Contexts.Eth>
-      <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
-    </Contexts.Eth>
-  </MaterialUi.ThemeProvider>
+  <>
+    <Externals.Next.Head>
+      <title> {React.string("sunspot")} </title>
+      <meta
+        name="description"
+        content="sunspot alerts you when events occur within eth nft secondary markets."
+      />
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+      <link rel="icon" type_="image/png" sizes="32x32" href="/favicon-32x32.png" />
+      <link rel="icon" type_="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    </Externals.Next.Head>
+    <MaterialUi.ThemeProvider theme={theme}>
+      <Contexts.Eth>
+        <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
+      </Contexts.Eth>
+    </MaterialUi.ThemeProvider>
+  </>
 }
