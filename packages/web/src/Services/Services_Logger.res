@@ -75,7 +75,7 @@ let deccoError = (tag, message, e: Decco.decodeError) => {
   }
 }
 
-let exn_ = (tag, message, e) =>
+let exn_ = (~tag, ~message, ~extra=?, e) =>
   if Config.isProduction && Config.isBrowser() {
     e
     ->Js.Exn.asJsExn
@@ -83,7 +83,12 @@ let exn_ = (tag, message, e) =>
     ->Externals.Sentry.captureExceptionWithContext(
       Externals.Sentry.exceptionContext(
         ~extra=Js.Json.object_(
-          Js.Dict.fromArray([("tag", Js.Json.string(tag)), ("message", Js.Json.string(message))]),
+          Js.Dict.fromArray(
+            Belt.Array.concat(
+              [("tag", Js.Json.string(tag)), ("message", Js.Json.string(message))],
+              extra->Belt.Option.getWithDefault([]),
+            ),
+          ),
         ),
         (),
       ),

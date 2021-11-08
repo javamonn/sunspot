@@ -46,7 +46,8 @@ let handlePushEvent = pushEvent => {
         pushEventData->PushEventData.options->PushEventData.unsafeOptionsAsShowNotificationOptions,
       ) |> Js.Promise.then_(_ => Js.Promise.resolve()),
     )
-  | exception e => Services.Logger.exn_("ServiceWorker", "Unable to decode push event data", e)
+  | exception e =>
+    Services.Logger.exn_(~tag="ServiceWorker", ~message="Unable to decode push event data", e)
   | Error(e) => Services.Logger.deccoError("ServiceWorker", "Unable to decode push event data.", e)
   }
 }

@@ -63,7 +63,10 @@ let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
       ~watchQuery=DefaultWatchQueryOptions.make(~fetchPolicy=NetworkOnly, ~errorPolicy=All, ()),
       (),
     ),
-    ~link=makeAppSyncLink(~credentials?, ~apiKey?, ~refreshCredentials?, ()),
+    ~link=Link.from([
+      Contexts_Apollo_AnalyticsLink.link,
+      makeAppSyncLink(~credentials?, ~apiKey?, ~refreshCredentials?, ()),
+    ]),
     (),
   )
 }

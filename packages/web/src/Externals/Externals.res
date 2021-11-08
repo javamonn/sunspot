@@ -14,3 +14,4 @@ module Webapi = Externals_Webapi
 module Std = Externals_Std
 module Sentry = Externals_Sentry
 module Amplitude = Externals_Amplitude
+module ApolloLink = Externals_ApolloLink
