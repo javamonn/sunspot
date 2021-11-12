@@ -50,19 +50,18 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
       |> Js.Promise.then_(pushSubscription => {
         open Mutation_UpdateAlertRule
 
-        let eventFilters =
+        let priceEventFilter =
           newValue
-          ->AlertModal.Value.rules
-          ->Belt.Map.String.valuesToArray
-          ->Belt.Array.keepMap(rule => {
-            let direction = switch CreateAlertRule.Price.modifier(rule) {
+          ->AlertModal.Value.priceRule
+          ->Belt.Option.flatMap(rule => {
+            let direction = switch CreateAlertRule_Price.modifier(rule) {
             | ">" => Some(#ALERT_ABOVE)
             | "<" => Some(#ALERT_BELOW)
             | _ => None
             }
             let value =
               rule
-              ->CreateAlertRule.Price.value
+              ->CreateAlertRule_Price.value
               ->Belt.Option.map(value =>
                 value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
               )
@@ -83,6 +82,37 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
                 alertAttributesEventFilter: None,
               })
             | _ => None
+            }
+          })
+
+        let propertiesRule =
+          newValue
+          ->AlertModal.Value.propertiesRule
+          ->Belt.Option.map(rule => {
+            let attributeInputs = rule->Belt.Array.map(a =>
+              switch a->CreateAlertRule_Properties.Value.value {
+              | StringValue({value}) => {
+                  openSeaAssetStringAttribute: Some({
+                    value: value,
+                    traitType: a->CreateAlertRule_Properties.Value.traitType->Js.Option.some,
+                  }),
+                  openSeaAssetNumberAttribute: None,
+                }
+              | NumberValue({value}) => {
+                  openSeaAssetNumberAttribute: Some({
+                    value: value,
+                    traitType: a->CreateAlertRule_Properties.Value.traitType->Js.Option.some,
+                  }),
+                  openSeaAssetStringAttribute: None,
+                }
+              }
+            )
+
+            {
+              alertAttributesEventFilter: Some({
+                attributes: attributeInputs,
+              }),
+              alertPriceThresholdEventFilter: None,
             }
           })
 
@@ -107,7 +137,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
             accountAddress: accountAddress,
             collectionSlug: AlertModal.CollectionOption.slugGet(newCollection),
             contractAddress: AlertModal.CollectionOption.contractAddressGet(newCollection),
-            eventFilters: eventFilters,
+            eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
             destination: destination,
           },
           key: {

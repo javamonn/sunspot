@@ -72,7 +72,7 @@ let make = () => {
     queryItems
     ->Belt.Array.getBy(item => AlertsTable.id(row) == item.id)
     ->Belt.Option.forEach(item => {
-      let rules =
+      let priceRule =
         item.eventFilters
         ->Belt.Array.getBy(eventFilter =>
           switch eventFilter {
@@ -83,7 +83,7 @@ let make = () => {
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
           | #AlertPriceThresholdEventFilter(eventFilter) =>
-            CreateAlertRule.Price.makeRule(
+            CreateAlertRule_Price.makeRule(
               ~id="alert-rule-price",
               ~modifier=switch eventFilter.direction {
               | #ALERT_ABOVE => ">"
@@ -98,10 +98,42 @@ let make = () => {
           | _ => None
           }
         )
-        ->Belt.Option.map(priceRule =>
-          Belt.Map.String.fromArray([(priceRule->CreateAlertRule.Price.id, priceRule)])
+
+      let propertiesRule =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch eventFilter {
+          | #AlertAttributesEventFilter(_) => true
+          | _ => false
+          }
         )
-        ->Belt.Option.getWithDefault(Belt.Map.String.empty)
+        ->Belt.Option.flatMap(eventFilter =>
+          switch eventFilter {
+          | #AlertAttributesEventFilter(eventFilter) =>
+            eventFilter.attributes
+            ->Belt.Array.keepMap(attribute =>
+              switch attribute {
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+                Some({
+                  CreateAlertRule_Properties.Value.value: CreateAlertRule_Properties.NumberValue({
+                    value: numberValue,
+                  }),
+                  traitType: traitType,
+                })
+              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+                Some({
+                  CreateAlertRule_Properties.Value.value: CreateAlertRule_Properties.StringValue({
+                    value: stringValue,
+                  }),
+                  traitType: traitType,
+                })
+              | _ => None
+              }
+            )
+            ->Js.Option.some
+          | _ => None
+          }
+        )
 
       let alertModalValue = AlertModal.Value.make(
         ~collection=Some(
@@ -112,7 +144,8 @@ let make = () => {
             ~contractAddress=item.collection.contractAddress,
           ),
         ),
-        ~rules,
+        ~priceRule,
+        ~propertiesRule,
         ~id=item.id,
       )
 

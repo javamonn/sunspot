@@ -32,11 +32,15 @@ module Query_AlertRulesByAccountAddress = %graphql(
         attributes {
           ... on OpenSeaAssetNumberAttribute {
             traitType
+            displayType
             numberValue: value
+            maxValue
           }
           ... on OpenSeaAssetStringAttribute {
             traitType
+            displayType
             stringValue: value
+            maxValue
           }
         }
       }
