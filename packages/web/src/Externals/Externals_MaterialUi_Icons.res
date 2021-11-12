@@ -49,3 +49,23 @@ module HelpOutline = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module ExpandMore = {
+  @react.component @module("@material-ui/icons/ExpandMore")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
+
+module LabelOutlined = {
+  @react.component @module("@material-ui/icons/LabelOutlined")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

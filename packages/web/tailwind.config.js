@@ -24,6 +24,14 @@ module.exports = {
       lightSecondary: 'rgba(255, 255, 255, .60)',
       lightDisabled: 'rgba(255, 255, 255, .38)',
     },
+    borderColor: {
+      darkPrimary: 'rgba(0, 0, 0, .87)',
+      darkSecondary: 'rgba(0, 0, 0, .60)',
+      darkDisabled: 'rgba(0, 0, 0, .38)',
+      lightPrimary: 'rgba(255, 255, 255, .87)',
+      lightSecondary: 'rgba(255, 255, 255, .60)',
+      lightDisabled: 'rgba(255, 255, 255, .38)',
+    },
     fontSize: {
       xs: ".75rem",
       sm: ".875rem",

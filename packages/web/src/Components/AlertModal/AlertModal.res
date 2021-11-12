@@ -24,6 +24,25 @@ module Query_OpenSeaCollectionByContractAddress = %graphql(`
   }
 `)
 
+module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
+  query OpenSeaCollectionAggregateAttributes($input: OpenSeaCollectionByContractAddressInput!) {
+    collection: getOpenSeaCollectionByContractAddress(input: $input) {
+      attributes {
+        traitType
+        count
+        values {
+          ... on OpenSeaCollectionAttributeNumberValue {
+            numberValue: value
+          }
+          ... on OpenSeaCollectionAttributeStringValue {
+            stringValue: value
+          }
+        }
+      }
+    }
+  }
+`)
+
 module CollectionOption = {
   @deriving(abstract)
   type t = {
@@ -41,39 +60,41 @@ module Value = {
   type t = {
     id: string,
     collection: option<CollectionOption.t>,
-    rules: Belt.Map.String.t<CreateAlertRule.Price.t>,
+    priceRule: option<CreateAlertRule_Price.t>,
+    propertiesRule: option<CreateAlertRule_Properties.Value.t>,
   }
 
-  let make = (~id, ~collection, ~rules) => {
+  let make = (~id, ~collection, ~priceRule, ~propertiesRule) => {
     id: id,
     collection: collection,
-    rules: rules,
+    priceRule: priceRule,
+    propertiesRule: propertiesRule,
   }
 
   let empty = () => {
     id: Externals.UUID.make(),
     collection: None,
-    rules: Belt.Map.String.empty,
+    priceRule: None,
+    propertiesRule: None,
   }
 }
 
 let validate = value => {
   let collectionValid = value->Value.collection->Js.Option.isSome
-  let rulesValid =
+  let priceRuleValid =
     value
-    ->Value.rules
-    ->Belt.Map.String.valuesToArray
-    ->Belt.Array.every(rule =>
-      rule
-      ->CreateAlertRule.Price.value
+    ->Value.priceRule
+    ->Belt.Option.flatMap(priceRule =>
+      priceRule
+      ->CreateAlertRule_Price.value
       ->Belt.Option.flatMap(Belt.Float.fromString)
       ->Belt.Option.map(value => value >= 0.0)
-      ->Belt.Option.getWithDefault(false)
     )
+    ->Belt.Option.getWithDefault(false)
 
   if !collectionValid {
     Some("collection is required.")
-  } else if !rulesValid {
+  } else if !priceRuleValid {
     Some("price rule value must be a positive number.")
   } else {
     None
@@ -103,6 +124,10 @@ let make = (
     executeContractAddressQuery,
     contractAddressQueryResult,
   ) = Query_OpenSeaCollectionByContractAddress.useLazy()
+  let (
+    executeCollectionAggregateAttributesQuery,
+    collectionAggregateAttributesResult,
+  ) = Query_OpenSeaCollectionAggregateAttributes.useLazy()
   let resultsSource = React.useRef(None)
 
   let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
@@ -117,22 +142,33 @@ let make = (
     }, 200))
   let (validationError, setValidationError) = React.useState(_ => None)
 
-  let handleRuleChange = rule =>
-    onChange({
-      ...value,
-      Value.rules: value->Value.rules->Belt.Map.String.set(rule->CreateAlertRule.Price.id, rule),
-    })
-  let handleRuleRemove = ruleId =>
-    onChange({
-      ...value,
-      rules: value.rules->Belt.Map.String.remove(ruleId),
-    })
   let _ = React.useEffect1(() => {
     if Js.String2.length(collectionQueryInput) > 0 {
       debouncedExecuteQuery(. collectionQueryInput)
     }
     None
   }, [collectionQueryInput])
+  let _ = React.useEffect1(() => {
+    value
+    ->Value.collection
+    ->Belt.Option.forEach(collection => {
+      executeCollectionAggregateAttributesQuery({
+        input: {contractAddress: collection->CollectionOption.contractAddressGet},
+      })
+    })
+    None
+  }, [value->Value.collection])
+
+  let handlePriceRuleChange = priceRule =>
+    onChange({
+      ...value,
+      Value.priceRule: Some(priceRule),
+    })
+  let handlePropertiesRuleChange = propertiesRule =>
+    onChange({
+      ...value,
+      Value.propertiesRule: Some(propertiesRule),
+    })
   let handleExited = () => {
     setCollectionQueryInput(_ => "")
     setValidationError(_ => None)
@@ -183,7 +219,7 @@ let make = (
   | _ => []
   }
 
-  let (isLoading, loadingText) = switch (
+  let (isLoadingCollectionOptions, loadingText) = switch (
     resultsSource.current,
     collectionNamePrefixQueryResult,
     contractAddressQueryResult,
@@ -197,6 +233,29 @@ let make = (
   | (Some(#NamePrefix), Executed({loading: true}), _)
   | (Some(#ContractAddress), _, Executed({loading: true})) => (true, React.string("Loading..."))
   | _ => (false, React.null)
+  }
+
+  let (
+    isLoadingCollectionAggregateAttributes,
+    collectionAggregateAttributes,
+  ) = switch collectionAggregateAttributesResult {
+  | Executed({data: Some({collection: {attributes}})}) =>
+    let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
+      CreateAlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
+      count: aggreggateAttribute.count,
+      values: aggreggateAttribute.values->Belt.Array.keepMap(value =>
+        switch value {
+        | #OpenSeaCollectionAttributeNumberValue({numberValue}) =>
+          Some(CreateAlertRule_Properties.NumberValue({value: numberValue}))
+        | #OpenSeaCollectionAttributeStringValue({stringValue}) =>
+          Some(CreateAlertRule_Properties.StringValue({value: stringValue}))
+        | #FutureAddedValue(_) => None
+        }
+      ),
+    })
+    (false, collectionAggregateAttributes)
+  | Executed({loading: true}) => (true, [])
+  | _ => (false, [])
   }
 
   <MaterialUi.Dialog
@@ -262,7 +321,7 @@ let make = (
           opt->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")}
         onOpen={_ => setAutocompleteIsOpen(_ => true)}
         onClose={(_, _) => setAutocompleteIsOpen(_ => false)}
-        loading={isLoading}
+        loading={isLoadingCollectionOptions}
         getOptionSelected={(opt1, opt2) =>
           Obj.magic(CollectionOption.slugGet(opt1) == CollectionOption.slugGet(opt2))}
         options={collectionOptions->Belt.Array.map(c => MaterialUi_Types.Any(c))}
@@ -302,20 +361,34 @@ let make = (
           </MaterialUi.Select>
         </MaterialUi.Tooltip>
       </MaterialUi.FormControl>
-      {value.rules
-      ->Belt.Map.String.valuesToArray
-      ->Belt.Array.map(rule =>
-        <CreateAlertRule.Price
-          key={CreateAlertRule.Price.id(rule)}
-          value={rule}
-          onChange={handleRuleChange}
-          onRemove={() => handleRuleRemove(CreateAlertRule.Price.id(rule))}
-        />
-      )
-      ->React.array}
-      {Belt.Map.String.size(value.rules) == 0
-        ? <CreateAlertRule.Prompt onCreate={handleRuleChange} className={Cn.make(["mt-8"])} />
-        : React.null}
+      <CreateAlertRule_Accordion
+        className={Cn.make(["mt-8"])}
+        summaryIcon={<MaterialUi.Typography
+          variant=#H5
+          color=#Secondary
+          classes={MaterialUi.Typography.Classes.make(~h5=Cn.make(["leading-none"]), ())}>
+          {React.string(`Ξ`)}
+        </MaterialUi.Typography>}
+        summaryTitle={React.string("price rule")}
+        summaryDescription={React.string("filter events by price threshold")}
+        details={<CreateAlertRule_Price
+          value=?{value->Value.priceRule} onChange={handlePriceRuleChange}
+        />}
+      />
+      <CreateAlertRule_Accordion
+        className={Cn.make(["mt-8"])}
+        summaryIcon={<Externals_MaterialUi_Icons.LabelOutlined
+          style={ReactDOM.Style.make(~opacity="0.42", ())}
+        />}
+        summaryTitle={React.string("properties rule")}
+        summaryDescription={React.string("filter events by asset properties")}
+        details={<CreateAlertRule_Properties
+          value=?{value->Value.propertiesRule}
+          onChange={handlePropertiesRuleChange}
+          options=collectionAggregateAttributes
+          isOptionsLoading={isLoadingCollectionAggregateAttributes}
+        />}
+      />
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions
       classes={MaterialUi.DialogActions.Classes.make(~root=Cn.make(["mt-8"]), ())}>
