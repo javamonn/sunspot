@@ -43,9 +43,8 @@ let make = () => {
       collectionSlug: item.collection.slug,
       collectionImageUrl: item.collection.imageUrl,
       event: "list",
-      rule: item.eventFilters
-      ->Belt.Array.get(0)
-      ->Belt.Option.flatMap(eventFilter =>
+      rules: item.eventFilters
+      ->Belt.Array.keepMap(eventFilter =>
         switch eventFilter {
         | #AlertPriceThresholdEventFilter(eventFilter) =>
           let modifier = switch eventFilter.direction {
@@ -58,11 +57,28 @@ let make = () => {
             ->Belt.Option.map(Belt.Float.toString)
             ->Belt.Option.getExn
 
-          Some({AlertsTable.modifier: modifier, price: formattedPrice})
-        | #AlertAttributesEventFilter(_) => None
+          Some([AlertsTable.PriceRule({modifier: modifier, price: formattedPrice})])
+        | #AlertAttributesEventFilter({attributes}) =>
+          attributes
+          ->Belt.Array.keepMap(attribute =>
+            switch attribute {
+            | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+              Some(
+                AlertsTable.PropertyRule({
+                  traitType: traitType,
+                  displayValue: Belt.Float.toString(numberValue),
+                }),
+              )
+            | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+              Some(AlertsTable.PropertyRule({traitType: traitType, displayValue: stringValue}))
+            | #FutureAddedValue(_) => None
+            }
+          )
+          ->Js.Option.some
         | #FutureAddedValue(_) => None
         }
-      ),
+      )
+      ->Belt.Array.concatMany,
     })
 
   let handleConnectWalletClicked = _ => {
@@ -84,7 +100,6 @@ let make = () => {
           switch eventFilter {
           | #AlertPriceThresholdEventFilter(eventFilter) =>
             CreateAlertRule_Price.makeRule(
-              ~id="alert-rule-price",
               ~modifier=switch eventFilter.direction {
               | #ALERT_ABOVE => ">"
               | #ALERT_BELOW => "<"

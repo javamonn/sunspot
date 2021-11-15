@@ -1,11 +1,9 @@
 @deriving(accessors)
 type t = {
-  id: string,
   modifier: string,
   value: option<string>,
 }
-let makeRule = (~id, ~modifier, ~value) => {
-  id: id,
+let makeRule = (~modifier, ~value) => {
   modifier: modifier,
   value: value,
 }
@@ -41,7 +39,7 @@ let make = (~value=?, ~onChange) =>
           let target = ev->ReactEvent.Form.target
           let newModifier = target["value"]
           value->Belt.Option.forEach(v => {
-            onChange({...v, modifier: newModifier})
+            onChange(Some({...v, modifier: newModifier}))
           })
         }}>
         <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("<")}>
@@ -66,9 +64,15 @@ let make = (~value=?, ~onChange) =>
         onChange={ev => {
           let target = ev->ReactEvent.Form.target
           let newValue = target["value"]
-          value->Belt.Option.forEach(v => {
-            onChange({...v, value: newValue})
-          })
+          switch (newValue, value) {
+          | (None, Some({modifier: ""}))
+          | (Some(""), Some({modifier: ""}))
+          | (None, None)
+          | (Some(""), None) =>
+            onChange(None)
+          | (_, Some(v)) => onChange(Some({...v, value: newValue}))
+          | (Some(_), None) => onChange(Some({modifier: "", value: newValue}))
+          }
         }}
       />
     </MaterialUi.FormControl>

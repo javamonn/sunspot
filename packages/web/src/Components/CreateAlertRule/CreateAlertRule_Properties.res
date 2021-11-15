@@ -186,10 +186,10 @@ let make = (~value=?, ~options, ~isOptionsLoading, ~onChange) => {
     value->Belt.Option.forEach(value => {
       let copy = Belt.Array.copy(value)
       let _ = Js.Array2.spliceInPlace(copy, ~pos=idx, ~remove=1, ~add=[])
-      onChange(copy)
+      onChange(Belt.Array.length(copy) == 0 ? None : Some(copy))
     })
   let handleAddValueAttribute = attribute =>
-    value->Belt.Option.getWithDefault([])->Belt.Array.concat([attribute])->onChange
+    value->Belt.Option.getWithDefault([])->Belt.Array.concat([attribute])->Js.Option.some->onChange
 
   <div className={Cn.make(["flex", "flex-col", "flex-1"])}>
     <Value value onRemoveValueAttribute={handleRemoveValueAttribute} />
