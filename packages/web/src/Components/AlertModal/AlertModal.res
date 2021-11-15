@@ -80,24 +80,32 @@ module Value = {
 }
 
 let validate = value => {
-  let collectionValid = value->Value.collection->Js.Option.isSome
-  let priceRuleValid =
-    value
-    ->Value.priceRule
-    ->Belt.Option.flatMap(priceRule =>
-      priceRule
-      ->CreateAlertRule_Price.value
-      ->Belt.Option.flatMap(Belt.Float.fromString)
-      ->Belt.Option.map(value => value >= 0.0)
-    )
-    ->Belt.Option.getWithDefault(false)
+  let collectionValidation = switch value->Value.collection {
+  | None => Some("collection is required")
+  | Some(_) => None
+  }
+  let priceRuleValidation = switch value->Value.priceRule {
+  | Some({modifier}) if Js.String2.length(modifier) == 0 => Some("price rule modifier is required.")
+  | Some({value: None}) => Some("price rule value is required.")
+  | Some({value: Some(value)}) =>
+    switch Belt.Float.fromString(value) {
+    | Some(value) if value <= 0.00 => Some("price rule value must be a positive number")
+    | None => Some("price rule value must be a positive number")
+    | _ => None
+    }
+  | None => None
+  }
+  let propertiesRuleValidation = switch value->Value.propertiesRule {
+  | Some(value) if Belt.Array.length(value) == 0 =>
+    Some("properties rule value must include properties")
+  | _ => None
+  }
 
-  if !collectionValid {
-    Some("collection is required.")
-  } else if !priceRuleValid {
-    Some("price rule value must be a positive number.")
-  } else {
-    None
+  switch (collectionValidation, priceRuleValidation, propertiesRuleValidation) {
+  | (Some(_), _, _) => collectionValidation
+  | (_, Some(_), _) => priceRuleValidation
+  | (_, _, Some(_)) => propertiesRuleValidation
+  | _ => None
   }
 }
 
@@ -162,12 +170,12 @@ let make = (
   let handlePriceRuleChange = priceRule =>
     onChange({
       ...value,
-      Value.priceRule: Some(priceRule),
+      Value.priceRule: priceRule,
     })
   let handlePropertiesRuleChange = propertiesRule =>
     onChange({
       ...value,
-      Value.propertiesRule: Some(propertiesRule),
+      Value.propertiesRule: propertiesRule,
     })
   let handleExited = () => {
     setCollectionQueryInput(_ => "")
@@ -311,7 +319,7 @@ let make = (
         onChange={(_, collection, _) => {
           onChange({
             ...value,
-            collection: collection->Obj.magic,
+            collection: collection->Obj.magic->Js.Nullable.toOption,
           })
         }}
         onInputChange={(_, value, _) => {

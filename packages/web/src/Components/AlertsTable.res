@@ -6,19 +6,28 @@ type column = {
 let columns = [
   {
     label: "collection",
-    minWidth: 300,
+    minWidth: 200,
   },
   {
     label: "event",
     minWidth: 120,
   },
   {
-    label: "rule",
+    label: "price",
+    minWidth: 120,
+  },
+  {
+    label: "properties",
     minWidth: 120,
   },
 ]
 
 type priceRule = {modifier: string, price: string}
+type propertyRule = {traitType: string, displayValue: string}
+type rule =
+  | PriceRule(priceRule)
+  | PropertyRule(propertyRule)
+
 @deriving(accessors)
 type row = {
   id: string,
@@ -26,19 +35,18 @@ type row = {
   collectionSlug: string,
   collectionImageUrl: option<string>,
   event: string,
-  rule: option<priceRule>,
+  rules: array<rule>,
 }
-
 
 // static widths to support ssr rehydration
 let loadingWidths = [
-  (0, 139, 131, 140),
-  (1, 217, 147, 140),
-  (2, 147, 141, 117),
-  (3, 190, 109, 113),
-  (4, 187, 154, 102),
-  (5, 126, 96, 108),
-  (6, 192, 127, 118),
+  (0, 139, 131, 140, 160),
+  (1, 217, 147, 140, 120),
+  (2, 147, 141, 117, 0),
+  (3, 190, 109, 113, 140),
+  (4, 187, 154, 102, 130),
+  (5, 126, 96, 108, 100),
+  (6, 192, 127, 118, 0),
 ]
 
 @react.component
@@ -59,7 +67,7 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
       </MaterialUi.TableHead>
       <MaterialUi.TableBody>
         {isLoading
-          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3)) =>
+          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4)) =>
               <MaterialUi.TableRow key={Belt.Int.toString(idx)}>
                 <MaterialUi.TableCell
                   classes={MaterialUi.TableCell.Classes.make(
@@ -92,6 +100,13 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
                     width={MaterialUi_Lab.Skeleton.Width.int(width3)}
                   />
                 </MaterialUi.TableCell>
+                <MaterialUi.TableCell>
+                  <MaterialUi_Lab.Skeleton
+                    variant=#Text
+                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                    width={MaterialUi_Lab.Skeleton.Width.int(width4)}
+                  />
+                </MaterialUi.TableCell>
               </MaterialUi.TableRow>
             )
           : rows->Belt.Array.map(row =>
@@ -114,14 +129,75 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell> {React.string(row.event)} </MaterialUi.TableCell>
                   <MaterialUi.TableCell>
-                    {row.rule
-                    ->Belt.Option.map(rule => <>
-                      {React.string("price ")}
-                      {React.string(rule.modifier)}
-                      {React.string(" ")}
-                      {React.string(rule.price)}
-                    </>)
+                    {row.rules
+                    ->Belt.Array.getBy(rule =>
+                      switch rule {
+                      | PriceRule(_) => true
+                      | _ => false
+                      }
+                    )
+                    ->Belt.Option.flatMap(rule =>
+                      switch rule {
+                      | PriceRule({modifier, price}) =>
+                        Some(
+                          <MaterialUi.Typography color=#TextPrimary variant=#Body2>
+                            {React.string("price ")}
+                            {React.string(modifier)}
+                            {React.string(" ")}
+                            {React.string(price)}
+                          </MaterialUi.Typography>,
+                        )
+                      | _ => None
+                      }
+                    )
                     ->Belt.Option.getWithDefault(React.null)}
+                  </MaterialUi.TableCell>
+                  <MaterialUi.TableCell>
+                    <ul className={Cn.make(["flex", "flex-row", "items-center"])}>
+                      {row.rules
+                      ->Belt.Array.keepMap((rule) =>
+                        switch rule {
+                        | PropertyRule({traitType, displayValue}) =>
+                          Some(
+                            <li
+                              key="property-rule"
+                              style={ReactDOM.Style.make(~bottom="10px", ())}
+                              className={Cn.make([
+                                "relative",
+                                "flex",
+                                "flex-col",
+                                "items-start",
+                                "mr-3",
+                              ])}>
+                              <MaterialUi.Typography color=#TextSecondary variant=#Caption>
+                                {React.string(traitType)}
+                              </MaterialUi.Typography>
+                              <MaterialUi.Chip
+                                label={React.string(displayValue)}
+                                color=#Primary
+                                variant=#Outlined
+                                size=#Small
+                                clickable={true}
+                              />
+                            </li>,
+                          )
+                        | PriceRule(_) => None
+                        }
+                      )
+                      ->Belt.Array.slice(~offset=0, ~len=2)
+                      ->React.array}
+                      {Belt.Array.length(row.rules) > 2
+                        ? <MaterialUi.Chip
+                            label={React.string(
+                              `+ ${Belt.Int.toString(Belt.Array.length(row.rules) - 2)}`,
+                            )}
+                            color=#Primary
+                            variant=#Outlined
+                            size=#Small
+                            clickable={true}
+                          />
+                        : React.null}
+                    </ul>
                   </MaterialUi.TableCell>
                 </MaterialUi.TableRow>,
                 {"onClick": _ => onRowClick(row)},
