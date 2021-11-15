@@ -14,7 +14,7 @@ type authentication =
 
 type t = {
   authentication: authentication,
-  signIn: unit => Js.Promise.t<unit>,
+  signIn: unit => Js.Promise.t<authentication>,
   refreshCredentials: string => Js.Promise.t<option<Contexts_Auth_Credentials.t>>,
 }
 
@@ -275,27 +275,32 @@ let make = (~children) => {
       |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address))
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
-        Js.Promise.resolve()
+        Js.Promise.resolve(Authenticated(credentials))
       })
       |> Js.Promise.catch(err => {
         Services_Logger.promiseError("Contexts_Auth", "Unable to sign in.", err)
-        Js.Promise.resolve()
+        Js.Promise.resolve(authentication)
       })
     | (AuthenticationChallengeRequired, Connected({web3, address})) =>
       handleAuthenticationChallenge(~web3, ~address)
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
-        Js.Promise.resolve()
+        Js.Promise.resolve(Authenticated(credentials))
       })
       |> Js.Promise.catch(err => {
         Services.Logger.promiseError("Contexts_Auth", "Failed authentication challenge.", err)
-        Js.Promise.resolve()
+        Js.Promise.resolve(authentication)
       })
     | (RefreshRequired({jwt}), _) =>
       jwt
       |> Contexts_Auth_Credentials.JWT.raw
       |> handleRefreshCredentials
-      |> Js.Promise.then_(_ => Js.Promise.resolve())
+      |> Js.Promise.then_(credentials => {
+        switch credentials {
+        | Some(credentials) => Js.Promise.resolve(Authenticated(credentials))
+        | None => Js.Promise.resolve(authentication)
+        }
+      })
     | (_, Web3Unavailable)
     | (_, Unknown) =>
       Js.Promise.reject(InvalidState_Web3Unavailable)
