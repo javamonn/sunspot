@@ -94,14 +94,14 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
               | StringValue({value}) => {
                   openSeaAssetStringAttribute: Some({
                     value: value,
-                    traitType: a->CreateAlertRule_Properties.Value.traitType->Js.Option.some,
+                    traitType: a->CreateAlertRule_Properties.Value.traitType,
                   }),
                   openSeaAssetNumberAttribute: None,
                 }
               | NumberValue({value}) => {
                   openSeaAssetNumberAttribute: Some({
                     value: value,
-                    traitType: a->CreateAlertRule_Properties.Value.traitType->Js.Option.some,
+                    traitType: a->CreateAlertRule_Properties.Value.traitType,
                   }),
                   openSeaAssetStringAttribute: None,
                 }

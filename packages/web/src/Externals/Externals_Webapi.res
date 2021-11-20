@@ -10,3 +10,7 @@ module Navigator = {
       "ready"
   }
 }
+
+module Location = {
+  @val @scope("location") external origin: string = "origin"
+}
