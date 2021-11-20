@@ -52,6 +52,21 @@ let promiseError = (tag, message, e) =>
     Js.log3(tag, message, e)
   }
 
+let apolloError = (tag, message, e) =>
+  if Config.isProduction && Config.isBrowser() {
+    Externals.Sentry.captureExceptionWithContext(
+      Obj.magic(e),
+      Externals.Sentry.exceptionContext(
+        ~extra=Js.Json.object_(
+          Js.Dict.fromArray([("tag", Js.Json.string(tag)), ("message", Js.Json.string(message))]),
+        ),
+        (),
+      ),
+    )
+  } else {
+    Js.log3(tag, message, e)
+  }
+
 let deccoError = (tag, message, e: Decco.decodeError) => {
   if Config.isProduction && Config.isBrowser() {
     DeccoDecodeError(e.message)
