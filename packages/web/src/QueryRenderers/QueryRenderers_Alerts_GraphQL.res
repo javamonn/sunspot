@@ -16,7 +16,8 @@ module Query_AlertRulesByAccountAddress = %graphql(
         endpoint
       }
       ...on DiscordAlertDestination {
-        endpoint
+        guildId
+        channelId
       }
     }
     eventFilters {
@@ -58,6 +59,22 @@ module Query_AlertRulesByAccountAddress = %graphql(
 `
   {inline: true}
 )
+
+module Query_DiscordIntegrationsByAccountAddress = %graphql(`
+  query DiscordIntegrationsByAccountAddress($input: DiscordIntegrationsByAccountAddressInput!) {
+    discordIntegrations: discordIntegrationsByAccountAddress(input: $input) {
+      items {
+        guildId
+        name
+        iconUrl
+        channels {
+          name 
+          id
+        }
+      }
+    }
+  }
+`)
 
 let makeVariables = (~accountAddress) => {
   Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.accountAddress: accountAddress,

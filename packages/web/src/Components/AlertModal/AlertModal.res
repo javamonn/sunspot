@@ -39,6 +39,7 @@ let make = (
   ~onClose,
   ~onExited=?,
   ~value,
+  ~discordDestinationOptions,
   ~onChange,
   ~isActioning,
   ~onAction,
@@ -107,7 +108,11 @@ let make = (
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
       <AlertModal_DialogContent
-        value={value} isExited={isExited} onChange={onChange} validationError={validationError}
+        value={value}
+        isExited={isExited}
+        onChange={onChange}
+        validationError={validationError}
+        discordDestinationOptions={discordDestinationOptions}
       />
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions

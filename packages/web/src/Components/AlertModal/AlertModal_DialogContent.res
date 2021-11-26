@@ -60,13 +60,15 @@ module Value = {
     collection: option<CollectionOption.t>,
     priceRule: option<CreateAlertRule_Price.t>,
     propertiesRule: option<CreateAlertRule_Properties.Value.t>,
+    destination: AlertRule_Destination.Value.t,
   }
 
-  let make = (~id, ~collection, ~priceRule, ~propertiesRule) => {
+  let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination) => {
     id: id,
     collection: collection,
     priceRule: priceRule,
     propertiesRule: propertiesRule,
+    destination: destination,
   }
 
   let empty = () => {
@@ -74,11 +76,12 @@ module Value = {
     collection: None,
     priceRule: None,
     propertiesRule: None,
+    destination: AlertRule_Destination.Value.WebPushAlertDestination,
   }
 }
 
 @react.component
-let make = (~value, ~onChange, ~validationError, ~isExited) => {
+let make = (~value, ~onChange, ~validationError, ~isExited, ~discordDestinationOptions=?) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
   let (
@@ -116,7 +119,7 @@ let make = (~value, ~onChange, ~validationError, ~isExited) => {
     value
     ->Value.collection
     ->Belt.Option.forEach(collection => {
-      executeCollectionAggregateAttributesQuery({
+      let _ = executeCollectionAggregateAttributesQuery({
         input: {contractAddress: collection->CollectionOption.contractAddressGet},
       })
     })
@@ -132,6 +135,11 @@ let make = (~value, ~onChange, ~validationError, ~isExited) => {
     onChange({
       ...value,
       Value.propertiesRule: propertiesRule,
+    })
+  let handleDestinationChange = destination =>
+    onChange({
+      ...value,
+      Value.destination: destination,
     })
 
   let collectionOptions = switch (
@@ -255,14 +263,14 @@ let make = (~value, ~onChange, ~validationError, ~isExited) => {
         />}
     />
     <MaterialUi.FormControl
-      classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-1/3", "pr-4"]), ())}>
+      classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-1/2"]), ())}>
       <MaterialUi.InputLabel shrink=true id="CreateAlertModal_action" htmlFor="">
         {React.string("event")}
       </MaterialUi.InputLabel>
       <MaterialUi.Tooltip
-        title={React.string("Only list events are currently supported, but more are coming soon.")}>
+        title={React.string("only list events are currently supported, but more are coming soon.")}>
         <MaterialUi.Select
-          labelId="CreateAlertModal_action"
+          labelId="AlertModal_action"
           value={MaterialUi.Select.Value.string("list")}
           disabled=true
           fullWidth=true>
@@ -272,6 +280,12 @@ let make = (~value, ~onChange, ~validationError, ~isExited) => {
         </MaterialUi.Select>
       </MaterialUi.Tooltip>
     </MaterialUi.FormControl>
+    <AlertRule_Destination
+      value={value->Value.destination}
+      onChange={handleDestinationChange}
+      discordDestinationOptions={discordDestinationOptions->Belt.Option.getWithDefault([])}
+      disabled={Js.Option.isNone(discordDestinationOptions)}
+    />
     <CreateAlertRule_Accordion
       className={Cn.make(["mt-8"])}
       summaryIcon={<MaterialUi.Typography
