@@ -8,7 +8,7 @@ type updateAlertModalState =
 let make = () => {
   let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let query = Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.use(
+  let alertRulesQuery = Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.use(
     ~skip=switch authentication {
     | Authenticated(_) => false
     | _ => true
@@ -18,17 +18,26 @@ let make = () => {
     | _ => makeVariables(~accountAddress="")
     },
   )
+  let discordIntegrationsQuery = Query_DiscordIntegrationsByAccountAddress.use(
+    ~skip=switch authentication {
+    | Authenticated(_) => false
+    | _ => true
+    },
+    switch authentication {
+    | Authenticated({jwt: {accountAddress}}) => {input: {accountAddress: accountAddress}}
+    | _ => {input: {accountAddress: ""}}
+    },
+  )
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
-  let queryItems = switch query {
+  let alertRuleItems = switch alertRulesQuery {
   | {data: Some({alertRules: Some({items: Some(items)})})} =>
     items->Belt.Array.keepMap(item => item)
   | _ => []
   }
-
   let tableRows =
-    queryItems
+    alertRuleItems
     ->Externals.Lodash.sortBy(item =>
       -.(
         item.updatedAt
@@ -81,11 +90,29 @@ let make = () => {
       ->Belt.Array.concatMany,
     })
 
+  let discordIntegrationOptions = switch discordIntegrationsQuery {
+  | {data: Some({discordIntegrations: Some({items: Some(items)})})} =>
+    items
+    ->Belt.Array.keepMap(item =>
+      item->Belt.Option.map(item =>
+        item.channels->Belt.Array.map(channel => {
+          AlertRule_Destination.Option.channelId: channel.id,
+          channelName: channel.name,
+          guildId: item.guildId,
+          guildName: item.name,
+          guildIconUrl: item.iconUrl
+        })
+      )
+    )
+    ->Belt.Array.concatMany
+  | _ => []
+  }
+
   let handleConnectWalletClicked = _ => {
     let _ = signIn()
   }
   let handleRowClick = row =>
-    queryItems
+    alertRuleItems
     ->Belt.Array.getBy(item => AlertsTable.id(row) == item.id)
     ->Belt.Option.forEach(item => {
       let priceRule =
@@ -150,6 +177,16 @@ let make = () => {
           }
         )
 
+      let destination = switch item.destination {
+      | #WebPushAlertDestination(_) => AlertRule_Destination.Value.WebPushAlertDestination
+      | #DiscordAlertDestination({guildId, channelId}) =>
+        AlertRule_Destination.Value.DiscordAlertDestination({
+          guildId: guildId,
+          channelId: channelId,
+        })
+      | #FutureAddedValue(_) => AlertRule_Destination.Value.WebPushAlertDestination
+      }
+
       let alertModalValue = AlertModal.Value.make(
         ~collection=Some(
           AlertModal.CollectionOption.make(
@@ -161,6 +198,7 @@ let make = () => {
         ),
         ~priceRule,
         ~propertiesRule,
+        ~destination,
         ~id=item.id,
       )
 
@@ -168,7 +206,7 @@ let make = () => {
     })
 
   let isUnsupportedBrowser = Config.isBrowser() && !Services.PushNotification.isSupported()
-  let isLoading = switch (eth, query) {
+  let isLoading = switch (eth, alertRulesQuery) {
   | (_, {loading: true})
   | (_, {called: false})
   | (Unknown, _) => true
@@ -188,29 +226,30 @@ let make = () => {
       }}
       isUnsupportedBrowser={isUnsupportedBrowser}
     />
-    <Containers.CreateAlertModal
-      isOpen={createAlertModalIsOpen}
-      onClose={_ => setCreateAlertModalIsOpen(_ => false)}
-      accountAddress=?{switch authentication {
-      | Authenticated({jwt: {accountAddress}}) => Some(accountAddress)
-      | _ => None
-      }}
-    />
-    <Containers.UpdateAlertModal
-      isOpen={switch updateAlertModal {
-      | UpdateAlertModalOpen(_) => true
-      | _ => false
-      }}
-      value=?{switch updateAlertModal {
-      | UpdateAlertModalOpen(v) => Some(v)
-      | _ => None
-      }}
-      onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
-      accountAddress=?{switch authentication {
-      | Authenticated({jwt: {accountAddress}}) => Some(accountAddress)
-      | _ => None
-      }}
-    />
+    {switch authentication {
+    | Authenticated({jwt: {accountAddress}}) => <>
+        <Containers.CreateAlertModal
+          isOpen={createAlertModalIsOpen}
+          onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+          accountAddress={accountAddress}
+          discordDestinationOptions={discordIntegrationOptions}
+        />
+        <Containers.UpdateAlertModal
+          isOpen={switch updateAlertModal {
+          | UpdateAlertModalOpen(_) => true
+          | _ => false
+          }}
+          value=?{switch updateAlertModal {
+          | UpdateAlertModalOpen(v) => Some(v)
+          | _ => None
+          }}
+          onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
+          accountAddress={accountAddress}
+          discordDestinationOptions={discordIntegrationOptions}
+        />
+      </>
+    | _ => React.null
+    }}
     <AlertsTable
       isLoading={isLoading}
       rows={isUnsupportedBrowser ? [] : tableRows}

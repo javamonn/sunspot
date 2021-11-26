@@ -15,8 +15,135 @@ module Mutation_DeleteAlertRule = %graphql(`
   }
 `)
 
+let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
+  open Mutation_UpdateAlertRule
+
+  let destination = switch AlertModal.Value.destination(newValue) {
+  | AlertRule_Destination.Value.WebPushAlertDestination =>
+    Services.PushNotification.getSubscription()
+    |> Js.Promise.then_(subscription => {
+      switch subscription {
+      | Some(subscription) => Js.Promise.resolve(subscription)
+      | None => Services.PushNotification.subscribe()
+      }
+    })
+    |> Js.Promise.then_(pushSubscription => {
+      open Externals.ServiceWorkerGlobalScope.PushSubscription
+      let s = getSerialized(pushSubscription)
+
+      Js.Promise.resolve({
+        webPushAlertDestination: Some({
+          endpoint: s->endpoint,
+          keys: {
+            p256dh: s->keys->p256dh,
+            auth: s->keys->auth,
+          },
+        }),
+        discordAlertDestination: None,
+      })
+    })
+  | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
+    Js.Promise.resolve({
+      discordAlertDestination: Some({
+        guildId: guildId,
+        channelId: channelId,
+      }),
+      webPushAlertDestination: None,
+    })
+  }
+
+  let priceEventFilter =
+    newValue
+    ->AlertModal.Value.priceRule
+    ->Belt.Option.flatMap(rule => {
+      let direction = switch CreateAlertRule_Price.modifier(rule) {
+      | ">" => Some(#ALERT_ABOVE)
+      | "<" => Some(#ALERT_BELOW)
+      | _ => None
+      }
+      let value =
+        rule
+        ->CreateAlertRule_Price.value
+        ->Belt.Option.map(value =>
+          value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
+        )
+
+      switch (direction, value) {
+      | (Some(direction), Some(value)) =>
+        Some({
+          alertPriceThresholdEventFilter: Some({
+            direction: direction,
+            value: value,
+            paymentToken: {
+              id: Services.PaymentToken.id(Services.PaymentToken.ethPaymentToken),
+              decimals: Services.PaymentToken.decimals(Services.PaymentToken.ethPaymentToken),
+              name: Services.PaymentToken.name(Services.PaymentToken.ethPaymentToken),
+              symbol: Services.PaymentToken.symbol(Services.PaymentToken.ethPaymentToken),
+            },
+          }),
+          alertAttributesEventFilter: None,
+        })
+      | _ => None
+      }
+    })
+
+  let propertiesRule =
+    newValue
+    ->AlertModal.Value.propertiesRule
+    ->Belt.Option.map(rule => {
+      let attributeInputs = rule->Belt.Array.map(a =>
+        switch a->CreateAlertRule_Properties.Value.value {
+        | StringValue({value}) => {
+            openSeaAssetStringAttribute: Some({
+              value: value,
+              traitType: a->CreateAlertRule_Properties.Value.traitType,
+            }),
+            openSeaAssetNumberAttribute: None,
+          }
+        | NumberValue({value}) => {
+            openSeaAssetNumberAttribute: Some({
+              value: value,
+              traitType: a->CreateAlertRule_Properties.Value.traitType,
+            }),
+            openSeaAssetStringAttribute: None,
+          }
+        }
+      )
+
+      {
+        alertAttributesEventFilter: Some({
+          attributes: attributeInputs,
+        }),
+        alertPriceThresholdEventFilter: None,
+      }
+    })
+
+  switch (oldValue->AlertModal.Value.collection, newValue->AlertModal.Value.collection) {
+  | (Some(oldCollection), Some(newCollection)) =>
+    destination |> Js.Promise.then_(destination =>
+      {
+        alertRule: {
+          id: AlertModal.Value.id(newValue),
+          accountAddress: accountAddress,
+          collectionSlug: AlertModal.CollectionOption.slugGet(newCollection),
+          contractAddress: AlertModal.CollectionOption.contractAddressGet(newCollection),
+          eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
+          destination: destination,
+        },
+        key: {
+          contractAddress: AlertModal.CollectionOption.contractAddressGet(oldCollection),
+          id: AlertModal.Value.id(oldValue),
+        },
+      }
+      ->Js.Option.some
+      ->Js.Promise.resolve
+    )
+  | _ => Js.Promise.resolve(None)
+  }
+}
+
 @react.component
-let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
+let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~discordDestinationOptions) => {
   let (updateAlertRuleMutation, updateAlertRuleMutationResult) = Mutation_UpdateAlertRule.use()
   let (deleteAlertRuleMutation, deleteAlertRuleMutationResult) = Mutation_DeleteAlertRule.use()
   let (newValue, setNewValue) = React.useState(_ => value)
@@ -25,157 +152,46 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
     None
   }, [value])
 
-  let handleUpdate = () => {
-    let _ = switch (
-      newValue,
-      newValue->Belt.Option.flatMap(AlertModal.Value.collection),
-      value,
-      value->Belt.Option.flatMap(AlertModal.Value.collection),
-      accountAddress,
-    ) {
-    | (
-        Some(newValue),
-        Some(newCollection),
-        Some(existingValue),
-        Some(existingCollection),
-        Some(accountAddress),
-      ) =>
-      Services.PushNotification.getSubscription()
-      |> Js.Promise.then_(subscription => {
-        switch subscription {
-        | Some(subscription) => Js.Promise.resolve(subscription)
-        | None => Services.PushNotification.subscribe()
-        }
-      })
-      |> Js.Promise.then_(pushSubscription => {
-        open Mutation_UpdateAlertRule
-
-        let priceEventFilter =
-          newValue
-          ->AlertModal.Value.priceRule
-          ->Belt.Option.flatMap(rule => {
-            let direction = switch CreateAlertRule_Price.modifier(rule) {
-            | ">" => Some(#ALERT_ABOVE)
-            | "<" => Some(#ALERT_BELOW)
-            | _ => None
-            }
-            let value =
-              rule
-              ->CreateAlertRule_Price.value
-              ->Belt.Option.map(value =>
-                value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
-              )
-
-            switch (direction, value) {
-            | (Some(direction), Some(value)) =>
-              Some({
-                alertPriceThresholdEventFilter: Some({
-                  direction: direction,
-                  value: value,
-                  paymentToken: {
-                    id: Services.PaymentToken.id(Services.PaymentToken.ethPaymentToken),
-                    decimals: Services.PaymentToken.decimals(Services.PaymentToken.ethPaymentToken),
-                    name: Services.PaymentToken.name(Services.PaymentToken.ethPaymentToken),
-                    symbol: Services.PaymentToken.symbol(Services.PaymentToken.ethPaymentToken),
-                  },
-                }),
-                alertAttributesEventFilter: None,
+  let handleUpdate = () =>
+    switch (value, newValue) {
+    | (Some(oldValue), Some(newValue)) =>
+      let _ = getUpdateAlertRuleInput(
+        ~oldValue,
+        ~newValue,
+        ~accountAddress,
+      ) |> Js.Promise.then_(updateAlertRuleInput =>
+        updateAlertRuleInput
+        ->Belt.Option.forEach(updateAlertRuleInput => {
+          let _ = updateAlertRuleMutation(
+            ~update=({writeFragment}, {data}) => {
+              data
+              ->Belt.Option.flatMap(({alertRule}) => alertRule)
+              ->Belt.Option.forEach(alertRule => {
+                let _ = writeFragment(
+                  ~fragment=module(
+                    QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
+                  ),
+                  ~data=alertRule,
+                  ~id=alertRule.id,
+                )
               })
-            | _ => None
-            }
-          })
-
-        let propertiesRule =
-          newValue
-          ->AlertModal.Value.propertiesRule
-          ->Belt.Option.map(rule => {
-            let attributeInputs = rule->Belt.Array.map(a =>
-              switch a->CreateAlertRule_Properties.Value.value {
-              | StringValue({value}) => {
-                  openSeaAssetStringAttribute: Some({
-                    value: value,
-                    traitType: a->CreateAlertRule_Properties.Value.traitType,
-                  }),
-                  openSeaAssetNumberAttribute: None,
-                }
-              | NumberValue({value}) => {
-                  openSeaAssetNumberAttribute: Some({
-                    value: value,
-                    traitType: a->CreateAlertRule_Properties.Value.traitType,
-                  }),
-                  openSeaAssetStringAttribute: None,
-                }
-              }
-            )
-
+            },
             {
-              alertAttributesEventFilter: Some({
-                attributes: attributeInputs,
-              }),
-              alertPriceThresholdEventFilter: None,
-            }
+              input: updateAlertRuleInput,
+            },
+          ) |> Js.Promise.then_(_result => {
+            onClose()
+            Js.Promise.resolve()
           })
-
-        let destination = {
-          open Externals.ServiceWorkerGlobalScope.PushSubscription
-          let s = getSerialized(pushSubscription)
-
-          {
-            webPushAlertDestination: Some({
-              endpoint: s->endpoint,
-              keys: {
-                p256dh: s->keys->p256dh,
-                auth: s->keys->auth,
-              },
-            }),
-            discordAlertDestination: None,
-          }
-        }
-        let input = {
-          alertRule: {
-            id: AlertModal.Value.id(newValue),
-            accountAddress: accountAddress,
-            collectionSlug: AlertModal.CollectionOption.slugGet(newCollection),
-            contractAddress: AlertModal.CollectionOption.contractAddressGet(newCollection),
-            eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
-            destination: destination,
-          },
-          key: {
-            contractAddress: AlertModal.CollectionOption.contractAddressGet(existingCollection),
-            id: AlertModal.Value.id(existingValue),
-          },
-        }
-
-        updateAlertRuleMutation(
-          ~update=({writeFragment}, {data}) => {
-            data
-            ->Belt.Option.flatMap(({alertRule}) => alertRule)
-            ->Belt.Option.forEach(alertRule => {
-              let _ = writeFragment(
-                ~fragment=module(
-                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
-                ),
-                ~data=alertRule,
-                ~id=alertRule.id,
-              )
-            })
-          },
-          {
-            input: input,
-          },
-        )
-      })
-      |> Js.Promise.then_(_result => {
-        onClose()
-        Js.Promise.resolve()
-      })
-    | _ => Js.Promise.resolve()
+        })
+        ->Js.Promise.resolve
+      )
+    | _ => ()
     }
-  }
 
   let handleDelete = _ =>
-    switch (value, value->Belt.Option.flatMap(AlertModal.Value.collection), accountAddress) {
-    | (Some(value), Some(collection), Some(accountAddress)) =>
+    switch (value, value->Belt.Option.flatMap(AlertModal.Value.collection)) {
+    | (Some(value), Some(collection)) =>
       let _ =
         deleteAlertRuleMutation(
           ~update=({writeQuery, readQuery}, {data}) => {
@@ -254,6 +270,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress) => {
     onAction={handleUpdate}
     actionLabel="update"
     title="update alert"
+    discordDestinationOptions={discordDestinationOptions}
     renderOverflowActionMenuItems={(~onClick) =>
       <MaterialUi.MenuItem
         onClick={_ => {
