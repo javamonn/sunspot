@@ -44,7 +44,7 @@ let make = () => {
           color=#Primary
           classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-6"]), ())}>
           {React.string(
-            "alert rules are defined over collections, event type, and optional price filter. when an event satisfying an alert rule occurs, a push notification will be delivered notifying you in near real-time.",
+            "alert rules are defined over collections, event type, and optional price filter. when an event satisfying an alert rule occurs, a notification will be delivered notifying you in near real-time.",
           )}
         </MaterialUi.Typography>
         <MaterialUi.Typography
@@ -52,7 +52,7 @@ let make = () => {
           color=#Primary
           classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-6"]), ())}>
           {React.string(
-            "sunspot is a work in progress. in the near future, more complex event types (e.g. floor price movement), filters (e.g. trait-based), and alert destinations (e.g. discord, sms) will be supported.",
+            "sunspot is a work in progress. in the near future, more complex event types (e.g. floor price movement), filters (e.g. rarity-based), and alert destinations (e.g. sms) will be supported.",
           )}
         </MaterialUi.Typography>
         <MaterialUi.Typography
