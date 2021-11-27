@@ -81,7 +81,14 @@ module Value = {
 }
 
 @react.component
-let make = (~value, ~onChange, ~validationError, ~isExited, ~discordDestinationOptions=?) => {
+let make = (
+  ~value,
+  ~onChange,
+  ~validationError,
+  ~isExited,
+  ~discordDestinationOptions,
+  ~destinationDisabled=?,
+) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
   let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
   let (
@@ -141,6 +148,7 @@ let make = (~value, ~onChange, ~validationError, ~isExited, ~discordDestinationO
       ...value,
       Value.destination: destination,
     })
+  let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
 
   let collectionOptions = switch (
     resultsSource.current,
@@ -283,8 +291,9 @@ let make = (~value, ~onChange, ~validationError, ~isExited, ~discordDestinationO
     <AlertRule_Destination
       value={value->Value.destination}
       onChange={handleDestinationChange}
-      discordDestinationOptions={discordDestinationOptions->Belt.Option.getWithDefault([])}
-      disabled={Js.Option.isNone(discordDestinationOptions)}
+      discordDestinationOptions={discordDestinationOptions}
+      disabled=?{destinationDisabled}
+      onConnectDiscord={handleConnectDiscord}
     />
     <CreateAlertRule_Accordion
       className={Cn.make(["mt-8"])}

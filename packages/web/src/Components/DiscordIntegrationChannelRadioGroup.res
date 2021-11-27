@@ -40,7 +40,7 @@ let make = (~guildName, ~guildIconUrl=?, ~options, ~value, ~onChange) => {
         <MaterialUi.FormControlLabel
           key={id}
           value={MaterialUi_Types.Any(id)}
-          label={React.string(name)}
+          label={React.string(`#${name}`)}
           control={<MaterialUi.Radio />}
         />
       )}
