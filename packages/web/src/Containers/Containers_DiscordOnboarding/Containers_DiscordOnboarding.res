@@ -1,5 +1,6 @@
 let styles = %raw("require('./Containers_DiscordOnboarding.module.css')")
-let steps = ["connect wallet", "configure alert", "select destination"]
+
+let steps = ["connect wallet", "select destination", "configure alert"]
 
 exception SignInFailed
 exception InvalidState
@@ -47,6 +48,7 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
     | _ => "sunspot is now installed within your discord server. to start receiving alerts, connect your wallet to create an account."
     }
   )
+
   let (
     createDiscordIntegrationMutation,
     createDiscordIntegrationMutationResult,
@@ -54,6 +56,18 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
   let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
   let discordIntegration =
     createDiscordIntegrationMutationResult.data->Belt.Option.map(d => d.discordIntegration)
+  let discordDestinationOptions =
+    discordIntegration
+    ->Belt.Option.map(discordIntegration =>
+      discordIntegration.channels->Belt.Array.map(channel => {
+        AlertRule_Destination.Option.channelId: channel.id,
+        channelName: channel.name,
+        guildId: discordIntegration.guildId,
+        guildName: discordIntegration.name,
+        guildIconUrl: discordIntegration.iconUrl,
+      })
+    )
+    ->Belt.Option.getWithDefault([])
 
   let handleCreateDiscordIntegration = () => {
     let execute = () =>
@@ -192,10 +206,11 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
         })
       let destination = {
         webPushAlertDestination: None,
-        discordAlertDestination: Some({
-          guildId: discordIntegration.guildId,
-          channelId: discordIntegrationChannelIdValue->DiscordIntegrationChannelRadioGroup.id,
-        }),
+        discordAlertDestination: switch alertRuleValue.destination {
+        | AlertRule_Destination.Value.WebPushAlertDestination => None
+        | DiscordAlertDestination({guildId, channelId}) =>
+          Some({guildId: guildId, channelId: channelId})
+        },
       }
       createAlertRuleMutation({
         input: {
@@ -227,15 +242,28 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
     if activeStep == 0 {
       let _ = handleCreateDiscordIntegration()
     } else if activeStep == 1 {
+      setAlertRuleValue(alertRule =>
+        switch (discordIntegration, discordIntegrationChannelIdValue) {
+        | (Some(discordIntegration), Some(discordIntegrationChannelIdValue)) => {
+            ...alertRule,
+            destination: AlertRule_Destination.Value.DiscordAlertDestination({
+              guildId: discordIntegration.guildId,
+              channelId: discordIntegrationChannelIdValue->DiscordIntegrationChannelRadioGroup.id,
+            }),
+          }
+        | _ => alertRule
+        }
+      )
+      setActiveStep(activeStep => activeStep + 1)
+    } else if activeStep == 2 {
       let validationResult = AlertModal.validate(alertRuleValue)
       setValidationError(_ => validationResult)
       switch validationResult {
-      | None => setActiveStep(activeStep => activeStep + 1)
+      | None =>
+        setIsActioning(_ => true)
+        let _ = handleCreateAlertRule()
       | Some(_) => ()
       }
-    } else {
-      setIsActioning(_ => true)
-      let _ = handleCreateAlertRule()
     }
   }
 
@@ -273,7 +301,8 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
           {React.string("install sunspot")}
         </MaterialUi.Typography>
       </MaterialUi.DialogTitle>
-      <MaterialUi.DialogContent>
+      <MaterialUi.DialogContent
+        classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
         <MaterialUi.Stepper
           activeStep={MaterialUi_Types.Number.int(activeStep)}
           classes={MaterialUi.Stepper.Classes.make(~root=Cn.make(["mb-4", "px-0"]), ())}>
@@ -302,23 +331,17 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
               </MaterialUi.Typography>
             </>
           : React.null}
-        {activeStep === 1
-          ? <AlertModal_DialogContent
-              isExited={false}
-              validationError={validationError}
-              value={alertRuleValue}
-              onChange={newValue => setAlertRuleValue(_ => newValue)}
-            />
-          : React.null}
         {switch discordIntegration {
-        | Some(discordIntegration) if activeStep == 2 => <>
+        | Some(discordIntegration) if activeStep == 1 => <>
             <MaterialUi.Typography
               color=#Primary
               variant=#Body1
               classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-10"]), ())}>
-              {React.string(
-                `select the channel within ${discordIntegration.name} that will receive alerts:`,
-              )}
+              {React.string("select the channel within ")}
+              <span className={Cn.make(["font-bold"])}>
+                {React.string(discordIntegration.name)}
+              </span>
+              {React.string(" that will receive alerts:")}
             </MaterialUi.Typography>
             <DiscordIntegrationChannelRadioGroup
               guildName={discordIntegration.name}
@@ -333,6 +356,16 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
           </>
         | _ => React.null
         }}
+        {activeStep === 2
+          ? <AlertModal_DialogContent
+              isExited={false}
+              validationError={validationError}
+              value={alertRuleValue}
+              onChange={newValue => setAlertRuleValue(_ => newValue)}
+              discordDestinationOptions={discordDestinationOptions}
+              destinationDisabled={true}
+            />
+          : React.null}
       </MaterialUi.DialogContent>
       <MaterialUi.DialogActions>
         <MaterialUi.Button

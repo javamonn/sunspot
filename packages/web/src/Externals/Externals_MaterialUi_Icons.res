@@ -1,7 +1,11 @@
 module Add = {
   @react.component @module("@material-ui/icons/Add")
-  external make: (~color: string=?, ~className: string=?, ~fontSize: string=?) => React.element =
-    "default"
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
 }
 
 module Close = {
