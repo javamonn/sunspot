@@ -129,6 +129,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
           contractAddress: AlertModal.CollectionOption.contractAddressGet(newCollection),
           eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
           destination: destination,
+          eventType: Some(#LISTING),
         },
         key: {
           contractAddress: AlertModal.CollectionOption.contractAddressGet(oldCollection),

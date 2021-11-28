@@ -1,6 +1,6 @@
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 module Mutation_CreateAlertRule = %graphql(`
-  mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
+  mutation CreateAlertRuleInput($input: AlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {
       ...AlertRule
     }
@@ -119,6 +119,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         contractAddress: AlertModal.CollectionOption.contractAddressGet(collection),
         eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
         destination: destination,
+        eventType: Some(#LISTING),
       }
       ->Js.Option.some
       ->Js.Promise.resolve

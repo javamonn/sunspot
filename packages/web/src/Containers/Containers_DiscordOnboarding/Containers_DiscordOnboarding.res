@@ -20,7 +20,7 @@ module Mutation_CreateDiscordIntegration = %graphql(`
   }
 `)
 module Mutation_CreateAlertRule = %graphql(`
-  mutation CreateAlertRule($input: CreateAlertRuleInput!) {
+  mutation CreateAlertRule($input: AlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {
       ...AlertRule
     }
@@ -229,6 +229,7 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
           ->AlertModal.CollectionOption.contractAddressGet,
           eventFilters: [priceEventFilter, propertiesEventFilter]->Belt.Array.keepMap(i => i),
           destination: destination,
+          eventType: Some(#LISTING)
         },
       }) |> Js.Promise.then_(_ => {
         onCreated()
