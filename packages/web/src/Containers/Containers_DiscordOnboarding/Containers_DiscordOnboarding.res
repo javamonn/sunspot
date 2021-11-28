@@ -20,7 +20,7 @@ module Mutation_CreateDiscordIntegration = %graphql(`
   }
 `)
 module Mutation_CreateAlertRule = %graphql(`
-  mutation CreateAlertRule($input: AlertRuleInput!) {
+  mutation CreateAlertRule($input: CreateAlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {
       ...AlertRule
     }

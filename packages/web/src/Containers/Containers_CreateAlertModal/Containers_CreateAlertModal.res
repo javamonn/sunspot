@@ -1,6 +1,6 @@
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 module Mutation_CreateAlertRule = %graphql(`
-  mutation CreateAlertRuleInput($input: AlertRuleInput!) {
+  mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {
       ...AlertRule
     }
