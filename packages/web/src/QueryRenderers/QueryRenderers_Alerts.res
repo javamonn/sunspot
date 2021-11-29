@@ -51,7 +51,11 @@ let make = () => {
       collectionName: item.collection.name,
       collectionSlug: item.collection.slug,
       collectionImageUrl: item.collection.imageUrl,
-      event: "list",
+      eventType: switch item.eventType {
+      | #LISTING => "listing"
+      | #SALE => "sale"
+      | #FutureAddedValue(v) => Js.String2.toLowerCase(v)
+      },
       rules: item.eventFilters
       ->Belt.Array.keepMap(eventFilter =>
         switch eventFilter {
@@ -100,7 +104,7 @@ let make = () => {
           channelName: channel.name,
           guildId: item.guildId,
           guildName: item.name,
-          guildIconUrl: item.iconUrl
+          guildIconUrl: item.iconUrl,
         })
       )
     )
@@ -186,6 +190,11 @@ let make = () => {
         })
       | #FutureAddedValue(_) => AlertRule_Destination.Value.WebPushAlertDestination
       }
+      let eventType = switch item.eventType {
+      | #LISTING => #listing
+      | #SALE => #sale
+      | _ => #listing
+      }
 
       let alertModalValue = AlertModal.Value.make(
         ~collection=Some(
@@ -200,16 +209,18 @@ let make = () => {
         ~propertiesRule,
         ~destination,
         ~id=item.id,
+        ~eventType,
       )
 
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
 
   let isUnsupportedBrowser = Config.isBrowser() && !Services.PushNotification.isSupported()
-  let isLoading = switch (eth, alertRulesQuery) {
-  | (_, {loading: true})
-  | (_, {called: false})
-  | (Unknown, _) => true
+  let isLoading = switch (eth, alertRulesQuery, authentication) {
+  | (_, {loading: true}, _)
+  | (_, {called: false}, _)
+  | (Unknown, _, _)
+  | (_, _, RefreshRequired(_)) => true
   | _ if !Config.isBrowser() => true
   | _ => false
   }

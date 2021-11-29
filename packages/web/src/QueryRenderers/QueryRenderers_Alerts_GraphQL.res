@@ -2,6 +2,7 @@ module Query_AlertRulesByAccountAddress = %graphql(
   `
   fragment AlertRule on AlertRule {
     id 
+    eventType
     updatedAt
     contractAddress
     accountAddress

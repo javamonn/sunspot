@@ -38,9 +38,10 @@ let make = (~value=?, ~onChange) =>
         onChange={(ev, _) => {
           let target = ev->ReactEvent.Form.target
           let newModifier = target["value"]
-          value->Belt.Option.forEach(v => {
-            onChange(Some({...v, modifier: newModifier}))
-          })
+          switch value {
+          | Some(value) => onChange(Some({...value, modifier: newModifier}))
+          | None => onChange(Some({value: None, modifier: newModifier}))
+          }
         }}>
         <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("<")}>
           {React.string("<")}

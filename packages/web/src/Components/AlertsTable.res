@@ -34,7 +34,7 @@ type row = {
   collectionName: option<string>,
   collectionSlug: string,
   collectionImageUrl: option<string>,
-  event: string,
+  eventType: string,
   rules: array<rule>,
 }
 
@@ -127,7 +127,7 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
                       listItemClasses={MaterialUi.ListItem.Classes.make(~root=Cn.make(["p-0"]), ())}
                     />
                   </MaterialUi.TableCell>
-                  <MaterialUi.TableCell> {React.string(row.event)} </MaterialUi.TableCell>
+                  <MaterialUi.TableCell> {React.string(row.eventType)} </MaterialUi.TableCell>
                   <MaterialUi.TableCell>
                     {row.rules
                     ->Belt.Array.getBy(rule =>

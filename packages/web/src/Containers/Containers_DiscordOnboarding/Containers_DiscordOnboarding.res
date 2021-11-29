@@ -229,7 +229,10 @@ let make = (~code, ~guildId, ~permissions, ~redirectUri, ~onCreated) => {
           ->AlertModal.CollectionOption.contractAddressGet,
           eventFilters: [priceEventFilter, propertiesEventFilter]->Belt.Array.keepMap(i => i),
           destination: destination,
-          eventType: Some(#LISTING)
+          eventType: switch alertRuleValue->AlertModal.Value.eventType {
+          | #listing => #LISTING
+          | #sale => #SALE
+          },
         },
       }) |> Js.Promise.then_(_ => {
         onCreated()

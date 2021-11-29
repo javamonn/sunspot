@@ -164,8 +164,9 @@ module OptionsLoading = {
 
     <ul className={Cn.make(["flex", "flex-col", "flex-1"])}>
       {widths.current
-      ->Belt.Array.map(width =>
-        <MaterialUi.Accordion variant=#Outlined square={true} expanded={false}>
+      ->Belt.Array.mapWithIndex((idx, width) =>
+        <MaterialUi.Accordion
+          variant=#Outlined square={true} expanded={false} key={Belt.Int.toString(idx)}>
           <MaterialUi.AccordionSummary expandIcon={<Externals.MaterialUi_Icons.ExpandMore />}>
             <MaterialUi_Lab.Skeleton
               variant=#Text

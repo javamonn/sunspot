@@ -119,7 +119,10 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         contractAddress: AlertModal.CollectionOption.contractAddressGet(collection),
         eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
         destination: destination,
-        eventType: Some(#LISTING),
+        eventType: switch value->AlertModal.Value.eventType {
+        | #listing => #LISTING
+        | #sale => #SALE
+        },
       }
       ->Js.Option.some
       ->Js.Promise.resolve

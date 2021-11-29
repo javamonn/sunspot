@@ -57,15 +57,17 @@ module Value = {
   @deriving(accessors)
   type t = {
     id: string,
+    eventType: AlertRule_EventType.t,
     collection: option<CollectionOption.t>,
     priceRule: option<CreateAlertRule_Price.t>,
     propertiesRule: option<CreateAlertRule_Properties.Value.t>,
     destination: AlertRule_Destination.Value.t,
   }
 
-  let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination) => {
+  let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination, ~eventType) => {
     id: id,
     collection: collection,
+    eventType: eventType,
     priceRule: priceRule,
     propertiesRule: propertiesRule,
     destination: destination,
@@ -76,6 +78,7 @@ module Value = {
     collection: None,
     priceRule: None,
     propertiesRule: None,
+    eventType: #listing,
     destination: AlertRule_Destination.Value.WebPushAlertDestination,
   }
 }
@@ -147,6 +150,11 @@ let make = (
     onChange({
       ...value,
       Value.destination: destination,
+    })
+  let handleEventTypeChange = eventType =>
+    onChange({
+      ...value,
+      Value.eventType: eventType,
     })
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
 
@@ -270,24 +278,7 @@ let make = (
           bare={true}
         />}
     />
-    <MaterialUi.FormControl
-      classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-1/2"]), ())}>
-      <MaterialUi.InputLabel shrink=true id="CreateAlertModal_action" htmlFor="">
-        {React.string("event")}
-      </MaterialUi.InputLabel>
-      <MaterialUi.Tooltip
-        title={React.string("only list events are currently supported, but more are coming soon.")}>
-        <MaterialUi.Select
-          labelId="AlertModal_action"
-          value={MaterialUi.Select.Value.string("list")}
-          disabled=true
-          fullWidth=true>
-          <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("list")}>
-            {React.string("list")}
-          </MaterialUi.MenuItem>
-        </MaterialUi.Select>
-      </MaterialUi.Tooltip>
-    </MaterialUi.FormControl>
+    <AlertRule_EventType value={value->Value.eventType} onChange={handleEventTypeChange} />
     <AlertRule_Destination
       value={value->Value.destination}
       onChange={handleDestinationChange}

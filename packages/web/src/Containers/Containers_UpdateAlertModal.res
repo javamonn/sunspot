@@ -129,7 +129,10 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
           contractAddress: AlertModal.CollectionOption.contractAddressGet(newCollection),
           eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
           destination: destination,
-          eventType: Some(#LISTING),
+          eventType: switch newValue->AlertModal.Value.eventType {
+          | #listing => #LISTING
+          | #sale => #SALE
+          },
         },
         key: {
           contractAddress: AlertModal.CollectionOption.contractAddressGet(oldCollection),
@@ -142,6 +145,8 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
   | _ => Js.Promise.resolve(None)
   }
 }
+
+let defaultValue = AlertModal.Value.empty()
 
 @react.component
 let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~discordDestinationOptions) => {
@@ -265,7 +270,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~discordDestinationOpt
   <AlertModal
     isOpen
     onClose
-    value={newValue->Belt.Option.getWithDefault(AlertModal.Value.empty())}
+    value={newValue->Belt.Option.getWithDefault(defaultValue)}
     onChange={newValue => setNewValue(_ => Some(newValue))}
     isActioning={isActioning}
     onAction={handleUpdate}
