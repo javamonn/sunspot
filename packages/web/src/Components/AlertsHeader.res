@@ -1,15 +1,15 @@
 @react.component
 let make = (
   ~eth: Contexts.Eth.state,
+  ~authentication: Contexts.Auth.authentication,
   ~onConnectWalletClicked,
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
-  ~authenticationChallengeRequired,
   ~isUnsupportedBrowser,
 ) => {
-  let createAlertButtonDisabled = switch eth {
-  | Connected(_) if authenticationChallengeRequired => true
-  | Connected(_) if !isUnsupportedBrowser => false
+  let createAlertButtonDisabled = switch (eth, authentication) {
+  | (Connected(_), AuthenticationChallengeRequired) => true
+  | (Connected(_), _) if !isUnsupportedBrowser => false
   | _ => true
   }
   let createAlertButton =
@@ -43,10 +43,7 @@ let make = (
       {switch eth {
       | Connected({address, provider}) =>
         <WalletButton
-          address
-          provider
-          onClick={onWalletButtonClicked}
-          authenticationChallengeRequired={authenticationChallengeRequired}
+          provider onClick={onWalletButtonClicked} authentication={authentication} address={address}
         />
       | _ => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}

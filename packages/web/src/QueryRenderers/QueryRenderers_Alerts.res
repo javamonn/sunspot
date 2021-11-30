@@ -228,13 +228,10 @@ let make = () => {
   <>
     <AlertsHeader
       eth
+      authentication
       onConnectWalletClicked={handleConnectWalletClicked}
       onWalletButtonClicked={handleConnectWalletClicked}
       onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
-      authenticationChallengeRequired={switch authentication {
-      | AuthenticationChallengeRequired => true
-      | _ => false
-      }}
       isUnsupportedBrowser={isUnsupportedBrowser}
     />
     {switch authentication {

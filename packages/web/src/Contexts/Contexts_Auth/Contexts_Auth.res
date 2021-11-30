@@ -8,6 +8,7 @@ exception UserDecline_ConnectFailed
 
 type authentication =
   | Unauthenticated
+  | InProgress
   | AuthenticationChallengeRequired
   | RefreshRequired(Contexts_Auth_Credentials.t)
   | Authenticated(Contexts_Auth_Credentials.t)
@@ -159,6 +160,7 @@ let make = (~children) => {
               | AuthenticationChallengeRequired => "AuthenticationChallengeRequired"
               | RefreshRequired(_) => "RefreshRequired"
               | Authenticated(_) => "Authenticated"
+              | InProgress => "InProgress"
               },
             ),
           ),
@@ -212,7 +214,7 @@ let make = (~children) => {
       }
     })
 
-  let handleAuthenticationChallenge = (~web3, ~address) =>
+  let handleAuthenticationChallenge = (~web3, ~address, ~waitForMetamaskClose=false, ()) =>
     Contexts_Apollo_Client.inst.contents.mutate(
       ~mutation=module(Mutation_AuthenticationChallengeCreate),
       {input: {address: address}},
@@ -224,7 +226,22 @@ let make = (~children) => {
             Mutation_AuthenticationChallengeCreate.t,
           >,
         ) =>
-        Externals.Web3.personalSign(web3, message, address)
+        Js.Promise.make((~resolve, ~reject) => {
+          let unit_ = ()
+          if waitForMetamaskClose {
+            // wait a bit to ensure MM window has closed
+            let _ = Js.Global.setTimeout(() => {
+              resolve(. unit_)
+            }, 3000)
+          } else {
+            resolve(. unit_)
+          }
+        })
+        |> Js.Promise.then_(_ => Externals.Web3.personalSign(web3, message, address))
+        |> Js.Promise.catch(err => {
+          setAuthentication(_ => AuthenticationChallengeRequired)
+          Js.Promise.reject(AuthenticationChallengeFailed)
+        })
       | Error(_) => Js.Promise.reject(AuthenticationChallengeFailed)
       }
     )
@@ -271,8 +288,9 @@ let make = (~children) => {
   let handleSignIn = () => {
     switch (authentication, eth) {
     | (Unauthenticated, NotConnected({provider, web3})) =>
+      setAuthentication(_ => InProgress)
       handleRequestAccount(~provider, ~web3)
-      |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address))
+      |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address, ~waitForMetamaskClose=true, ()))
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
         Js.Promise.resolve(Authenticated(credentials))
@@ -282,7 +300,8 @@ let make = (~children) => {
         Js.Promise.resolve(authentication)
       })
     | (AuthenticationChallengeRequired, Connected({web3, address})) =>
-      handleAuthenticationChallenge(~web3, ~address)
+      setAuthentication(_ => InProgress)
+      handleAuthenticationChallenge(~web3, ~address, ())
       |> Js.Promise.then_(credentials => {
         setAuthentication(_ => Authenticated(credentials))
         Js.Promise.resolve(Authenticated(credentials))
@@ -305,7 +324,8 @@ let make = (~children) => {
     | (_, Unknown) =>
       Js.Promise.reject(InvalidState_Web3Unavailable)
     | (AuthenticationChallengeRequired(_), _)
-    | (Unauthenticated, _) =>
+    | (Unauthenticated, _)
+    | (InProgress, _) =>
       Js.Promise.reject(InvalidState_Desync)
     | (Authenticated(_), _) => Js.Promise.reject(InvalidState_AlreadyAuthenticated)
     }
