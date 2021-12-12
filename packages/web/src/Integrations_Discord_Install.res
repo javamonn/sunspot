@@ -10,7 +10,7 @@ let default = () => {
     : router.pathname
 
   let handleCreated = () => {
-    Externals.Next.Router.replace(router, "/")
+    Externals.Next.Router.replace(router, "/alerts")
   }
   <main
     className={Cn.make([

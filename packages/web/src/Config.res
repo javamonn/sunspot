@@ -9,5 +9,5 @@ let sentryDsn = "https://46f76de2bfc64d10a89fc90865bb1d47@o1060100.ingest.sentry
 let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
 
 let discordOAuthUrl = isProduction
-  ? "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot"
-  : "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot"
+  ? "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands"
+  : "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands"
