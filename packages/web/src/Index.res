@@ -16,7 +16,7 @@ let default = () =>
       <p className={Cn.make(["mb-2"])}>
         <b> {React.string("sunspot")} </b>
         {React.string(
-          " alerts you in real-time when listing and sales of ethereum nfts occur on opensea.",
+          " alerts you in real-time when ethereum nfts are listed and sold on opensea.",
         )}
       </p>
       <ul className={Cn.make(["list-circle", "list-inside"])}>
