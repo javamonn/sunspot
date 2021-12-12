@@ -1,5 +1,5 @@
 import "styles/main.css";
-import "@fontsource/roboto-mono";
+import "@fontsource/ibm-plex-mono";
 
 // Note:
 // Just renaming $$default to ResApp alone

@@ -15,23 +15,27 @@ module.exports = {
   },
   darkMode: false, // or 'media' or 'class'
   theme: {
-    extend: {},
+    extend: {
+      listStyleType: {
+        circle: "circle",
+      },
+    },
     textColor: {
-      darkPrimary: 'rgba(0, 0, 0, .87)',
-      darkSecondary: 'rgba(0, 0, 0, .60)',
-      darkDisabled: 'rgba(0, 0, 0, .38)',
-      lightPrimary: 'rgba(255, 255, 255, .87)',
-      lightSecondary: 'rgba(255, 255, 255, .60)',
-      lightDisabled: 'rgba(255, 255, 255, .38)',
+      darkPrimary: "rgba(0, 0, 0, .87)",
+      darkSecondary: "rgba(0, 0, 0, .60)",
+      darkDisabled: "rgba(0, 0, 0, .38)",
+      lightPrimary: "rgba(255, 255, 255, .87)",
+      lightSecondary: "rgba(255, 255, 255, .60)",
+      lightDisabled: "rgba(255, 255, 255, .38)",
     },
     borderColor: {
-      darkPrimary: 'rgba(0, 0, 0, .87)',
-      darkSecondary: 'rgba(0, 0, 0, .60)',
-      darkDisabled: 'rgba(0, 0, 0, .38)',
-      darkBorder: 'rgba(0, 0, 0, .20)',
-      lightPrimary: 'rgba(255, 255, 255, .87)',
-      lightSecondary: 'rgba(255, 255, 255, .60)',
-      lightDisabled: 'rgba(255, 255, 255, .38)',
+      darkPrimary: "rgba(0, 0, 0, .87)",
+      darkSecondary: "rgba(0, 0, 0, .60)",
+      darkDisabled: "rgba(0, 0, 0, .38)",
+      darkBorder: "rgba(0, 0, 0, .20)",
+      lightPrimary: "rgba(255, 255, 255, .87)",
+      lightSecondary: "rgba(255, 255, 255, .60)",
+      lightDisabled: "rgba(255, 255, 255, .38)",
     },
     fontSize: {
       xs: ".75rem",
@@ -62,7 +66,7 @@ module.exports = {
         "sans-serif",
       ],
       mono: [
-        "Roboto Mono",
+        "IBM Plex Mono",
         "Menlo",
         "Monaco",
         "Consolas",

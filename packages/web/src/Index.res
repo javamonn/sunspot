@@ -19,14 +19,14 @@ let default = () =>
           " alerts you in real-time when listing and sales of ethereum nfts occur on opensea.",
         )}
       </p>
-      <ul className={Cn.make(["list-disc", "list-inside"])}>
+      <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li>
           <Externals.Next.Link href="/alerts">
-            <a className={Cn.make(["underline", "font-bold"])}> {React.string("launch app")} </a>
+            <a className={Cn.make(["underline"])}> {React.string("launch app")} </a>
           </Externals.Next.Link>
         </li>
         <li>
-          <a className={Cn.make(["underline", "font-bold"])} href={Config.discordOAuthUrl}>
+          <a className={Cn.make(["underline"])} href={Config.discordOAuthUrl}>
             {React.string("install discord bot")}
           </a>
         </li>
@@ -34,7 +34,7 @@ let default = () =>
     </section>
     <section className={Cn.make(["mb-12"])}>
       <p className={Cn.make(["mb-2", "font-bold"])}> {React.string("use cases:")} </p>
-      <ul className={Cn.make(["list-disc", "list-inside"])}>
+      <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li> {React.string("snipe mispriced assets at time of listing")} </li>
         <li> {React.string("monitor collection average price and volume activity")} </li>
         <li> {React.string("create a discord sales bot for your project")} </li>
@@ -43,7 +43,7 @@ let default = () =>
     </section>
     <section className={Cn.make(["mb-12"])}>
       <p className={Cn.make(["mb-2", "font-bold"])}> {React.string("features:")} </p>
-      <ul className={Cn.make(["list-disc", "list-inside"])}>
+      <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li> {React.string("real time event ingestion and alert dispatch pipeline")} </li>
         <li> {React.string("create alert rules with price threshold and traits")} </li>
         <li> {React.string("alerts delivered via browser push notification or discord bot")} </li>
@@ -52,7 +52,7 @@ let default = () =>
     </section>
     <section className={Cn.make(["mb-10"])}>
       <p className={Cn.make(["mb-2", "font-bold"])}> {React.string("etc:")} </p>
-      <ul className={Cn.make(["list-disc", "list-inside"])}>
+      <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li>
           <a className={Cn.make(["underline"])} href="https://discord.gg/y3wcMgagsF">
             {React.string("discord")}
