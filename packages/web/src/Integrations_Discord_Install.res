@@ -25,12 +25,14 @@ let default = () => {
       "max-w-6xl",
       "mx-auto",
     ])}>
-    <Containers.DiscordOnboaring
-      code={code->Belt.Option.getWithDefault("")}
-      guildId={guildId->Belt.Option.getWithDefault("")}
-      permissions={permissions->Belt.Option.getWithDefault(0)}
-      redirectUri={redirectUri}
+    <Containers.OAuthIntegration
       onCreated={handleCreated}
+      params={Containers_OAuthIntegration.Discord({
+        code: code->Belt.Option.getWithDefault(""),
+        guildId: guildId->Belt.Option.getWithDefault(""),
+        permissions: permissions->Belt.Option.getWithDefault(0),
+        redirectUri: redirectUri,
+      })}
     />
   </main>
 }

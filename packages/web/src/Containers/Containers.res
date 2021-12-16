@@ -1,3 +1,3 @@
 module CreateAlertModal = Containers_CreateAlertModal
 module UpdateAlertModal = Containers_UpdateAlertModal
-module DiscordOnboaring = Containers_DiscordOnboarding
+module OAuthIntegration = Containers_OAuthIntegration
