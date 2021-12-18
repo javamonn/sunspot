@@ -1,5 +1,6 @@
 let pushNotificationDestinationId = "push-notification"
 let destinationIdAddDiscordIntegration = "add-discord-integration"
+let destinationIdAddSlackIntegration = "add-slack-integration"
 
 let discordIconUrl = "/discord-icon.svg"
 let slackIconUrl = "/slack-icon.svg"
@@ -45,6 +46,9 @@ let make = (
         Some(Value.WebPushAlertDestination)
       } else if newDestination == destinationIdAddDiscordIntegration {
         onConnectDiscord()
+        None
+      } else if newDestination == destinationIdAddSlackIntegration {
+        onConnectSlack()
         None
       } else {
         destinationOptions
@@ -149,6 +153,17 @@ let make = (
           <Externals.MaterialUi_Icons.Add />
         </MaterialUi.Avatar>
         <span className={Cn.make(["ml-2"])}> {React.string("connect discord")} </span>
+      </MaterialUi.MenuItem>
+      <MaterialUi.MenuItem
+        value={MaterialUi.MenuItem.Value.string(destinationIdAddSlackIntegration)}>
+        <MaterialUi.Avatar
+          classes={MaterialUi.Avatar.Classes.make(
+            ~root=Cn.make(["bg-gray-200", "text-darkDisabled"]),
+            (),
+          )}>
+          <Externals.MaterialUi_Icons.Add />
+        </MaterialUi.Avatar>
+        <span className={Cn.make(["ml-2"])}> {React.string("connect slack")} </span>
       </MaterialUi.MenuItem>
     </MaterialUi.Select>
   </MaterialUi.FormControl>
