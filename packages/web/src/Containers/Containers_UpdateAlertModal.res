@@ -40,6 +40,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
           },
         }),
         discordAlertDestination: None,
+        slackAlertDestination: None,
       })
     })
   | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
@@ -49,6 +50,16 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
         channelId: channelId,
       }),
       webPushAlertDestination: None,
+      slackAlertDestination: None,
+    })
+  | AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl}) =>
+    Js.Promise.resolve({
+      discordAlertDestination: None,
+      webPushAlertDestination: None,
+      slackAlertDestination: Some({
+        channelId: channelId,
+        incomingWebhookUrl: incomingWebhookUrl,
+      }),
     })
   }
 
@@ -149,7 +160,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
 let defaultValue = AlertModal.Value.empty()
 
 @react.component
-let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~discordDestinationOptions) => {
+let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) => {
   let (updateAlertRuleMutation, updateAlertRuleMutationResult) = Mutation_UpdateAlertRule.use()
   let (deleteAlertRuleMutation, deleteAlertRuleMutationResult) = Mutation_DeleteAlertRule.use()
   let (newValue, setNewValue) = React.useState(_ => value)
@@ -276,7 +287,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~discordDestinationOpt
     onAction={handleUpdate}
     actionLabel="update"
     title="update alert"
-    discordDestinationOptions={discordDestinationOptions}
+    destinationOptions={destinationOptions}
     renderOverflowActionMenuItems={(~onClick) =>
       <MaterialUi.MenuItem
         onClick={_ => {

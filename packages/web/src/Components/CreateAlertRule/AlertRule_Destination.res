@@ -2,26 +2,41 @@ let pushNotificationDestinationId = "push-notification"
 let destinationIdAddDiscordIntegration = "add-discord-integration"
 
 let discordIconUrl = "/discord-icon.svg"
+let slackIconUrl = "/slack-icon.svg"
 
 module Value = {
   type t =
     | WebPushAlertDestination
     | DiscordAlertDestination({guildId: string, channelId: string})
+    | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
 }
 
 module Option = {
-  @deriving(accessors)
-  type t = {
-    guildId: string,
-    guildIconUrl: option<string>,
-    channelId: string,
-    channelName: string,
-    guildName: string,
-  }
+  type t =
+    | DiscordAlertDestinationOption({
+        guildId: string,
+        guildIconUrl: option<string>,
+        channelId: string,
+        channelName: string,
+        guildName: string,
+      })
+    | SlackAlertDestinationOption({
+        teamName: string,
+        channelName: string,
+        channelId: string,
+        incomingWebhookUrl: string,
+      })
 }
 
 @react.component
-let make = (~value, ~onChange, ~onConnectDiscord, ~discordDestinationOptions, ~disabled=?) => {
+let make = (
+  ~value,
+  ~onChange,
+  ~onConnectDiscord,
+  ~onConnectSlack,
+  ~destinationOptions,
+  ~disabled=?,
+) => {
   let handleChange = (ev, _) => {
     let target = ev->ReactEvent.Form.target
     target["value"]
@@ -32,12 +47,27 @@ let make = (~value, ~onChange, ~onConnectDiscord, ~discordDestinationOptions, ~d
         onConnectDiscord()
         None
       } else {
-        discordDestinationOptions
-        ->Belt.Array.getBy(opt => Option.channelId(opt) == newDestination)
-        ->Belt.Option.map(opt => Value.DiscordAlertDestination({
-          guildId: Option.guildId(opt),
-          channelId: Option.channelId(opt),
-        }))
+        destinationOptions
+        ->Belt.Array.getBy(opt =>
+          switch opt {
+          | Option.DiscordAlertDestinationOption({channelId}) => channelId == newDestination
+          | SlackAlertDestinationOption({channelId}) => channelId == newDestination
+          }
+        )
+        ->Belt.Option.map(opt =>
+          switch opt {
+          | DiscordAlertDestinationOption({guildId, channelId}) =>
+            Value.DiscordAlertDestination({
+              guildId: guildId,
+              channelId: channelId,
+            })
+          | SlackAlertDestinationOption({incomingWebhookUrl, channelId}) =>
+            Value.SlackAlertDestination({
+              incomingWebhookUrl: incomingWebhookUrl,
+              channelId: channelId,
+            })
+          }
+        )
       }
     )
     ->Belt.Option.forEach(newDestination => {
@@ -48,6 +78,7 @@ let make = (~value, ~onChange, ~onConnectDiscord, ~discordDestinationOptions, ~d
   let unwrappedValue = switch value {
   | Value.WebPushAlertDestination => MaterialUi.Select.Value.string(pushNotificationDestinationId)
   | DiscordAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
+  | SlackAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
   }
 
   <MaterialUi.FormControl
@@ -67,29 +98,45 @@ let make = (~value, ~onChange, ~onConnectDiscord, ~discordDestinationOptions, ~d
         value={MaterialUi.MenuItem.Value.string(pushNotificationDestinationId)}>
         {React.string("push notification (this device)")}
       </MaterialUi.MenuItem>
-      {Belt.Array.length(discordDestinationOptions) > 0 ? <MaterialUi.Divider /> : React.null}
-      {discordDestinationOptions
-      ->Belt.Array.map(opt =>
+      {Belt.Array.length(destinationOptions) > 0 ? <MaterialUi.Divider /> : React.null}
+      {destinationOptions
+      ->Belt.Array.map(opt => {
+        let (id, name, iconUrl) = switch opt {
+        | Option.DiscordAlertDestinationOption({
+            channelId,
+            guildIconUrl,
+            channelName,
+            guildName,
+          }) => (
+            channelId,
+            `#${channelName} (${guildName})`,
+            guildIconUrl->Belt.Option.getWithDefault(discordIconUrl),
+          )
+        | SlackAlertDestinationOption({teamName, channelName, channelId}) => (
+            channelId,
+            `${channelName} (${teamName})`,
+            slackIconUrl,
+          )
+        }
+
         <MaterialUi.MenuItem
-          key={Option.channelId(opt)}
-          value={opt->Option.channelId->MaterialUi.MenuItem.Value.string}
+          key={id}
+          value={id->MaterialUi.MenuItem.Value.string}
           classes={MaterialUi.MenuItem.Classes.make(~root=Cn.make(["whitespace-pre", "h-14"]), ())}>
           <div className={Cn.make(["absolute"])}>
             <MaterialUi.Avatar
               classes={MaterialUi.Avatar.Classes.make(~root=Cn.make(["bg-gray-200"]), ())}>
-              {opt
-              ->Option.guildIconUrl
-              ->Belt.Option.map(src => <img src={src} />)
-              ->Belt.Option.getWithDefault(
-                <img className={Cn.make(["w-5", "h-5", "opacity-70"])} src={discordIconUrl} />,
-              )}
+              <img
+                src={iconUrl}
+                className={iconUrl == discordIconUrl
+                  ? Cn.make(["w-5", "h-5", "opacity-70"])
+                  : Cn.make([])}
+              />
             </MaterialUi.Avatar>
           </div>
-          <span className={Cn.make(["ml-14"])}>
-            {React.string(`#${opt->Option.channelName} (${opt->Option.guildName})`)}
-          </span>
+          <span className={Cn.make(["ml-14"])}> {React.string(name)} </span>
         </MaterialUi.MenuItem>
-      )
+      })
       ->React.array}
       <MaterialUi.Divider />
       <MaterialUi.MenuItem

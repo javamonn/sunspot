@@ -89,7 +89,7 @@ let make = (
   ~onChange,
   ~validationError,
   ~isExited,
-  ~discordDestinationOptions,
+  ~destinationOptions,
   ~destinationDisabled=?,
 ) => {
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
@@ -157,6 +157,7 @@ let make = (
       Value.eventType: eventType,
     })
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
+  let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
 
   let collectionOptions = switch (
     resultsSource.current,
@@ -282,9 +283,10 @@ let make = (
     <AlertRule_Destination
       value={value->Value.destination}
       onChange={handleDestinationChange}
-      discordDestinationOptions={discordDestinationOptions}
+      destinationOptions={destinationOptions}
       disabled=?{destinationDisabled}
       onConnectDiscord={handleConnectDiscord}
+      onConnectSlack={handleConnectSlack}
     />
     <CreateAlertRule_Accordion
       className={Cn.make(["mt-8"])}

@@ -39,7 +39,7 @@ let make = (
   ~onClose,
   ~onExited=?,
   ~value,
-  ~discordDestinationOptions,
+  ~destinationOptions,
   ~onChange,
   ~isActioning,
   ~onAction,
@@ -112,7 +112,7 @@ let make = (
         isExited={isExited}
         onChange={onChange}
         validationError={validationError}
-        discordDestinationOptions={discordDestinationOptions}
+        destinationOptions={destinationOptions}
       />
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions

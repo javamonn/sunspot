@@ -2,6 +2,15 @@
 let default = () => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
   let code = Js.Dict.get(router.query, "code")
+
+  /**
+  let redirectUri = Config.isBrowser()
+    ? Externals.Webapi.Location.origin ++ router.pathname
+    : router.pathname
+  **/
+  let redirectUri = "https://sunspot.gg/integrations/slack/install"
+
+
   let handleCreated = () => {
     Externals.Next.Router.replace(router, "/alerts")
   }
@@ -18,6 +27,12 @@ let default = () => {
       "max-w-6xl",
       "mx-auto",
     ])}>
-    {React.null}
+    <Containers.OAuthIntegration
+      onCreated={handleCreated}
+      params={Containers.OAuthIntegration.Slack({
+        code: code->Belt.Option.getWithDefault(""),
+        redirectUri: redirectUri,
+      })}
+    />
   </main>
 }

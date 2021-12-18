@@ -100,11 +100,13 @@ let make = () => {
     ->Belt.Array.keepMap(item =>
       item->Belt.Option.map(item =>
         item.channels->Belt.Array.map(channel => {
-          AlertRule_Destination.Option.channelId: channel.id,
-          channelName: channel.name,
-          guildId: item.guildId,
-          guildName: item.name,
-          guildIconUrl: item.iconUrl,
+          AlertRule_Destination.Option.DiscordAlertDestinationOption({
+            channelId: channel.id,
+            channelName: channel.name,
+            guildId: item.guildId,
+            guildName: item.name,
+            guildIconUrl: item.iconUrl,
+          })
         })
       )
     )
@@ -240,7 +242,7 @@ let make = () => {
           isOpen={createAlertModalIsOpen}
           onClose={_ => setCreateAlertModalIsOpen(_ => false)}
           accountAddress={accountAddress}
-          discordDestinationOptions={discordIntegrationOptions}
+          destinationOptions={discordIntegrationOptions}
         />
         <Containers.UpdateAlertModal
           isOpen={switch updateAlertModal {
@@ -253,7 +255,7 @@ let make = () => {
           }}
           onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
           accountAddress={accountAddress}
-          discordDestinationOptions={discordIntegrationOptions}
+          destinationOptions={discordIntegrationOptions}
         />
       </>
     | _ => React.null

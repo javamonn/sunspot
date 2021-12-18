@@ -32,6 +32,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
           },
         }),
         discordAlertDestination: None,
+        slackAlertDestination: None
       })
     })
   | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
@@ -41,6 +42,16 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         channelId: channelId,
       }),
       webPushAlertDestination: None,
+      slackAlertDestination: None
+    })
+  | AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl}) =>
+    Js.Promise.resolve({
+      discordAlertDestination: None,
+      webPushAlertDestination: None,
+      slackAlertDestination: Some({
+        channelId: channelId,
+        incomingWebhookUrl: incomingWebhookUrl
+      })
     })
   }
   let priceEventFilter =
@@ -132,7 +143,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
 }
 
 @react.component
-let make = (~isOpen, ~onClose, ~accountAddress, ~discordDestinationOptions) => {
+let make = (~isOpen, ~onClose, ~accountAddress, ~destinationOptions) => {
   let (createAlertRuleMutation, createAlertRuleMutationResult) = Mutation_CreateAlertRule.use()
   let (value, setValue) = React.useState(() => AlertModal.Value.empty())
 
@@ -200,7 +211,7 @@ let make = (~isOpen, ~onClose, ~accountAddress, ~discordDestinationOptions) => {
     onClose
     onExited={handleExited}
     value={value}
-    discordDestinationOptions={discordDestinationOptions}
+    destinationOptions={destinationOptions}
     onChange={newValue => setValue(_ => newValue)}
     isActioning={isCreating}
     onAction={handleCreate}

@@ -3,17 +3,14 @@ open Containers_OAuthIntegration_GraphQL
 exception SignInFailed
 exception InvalidState
 
-type discordIntegrationParams = {
-  code: string,
-  guildId: string,
-  permissions: int,
-  redirectUri: string,
-}
-type integrationParams = Discord(discordIntegrationParams)
+type integrationParams =
+  | Discord({code: string, guildId: string, permissions: int, redirectUri: string})
+  | Slack({code: string, redirectUri: string})
 
 let integrationDisplayName = integrationParams =>
   switch integrationParams {
   | Discord(_) => "discord"
+  | Slack(_) => "slack"
   }
 
 @react.component
@@ -43,8 +40,61 @@ let make = (~onCreated, ~params) => {
     createDiscordOAuthIntegrationMutation,
     createDiscordOAuthIntegrationMutationResult,
   ) = Mutation_CreateDiscordOAuthIntegration.use()
+  let (
+    createSlackOAuthIntegrationMutation,
+    createSlackOAuthIntegrationMutationResult,
+  ) = Mutation_CreateSlackOAuthIntegration.use()
+
+  let connectWalletElement =
+    <>
+      {createIntegrationError
+      ->Belt.Option.map(error =>
+        <MaterialUi_Lab.Alert
+          severity=#Error classes={MaterialUi_Lab.Alert.Classes.make(~root=Cn.make(["mb-6"]), ())}>
+          {React.string(error)}
+        </MaterialUi_Lab.Alert>
+      )
+      ->Belt.Option.getWithDefault(React.null)}
+      <MaterialUi.Typography
+        color=#Primary
+        variant=#Body1
+        classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-16"]), ())}>
+        {React.string(step0BodyText)}
+      </MaterialUi.Typography>
+    </>
 
   let steps = switch params {
+  | Slack(_) => [
+      {
+        OAuthIntegrationDialog.label: "connect wallet",
+        actionLabel: switch authentication {
+        | Authenticated(_) => "connect account"
+        | _ => "connect wallet"
+        },
+        element: connectWalletElement,
+      },
+      {
+        label: "configure alert",
+        actionLabel: "create alert",
+        element: <AlertModal_DialogContent
+          isExited={false}
+          validationError={validationError}
+          value={alertRuleValue}
+          onChange={newValue => setAlertRuleValue(_ => newValue)}
+          destinationOptions={createSlackOAuthIntegrationMutationResult.data
+          ->Belt.Option.map(data => [
+            AlertRule_Destination.Option.SlackAlertDestinationOption({
+              teamName: data.slackIntegration.teamName,
+              channelName: data.slackIntegration.channelName,
+              channelId: data.slackIntegration.channelId,
+              incomingWebhookUrl: data.slackIntegration.incomingWebhookUrl,
+            }),
+          ])
+          ->Belt.Option.getWithDefault([])}
+          destinationDisabled={true}
+        />,
+      },
+    ]
   | Discord(_) => [
       {
         OAuthIntegrationDialog.label: "connect wallet",
@@ -52,23 +102,7 @@ let make = (~onCreated, ~params) => {
         | Authenticated(_) => "connect account"
         | _ => "connect wallet"
         },
-        element: <>
-          {createIntegrationError
-          ->Belt.Option.map(error =>
-            <MaterialUi_Lab.Alert
-              severity=#Error
-              classes={MaterialUi_Lab.Alert.Classes.make(~root=Cn.make(["mb-6"]), ())}>
-              {React.string(error)}
-            </MaterialUi_Lab.Alert>
-          )
-          ->Belt.Option.getWithDefault(React.null)}
-          <MaterialUi.Typography
-            color=#Primary
-            variant=#Body1
-            classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-16"]), ())}>
-            {React.string(step0BodyText)}
-          </MaterialUi.Typography>
-        </>,
+        element: connectWalletElement,
       },
       {
         label: "select destination",
@@ -127,15 +161,17 @@ let make = (~onCreated, ~params) => {
           validationError={validationError}
           value={alertRuleValue}
           onChange={newValue => setAlertRuleValue(_ => newValue)}
-          discordDestinationOptions={createDiscordOAuthIntegrationMutationResult.data
+          destinationOptions={createDiscordOAuthIntegrationMutationResult.data
           ->Belt.Option.map(data =>
-            data.discordIntegration.channels->Belt.Array.map(channel => {
-              AlertRule_Destination.Option.channelId: channel.id,
-              channelName: channel.name,
-              guildId: data.discordIntegration.guildId,
-              guildName: data.discordIntegration.name,
-              guildIconUrl: data.discordIntegration.iconUrl,
-            })
+            data.discordIntegration.channels->Belt.Array.map(
+              channel => AlertRule_Destination.Option.DiscordAlertDestinationOption({
+                channelId: channel.id,
+                channelName: channel.name,
+                guildId: data.discordIntegration.guildId,
+                guildName: data.discordIntegration.name,
+                guildIconUrl: data.discordIntegration.iconUrl,
+              }),
+            )
           )
           ->Belt.Option.getWithDefault([])}
           destinationDisabled={true}
@@ -155,27 +191,49 @@ let make = (~onCreated, ~params) => {
             permissions: permissions,
             redirectUri: redirectUri,
           },
-        })
+        }) |> Js.Promise.then_(result =>
+          /* * discord alert destination is set in step 2 * */
+          result->Belt.Result.map(result => None)->Js.Promise.resolve
+        )
+      | Slack({code, redirectUri}) =>
+        createSlackOAuthIntegrationMutation({
+          input: {
+            code: code,
+            redirectUri: redirectUri,
+          },
+        }) |> Js.Promise.then_(result =>
+          result
+          ->Belt.Result.map((
+            result: ApolloClient__React_Types.FetchResult.t__ok<
+              Mutation_CreateSlackOAuthIntegration.Mutation_CreateSlackOAuthIntegration_inner.t,
+            >,
+          ) => Some(
+            AlertRule_Destination.Value.SlackAlertDestination({
+              channelId: result.data.slackIntegration.channelId,
+              incomingWebhookUrl: result.data.slackIntegration.incomingWebhookUrl,
+            }),
+          ))
+          ->Js.Promise.resolve
+        )
       }
 
       mutation
       |> Js.Promise.then_(result => {
-        setIsActioning(_ => false)
-        let _ = switch result {
-        | Ok(_) => setActiveStepIdx(idx => idx + 1)
+        let mappedResult = switch result {
+        | Ok(destination) => Ok(destination)
         | Error(e) =>
           Services.Logger.apolloError(
             "Containers_OAuthIntegration",
             "handleCreateOAuthIntegration",
             e,
           )
-          setCreateIntegrationError(_ => Some(
+          Error(
             `an error occurred while connecting your account to your ${integrationDisplayName(
                 params,
               )} server. try again or contact us for support.`,
-          ))
+          )
         }
-        Js.Promise.resolve()
+        Js.Promise.resolve(mappedResult)
       })
       |> Js.Promise.catch(err => {
         Services.Logger.promiseError(
@@ -183,18 +241,15 @@ let make = (~onCreated, ~params) => {
           "handleCreateOAuthIntegration",
           err,
         )
-        setCreateIntegrationError(_ => Some(
-          `an error occurred while connecting your account to your ${integrationDisplayName(
-              params,
-            )} server. try again or contact us for support.`,
-        ))
-        setIsActioning(_ => false)
-        Js.Promise.resolve()
+        Js.Promise.resolve(
+          Error(
+            `an error occurred while connecting your account to your ${integrationDisplayName(
+                params,
+              )} server. try again or contact us for support.`,
+          ),
+        )
       })
     }
-
-    setIsActioning(_ => true)
-    setCreateIntegrationError(_ => None)
     switch authentication {
     | Authenticated(_) => executeMutation()
     | _ =>
@@ -211,11 +266,11 @@ let make = (~onCreated, ~params) => {
           "handleCreateOAuthIntegration",
           err,
         )
-        setIsActioning(_ => false)
-        setCreateIntegrationError(_ => Some(
-          "an error occurred while connecting your wallet. try again or contact us for support.",
-        ))
-        Js.Promise.resolve()
+        Js.Promise.resolve(
+          Error(
+            "an error occurred while connecting your wallet. try again or contact us for support.",
+          ),
+        )
       })
     }
   }
@@ -292,11 +347,18 @@ let make = (~onCreated, ~params) => {
     let destination = switch alertRuleValue.destination {
     | DiscordAlertDestination({guildId, channelId}) => {
         webPushAlertDestination: None,
+        slackAlertDestination: None,
         discordAlertDestination: Some({guildId: guildId, channelId: channelId}),
+      }
+    | SlackAlertDestination({channelId, incomingWebhookUrl}) => {
+        webPushAlertDestination: None,
+        discordAlertDestination: None,
+        slackAlertDestination: Some({channelId: channelId, incomingWebhookUrl: incomingWebhookUrl}),
       }
     | AlertRule_Destination.Value.WebPushAlertDestination => {
         webPushAlertDestination: None,
         discordAlertDestination: None,
+        slackAlertDestination: None,
       }
     }
 
@@ -331,7 +393,22 @@ let make = (~onCreated, ~params) => {
   let handleActionClicked = () => {
     switch steps->Belt.Array.get(activeStepIdx)->Belt.Option.map(({label}) => label) {
     | Some("connect wallet") =>
-      let _ = handleCreateOAuthIntegration()
+      setIsActioning(_ => true)
+      setCreateIntegrationError(_ => None)
+      let _ = handleCreateOAuthIntegration() |> Js.Promise.then_(destinationResult => {
+        setIsActioning(_ => false)
+        switch destinationResult {
+        | Ok(Some(destination)) =>
+          setActiveStepIdx(idx => idx + 1)
+          setAlertRuleValue(alertRuleValue => {
+            ...alertRuleValue,
+            destination: destination,
+          })
+        | Ok(None) => setActiveStepIdx(idx => idx + 1)
+        | Error(message) => setCreateIntegrationError(_ => Some(message))
+        }
+        Js.Promise.resolve()
+      })
     | Some("select destination") => setActiveStepIdx(idx => idx + 1)
     | Some("configure alert") =>
       let validationResult = AlertModal.validate(alertRuleValue)
