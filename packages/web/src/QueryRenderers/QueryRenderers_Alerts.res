@@ -18,14 +18,20 @@ let make = () => {
     | _ => makeVariables(~accountAddress="")
     },
   )
-  let discordIntegrationsQuery = Query_DiscordIntegrationsByAccountAddress.use(
+  let oauthIntegrationsQuery = Query_OAuthIntegrationsByAccountAddress.use(
     ~skip=switch authentication {
     | Authenticated(_) => false
     | _ => true
     },
     switch authentication {
-    | Authenticated({jwt: {accountAddress}}) => {input: {accountAddress: accountAddress}}
-    | _ => {input: {accountAddress: ""}}
+    | Authenticated({jwt: {accountAddress}}) => {
+        discordIntegrationsInput: {accountAddress: accountAddress},
+        slackIntegrationsInput: {accountAddress: accountAddress},
+      }
+    | _ => {
+        discordIntegrationsInput: {accountAddress: ""},
+        slackIntegrationsInput: {accountAddress: ""},
+      }
     },
   )
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
@@ -94,24 +100,39 @@ let make = () => {
       ->Belt.Array.concatMany,
     })
 
-  let discordIntegrationOptions = switch discordIntegrationsQuery {
-  | {data: Some({discordIntegrations: Some({items: Some(items)})})} =>
-    items
-    ->Belt.Array.keepMap(item =>
-      item->Belt.Option.map(item =>
-        item.channels->Belt.Array.map(channel => {
-          AlertRule_Destination.Option.DiscordAlertDestinationOption({
-            channelId: channel.id,
-            channelName: channel.name,
-            guildId: item.guildId,
-            guildName: item.name,
-            guildIconUrl: item.iconUrl,
+  let integrationOptions = {
+    let discordIntegrationOptions = switch oauthIntegrationsQuery {
+    | {data: Some({discordIntegrations: Some({items: Some(discordItems)})})} =>
+      discordItems
+      ->Belt.Array.keepMap(item =>
+        item->Belt.Option.map(item =>
+          item.channels->Belt.Array.map(channel => {
+            AlertRule_Destination.Option.DiscordAlertDestinationOption({
+              channelId: channel.id,
+              channelName: channel.name,
+              guildId: item.guildId,
+              guildName: item.name,
+              guildIconUrl: item.iconUrl,
+            })
           })
-        })
+        )
       )
-    )
-    ->Belt.Array.concatMany
-  | _ => []
+      ->Belt.Array.concatMany
+    | _ => []
+    }
+    let slackIntegrationOptions = switch oauthIntegrationsQuery {
+    | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
+      slackItems->Belt.Array.keepMap(item =>
+        item->Belt.Option.map(item => AlertRule_Destination.Option.SlackAlertDestinationOption({
+          teamName: item.teamName,
+          channelName: item.channelName,
+          channelId: item.channelId,
+          incomingWebhookUrl: item.incomingWebhookUrl,
+        }))
+      )
+    | _ => []
+    }
+    Belt.Array.concatMany([discordIntegrationOptions, slackIntegrationOptions])
   }
 
   let handleConnectWalletClicked = _ => {
@@ -190,6 +211,11 @@ let make = () => {
           guildId: guildId,
           channelId: channelId,
         })
+      | #SlackAlertDestination({channelId, incomingWebhookUrl}) =>
+        AlertRule_Destination.Value.SlackAlertDestination({
+          channelId: channelId,
+          incomingWebhookUrl: incomingWebhookUrl,
+        })
       | #FutureAddedValue(_) => AlertRule_Destination.Value.WebPushAlertDestination
       }
       let eventType = switch item.eventType {
@@ -242,7 +268,7 @@ let make = () => {
           isOpen={createAlertModalIsOpen}
           onClose={_ => setCreateAlertModalIsOpen(_ => false)}
           accountAddress={accountAddress}
-          destinationOptions={discordIntegrationOptions}
+          destinationOptions={integrationOptions}
         />
         <Containers.UpdateAlertModal
           isOpen={switch updateAlertModal {
@@ -255,7 +281,7 @@ let make = () => {
           }}
           onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
           accountAddress={accountAddress}
-          destinationOptions={discordIntegrationOptions}
+          destinationOptions={integrationOptions}
         />
       </>
     | _ => React.null

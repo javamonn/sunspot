@@ -16,9 +16,13 @@ module Query_AlertRulesByAccountAddress = %graphql(
       ... on WebPushAlertDestination {
         endpoint
       }
-      ...on DiscordAlertDestination {
+      ... on DiscordAlertDestination {
         guildId
         channelId
+      }
+      ... on SlackAlertDestination {
+        channelId
+        incomingWebhookUrl
       }
     }
     eventFilters {
@@ -61,9 +65,12 @@ module Query_AlertRulesByAccountAddress = %graphql(
   {inline: true}
 )
 
-module Query_DiscordIntegrationsByAccountAddress = %graphql(`
-  query DiscordIntegrationsByAccountAddress($input: DiscordIntegrationsByAccountAddressInput!) {
-    discordIntegrations: discordIntegrationsByAccountAddress(input: $input) {
+module Query_OAuthIntegrationsByAccountAddress = %graphql(`
+  query OAuthIntegrationsByAccountAddress(
+    $discordIntegrationsInput: DiscordIntegrationsByAccountAddressInput!
+    $slackIntegrationsInput: SlackIntegrationsByAccountAddressInput!
+  ) {
+    discordIntegrations: discordIntegrationsByAccountAddress(input: $discordIntegrationsInput) {
       items {
         guildId
         name
@@ -72,6 +79,14 @@ module Query_DiscordIntegrationsByAccountAddress = %graphql(`
           name 
           id
         }
+      }
+    }
+    slackIntegrations: slackIntegrationsByAccountAddress(input: $slackIntegrationsInput) {
+      items {
+        channelId
+        channelName
+        teamName
+        incomingWebhookUrl
       }
     }
   }
