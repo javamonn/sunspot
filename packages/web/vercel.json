@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "excludeFiles" : "node_modules/**"
+  }
+}
