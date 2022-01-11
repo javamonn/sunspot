@@ -129,7 +129,7 @@ let make = (
       {Belt.Array.length(destinationOptions) > 0 ? <MaterialUi.Divider /> : React.null}
       {destinationOptions
       ->Belt.Array.map(opt => {
-        let (id, name, iconUrl) = switch opt {
+        let (id, name, iconUrl, displayType) = switch opt {
         | Option.DiscordAlertDestinationOption({
             channelId,
             guildIconUrl,
@@ -139,16 +139,19 @@ let make = (
             channelId,
             `#${channelName} (${guildName})`,
             guildIconUrl->Belt.Option.getWithDefault(discordIconUrl),
+            "discord",
           )
         | SlackAlertDestinationOption({teamName, channelName, channelId}) => (
             channelId,
             `${channelName} (${teamName})`,
             slackIconUrl,
+            "slack",
           )
         | TwitterAlertDestinationOption({userId, username, profileImageUrl}) => (
             userId,
             `@${username}`,
             profileImageUrl,
+            "twitter",
           )
         }
 
@@ -167,7 +170,14 @@ let make = (
               />
             </MaterialUi.Avatar>
           </div>
-          <span className={Cn.make(["ml-14"])}> {React.string(name)} </span>
+          <div className={Cn.make(["flex", "flex-row", "justify-between", "flex-1"])}>
+            <span className={Cn.make(["ml-14", "font-medium", "block", "flex-1"])}>
+              {React.string(name)}
+            </span>
+            <span className={Cn.make(["ml-14", "text-darkSecondary", "block"])}>
+              {React.string(displayType)}
+            </span>
+          </div>
         </MaterialUi.MenuItem>
       })
       ->React.array}
