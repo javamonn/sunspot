@@ -110,7 +110,7 @@ let make = (
   }
 
   <MaterialUi.FormControl
-    classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-1/2"]), ())}>
+    classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-full"]), ())}>
     <MaterialUi.InputLabel shrink=true id="CreateAlertModal_action" htmlFor="">
       {React.string("destination")}
     </MaterialUi.InputLabel>

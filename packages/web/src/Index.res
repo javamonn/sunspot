@@ -26,9 +26,19 @@ let default = () =>
           </Externals.Next.Link>
         </li>
         <li>
+          {React.string("install bot (")}
           <a className={Cn.make(["underline"])} href={Config.discordOAuthUrl}>
-            {React.string("install discord bot")}
+            {React.string("discord")}
           </a>
+          {React.string(", ")}
+          <a className={Cn.make(["underline"])} href={Config.twitterOAuthUrl}>
+            {React.string("twitter")}
+          </a>
+          {React.string(", ")}
+          <a className={Cn.make(["underline"])} href={Config.slackOAuthUrl}>
+            {React.string("slack")}
+          </a>
+          {React.string(")")}
         </li>
       </ul>
     </section>
@@ -37,7 +47,7 @@ let default = () =>
       <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li> {React.string("snipe mispriced assets at time of listing")} </li>
         <li> {React.string("monitor collection average price and volume activity")} </li>
-        <li> {React.string("create a discord sales bot for your project")} </li>
+        <li> {React.string("create discord and twitter sales bots for your project")} </li>
         <li> {React.string("get notified when your active listing is undercut")} </li>
       </ul>
     </section>
