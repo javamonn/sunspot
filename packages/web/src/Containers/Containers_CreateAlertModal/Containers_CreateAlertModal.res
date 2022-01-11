@@ -32,7 +32,8 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
           },
         }),
         discordAlertDestination: None,
-        slackAlertDestination: None
+        slackAlertDestination: None,
+        twitterAlertDestination: None,
       })
     })
   | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
@@ -42,16 +43,34 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         channelId: channelId,
       }),
       webPushAlertDestination: None,
-      slackAlertDestination: None
+      slackAlertDestination: None,
+      twitterAlertDestination: None,
     })
   | AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl}) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
+      twitterAlertDestination: None,
       slackAlertDestination: Some({
         channelId: channelId,
-        incomingWebhookUrl: incomingWebhookUrl
-      })
+        incomingWebhookUrl: incomingWebhookUrl,
+      }),
+    })
+  | AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken}) =>
+    Js.Promise.resolve({
+      discordAlertDestination: None,
+      webPushAlertDestination: None,
+      slackAlertDestination: None,
+      twitterAlertDestination: Some({
+        userId: userId,
+        accessToken: {
+          accessToken: accessToken.accessToken,
+          refreshToken: accessToken.refreshToken,
+          tokenType: accessToken.tokenType,
+          scope: accessToken.scope,
+          expiresAt: accessToken.expiresAt,
+        },
+      }),
     })
   }
   let priceEventFilter =

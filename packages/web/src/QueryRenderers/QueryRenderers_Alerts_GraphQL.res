@@ -24,6 +24,16 @@ module Query_AlertRulesByAccountAddress = %graphql(
         channelId
         incomingWebhookUrl
       }
+      ... on TwitterAlertDestination {
+        userId
+        accessToken {
+          accessToken 
+          tokenType
+          refreshToken
+          expiresAt
+          scope
+        }
+      }
     }
     eventFilters {
       ... on AlertPriceThresholdEventFilter {
@@ -69,6 +79,7 @@ module Query_OAuthIntegrationsByAccountAddress = %graphql(`
   query OAuthIntegrationsByAccountAddress(
     $discordIntegrationsInput: DiscordIntegrationsByAccountAddressInput!
     $slackIntegrationsInput: SlackIntegrationsByAccountAddressInput!
+    $twitterIntegrationsInput: TwitterIntegrationsByAccountAddressInput!
   ) {
     discordIntegrations: discordIntegrationsByAccountAddress(input: $discordIntegrationsInput) {
       items {
@@ -87,6 +98,23 @@ module Query_OAuthIntegrationsByAccountAddress = %graphql(`
         channelName
         teamName
         incomingWebhookUrl
+      }
+    }
+    twitterIntegrations: twitterIntegrationsByAccountAddress(input: $twitterIntegrationsInput) {
+      items {
+        userId  
+        user {
+          id
+          username
+          profileImageUrl
+        }
+        accessToken {
+          accessToken 
+          tokenType
+          refreshToken
+          expiresAt
+          scope
+        }
       }
     }
   }

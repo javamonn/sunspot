@@ -25,6 +25,26 @@ module Mutation_CreateSlackOAuthIntegration = %graphql(`
   }
 `)
 
+module Mutation_CreateTwitterOAuthIntegration = %graphql(`
+  mutation CreateTwitterIntegration($input: CreateTwitterIntegrationInput!) {
+    twitterIntegration: createTwitterIntegration(input: $input) {
+      userId
+      user {
+        id
+        username
+        profileImageUrl
+      }
+      accessToken {
+        accessToken 
+        tokenType
+        refreshToken
+        expiresAt
+        scope
+      }
+    }
+  }
+`)
+
 module Mutation_CreateAlertRule = %graphql(`
   mutation CreateAlertRule($input: CreateAlertRuleInput!) {
     alertRule: createAlertRule(input: $input) {

@@ -27,10 +27,12 @@ let make = () => {
     | Authenticated({jwt: {accountAddress}}) => {
         discordIntegrationsInput: {accountAddress: accountAddress},
         slackIntegrationsInput: {accountAddress: accountAddress},
+        twitterIntegrationsInput: {accountAddress: accountAddress},
       }
     | _ => {
         discordIntegrationsInput: {accountAddress: ""},
         slackIntegrationsInput: {accountAddress: ""},
+        twitterIntegrationsInput: {accountAddress: ""},
       }
     },
   )
@@ -132,7 +134,29 @@ let make = () => {
       )
     | _ => []
     }
-    Belt.Array.concatMany([discordIntegrationOptions, slackIntegrationOptions])
+    let twitterIntegrationOptions = switch oauthIntegrationsQuery {
+    | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
+      twitterItems->Belt.Array.keepMap(item =>
+        item->Belt.Option.map(item => AlertRule_Destination.Option.TwitterAlertDestinationOption({
+          userId: item.user.id,
+          username: item.user.username,
+          profileImageUrl: item.user.profileImageUrl,
+          accessToken: {
+            accessToken: item.accessToken.accessToken,
+            refreshToken: item.accessToken.refreshToken,
+            scope: item.accessToken.scope,
+            expiresAt: item.accessToken.expiresAt,
+            tokenType: item.accessToken.tokenType,
+          },
+        }))
+      )
+    | _ => []
+    }
+    Belt.Array.concatMany([
+      discordIntegrationOptions,
+      slackIntegrationOptions,
+      twitterIntegrationOptions,
+    ])
   }
 
   let handleConnectWalletClicked = _ => {
@@ -215,6 +239,17 @@ let make = () => {
         AlertRule_Destination.Value.SlackAlertDestination({
           channelId: channelId,
           incomingWebhookUrl: incomingWebhookUrl,
+        })
+      | #TwitterAlertDestination({userId, accessToken}) =>
+        AlertRule_Destination.Value.TwitterAlertDestination({
+          userId: userId,
+          accessToken: {
+            accessToken: accessToken.accessToken,
+            refreshToken: accessToken.refreshToken,
+            tokenType: accessToken.tokenType,
+            scope: accessToken.scope,
+            expiresAt: accessToken.expiresAt,
+          },
         })
       | #FutureAddedValue(_) => AlertRule_Destination.Value.WebPushAlertDestination
       }

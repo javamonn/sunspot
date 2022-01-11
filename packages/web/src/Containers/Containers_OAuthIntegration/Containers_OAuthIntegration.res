@@ -6,45 +6,33 @@ exception InvalidState
 type integrationParams =
   | Discord({code: string, guildId: string, permissions: int, redirectUri: string})
   | Slack({code: string, redirectUri: string})
+  | Twitter({code: string, redirectUri: string})
 
 let integrationDisplayName = integrationParams =>
   switch integrationParams {
   | Discord(_) => "discord"
   | Slack(_) => "slack"
+  | Twitter(_) => "twitter"
   }
 
-@react.component
-let make = (~onCreated, ~params) => {
-  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let (validationError, setValidationError) = React.useState(_ => None)
-  let (isDialogOpen, setIsDialogOpen) = React.useState(_ => true)
-  let (activeStepIdx, setActiveStepIdx) = React.useState(() => 0)
-  let (createIntegrationError, setCreateIntegrationError) = React.useState(_ => None)
-  let (isActioning, setIsActioning) = React.useState(() => false)
-  let (step0BodyText, _) = React.useState(() =>
-    switch authentication {
-    | Authenticated(_) =>
-      `sunspot is now installed within your ${integrationDisplayName(
-          params,
-        )} server. to start receiving alerts, click next to connect your account.`
-    | _ =>
-      `sunspot is now installed within your ${integrationDisplayName(
-          params,
-        )} server. to start receiving alerts, connect your wallet to create an account.`
-    }
-  )
-  let (alertRuleValue, setAlertRuleValue) = React.useState(_ => AlertModal.Value.empty())
-
-  let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
-  let (
-    createDiscordOAuthIntegrationMutation,
-    createDiscordOAuthIntegrationMutationResult,
-  ) = Mutation_CreateDiscordOAuthIntegration.use()
-  let (
-    createSlackOAuthIntegrationMutation,
-    createSlackOAuthIntegrationMutationResult,
-  ) = Mutation_CreateSlackOAuthIntegration.use()
-
+let makeSteps = (
+  ~validationError,
+  ~setAlertRuleValue,
+  ~alertRuleValue,
+  ~step0BodyText,
+  ~createIntegrationError,
+  ~authentication,
+  ~params,
+  ~createSlackOAuthIntegrationMutationResultData: option<
+    Mutation_CreateSlackOAuthIntegration.Mutation_CreateSlackOAuthIntegration_inner.t,
+  >,
+  ~createDiscordOAuthIntegrationMutationResultData: option<
+    Mutation_CreateDiscordOAuthIntegration.Mutation_CreateDiscordOAuthIntegration_inner.t,
+  >,
+  ~createTwitterOAuthIntegrationMutationResultData: option<
+    Mutation_CreateTwitterOAuthIntegration.Mutation_CreateTwitterOAuthIntegration_inner.t,
+  >,
+) => {
   let connectWalletElement =
     <>
       {createIntegrationError
@@ -63,12 +51,12 @@ let make = (~onCreated, ~params) => {
       </MaterialUi.Typography>
     </>
 
-  let steps = switch params {
+  switch params {
   | Slack(_) => [
       {
         OAuthIntegrationDialog.label: "connect wallet",
         actionLabel: switch authentication {
-        | Authenticated(_) => "connect account"
+        | Contexts.Auth.Authenticated(_) => "connect account"
         | _ => "connect wallet"
         },
         element: connectWalletElement,
@@ -81,13 +69,50 @@ let make = (~onCreated, ~params) => {
           validationError={validationError}
           value={alertRuleValue}
           onChange={newValue => setAlertRuleValue(_ => newValue)}
-          destinationOptions={createSlackOAuthIntegrationMutationResult.data
+          destinationOptions={createSlackOAuthIntegrationMutationResultData
           ->Belt.Option.map(data => [
             AlertRule_Destination.Option.SlackAlertDestinationOption({
               teamName: data.slackIntegration.teamName,
               channelName: data.slackIntegration.channelName,
               channelId: data.slackIntegration.channelId,
               incomingWebhookUrl: data.slackIntegration.incomingWebhookUrl,
+            }),
+          ])
+          ->Belt.Option.getWithDefault([])}
+          destinationDisabled={true}
+        />,
+      },
+    ]
+  | Twitter(_) => [
+      {
+        OAuthIntegrationDialog.label: "connect wallet",
+        actionLabel: switch authentication {
+        | Contexts.Auth.Authenticated(_) => "connect account"
+        | _ => "connect wallet"
+        },
+        element: connectWalletElement,
+      },
+      {
+        label: "configure alert",
+        actionLabel: "create alert",
+        element: <AlertModal_DialogContent
+          isExited={false}
+          validationError={validationError}
+          value={alertRuleValue}
+          onChange={newValue => setAlertRuleValue(_ => newValue)}
+          destinationOptions={createTwitterOAuthIntegrationMutationResultData
+          ->Belt.Option.map(data => [
+            AlertRule_Destination.Option.TwitterAlertDestinationOption({
+              userId: data.twitterIntegration.user.id,
+              username: data.twitterIntegration.user.username,
+              profileImageUrl: data.twitterIntegration.user.profileImageUrl,
+              accessToken: {
+                accessToken: data.twitterIntegration.accessToken.accessToken,
+                refreshToken: data.twitterIntegration.accessToken.refreshToken,
+                scope: data.twitterIntegration.accessToken.scope,
+                expiresAt: data.twitterIntegration.accessToken.expiresAt,
+                tokenType: data.twitterIntegration.accessToken.tokenType,
+              },
             }),
           ])
           ->Belt.Option.getWithDefault([])}
@@ -107,7 +132,7 @@ let make = (~onCreated, ~params) => {
       {
         label: "select destination",
         actionLabel: "next",
-        element: createDiscordOAuthIntegrationMutationResult.data
+        element: createDiscordOAuthIntegrationMutationResultData
         ->Belt.Option.map(data => {
           let value = switch alertRuleValue.destination {
           | AlertRule_Destination.Value.DiscordAlertDestination({channelId}) =>
@@ -161,7 +186,7 @@ let make = (~onCreated, ~params) => {
           validationError={validationError}
           value={alertRuleValue}
           onChange={newValue => setAlertRuleValue(_ => newValue)}
-          destinationOptions={createDiscordOAuthIntegrationMutationResult.data
+          destinationOptions={createDiscordOAuthIntegrationMutationResultData
           ->Belt.Option.map(data =>
             data.discordIntegration.channels->Belt.Array.map(
               channel => AlertRule_Destination.Option.DiscordAlertDestinationOption({
@@ -179,6 +204,56 @@ let make = (~onCreated, ~params) => {
       },
     ]
   }
+}
+
+@react.component
+let make = (~onCreated, ~params) => {
+  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let (validationError, setValidationError) = React.useState(_ => None)
+  let (isDialogOpen, setIsDialogOpen) = React.useState(_ => true)
+  let (activeStepIdx, setActiveStepIdx) = React.useState(() => 0)
+  let (createIntegrationError, setCreateIntegrationError) = React.useState(_ => None)
+  let (isActioning, setIsActioning) = React.useState(() => false)
+  let (step0BodyText, _) = React.useState(() =>
+    switch authentication {
+    | Authenticated(_) =>
+      `sunspot is now installed within your ${integrationDisplayName(
+          params,
+        )} server. to start receiving alerts, click next to connect your account.`
+    | _ =>
+      `sunspot is now installed within your ${integrationDisplayName(
+          params,
+        )} server. to start receiving alerts, connect your wallet to create an account.`
+    }
+  )
+  let (alertRuleValue, setAlertRuleValue) = React.useState(_ => AlertModal.Value.empty())
+
+  let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
+  let (
+    createDiscordOAuthIntegrationMutation,
+    createDiscordOAuthIntegrationMutationResult,
+  ) = Mutation_CreateDiscordOAuthIntegration.use()
+  let (
+    createSlackOAuthIntegrationMutation,
+    createSlackOAuthIntegrationMutationResult,
+  ) = Mutation_CreateSlackOAuthIntegration.use()
+  let (
+    createTwitterOAuthIntegrationMutation,
+    createTwitterOAuthIntegrationMutationResult,
+  ) = Mutation_CreateTwitterOAuthIntegration.use()
+
+  let steps = makeSteps(
+    ~createSlackOAuthIntegrationMutationResultData=createSlackOAuthIntegrationMutationResult.data,
+    ~createDiscordOAuthIntegrationMutationResultData=createDiscordOAuthIntegrationMutationResult.data,
+    ~createTwitterOAuthIntegrationMutationResultData=createTwitterOAuthIntegrationMutationResult.data,
+    ~validationError,
+    ~setAlertRuleValue,
+    ~alertRuleValue,
+    ~step0BodyText,
+    ~createIntegrationError,
+    ~authentication,
+    ~params,
+  )
 
   let handleCreateOAuthIntegration = () => {
     let executeMutation = () => {
@@ -215,6 +290,35 @@ let make = (~onCreated, ~params) => {
           ))
           ->Js.Promise.resolve
         )
+      | Twitter({code, redirectUri}) =>
+        createTwitterOAuthIntegrationMutation({
+          input: {
+            code: code,
+            redirectUri: redirectUri,
+          },
+        }) |> Js.Promise.then_(result => {
+          result
+          ->Belt.Result.map((
+            result: ApolloClient__React_Types.FetchResult.t__ok<
+              Mutation_CreateTwitterOAuthIntegration.Mutation_CreateTwitterOAuthIntegration_inner.t,
+            >,
+          ) => {
+            let data = result.data.twitterIntegration
+            Some(
+              AlertRule_Destination.Value.TwitterAlertDestination({
+                userId: data.user.id,
+                accessToken: {
+                  accessToken: data.accessToken.accessToken,
+                  refreshToken: data.accessToken.refreshToken,
+                  expiresAt: data.accessToken.expiresAt,
+                  scope: data.accessToken.scope,
+                  tokenType: data.accessToken.tokenType,
+                },
+              }),
+            )
+          })
+          ->Js.Promise.resolve
+        })
       }
 
       mutation
@@ -346,19 +450,37 @@ let make = (~onCreated, ~params) => {
 
     let destination = switch alertRuleValue.destination {
     | DiscordAlertDestination({guildId, channelId}) => {
+        discordAlertDestination: Some({guildId: guildId, channelId: channelId}),
         webPushAlertDestination: None,
         slackAlertDestination: None,
-        discordAlertDestination: Some({guildId: guildId, channelId: channelId}),
+        twitterAlertDestination: None,
       }
     | SlackAlertDestination({channelId, incomingWebhookUrl}) => {
+        slackAlertDestination: Some({channelId: channelId, incomingWebhookUrl: incomingWebhookUrl}),
         webPushAlertDestination: None,
         discordAlertDestination: None,
-        slackAlertDestination: Some({channelId: channelId, incomingWebhookUrl: incomingWebhookUrl}),
+        twitterAlertDestination: None,
       }
-    | AlertRule_Destination.Value.WebPushAlertDestination => {
+    | TwitterAlertDestination({userId, accessToken}) => {
+        discordAlertDestination: None,
+        webPushAlertDestination: None,
+        slackAlertDestination: None,
+        twitterAlertDestination: Some({
+          userId: userId,
+          accessToken: {
+            accessToken: accessToken.accessToken,
+            refreshToken: accessToken.refreshToken,
+            tokenType: accessToken.tokenType,
+            scope: accessToken.scope,
+            expiresAt: accessToken.expiresAt,
+          },
+        }),
+      }
+    | WebPushAlertDestination => {
         webPushAlertDestination: None,
         discordAlertDestination: None,
         slackAlertDestination: None,
+        twitterAlertDestination: None,
       }
     }
 

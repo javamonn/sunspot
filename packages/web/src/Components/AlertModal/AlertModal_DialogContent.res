@@ -158,6 +158,7 @@ let make = (
     })
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
+  let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
 
   let collectionOptions = switch (
     resultsSource.current,
@@ -287,6 +288,7 @@ let make = (
       disabled=?{destinationDisabled}
       onConnectDiscord={handleConnectDiscord}
       onConnectSlack={handleConnectSlack}
+      onConnectTwitter={handleConnectTwitter}
     />
     <CreateAlertRule_Accordion
       className={Cn.make(["mt-8"])}

@@ -1,15 +1,25 @@
 let pushNotificationDestinationId = "push-notification"
 let destinationIdAddDiscordIntegration = "add-discord-integration"
 let destinationIdAddSlackIntegration = "add-slack-integration"
+let destinationIdAddTwitterIntegration = "add-twitter-integration"
 
 let discordIconUrl = "/discord-icon.svg"
 let slackIconUrl = "/slack-icon.svg"
+
+type destinationOAuthAccessToken = {
+  accessToken: string,
+  refreshToken: string,
+  scope: string,
+  expiresAt: string,
+  tokenType: string,
+}
 
 module Value = {
   type t =
     | WebPushAlertDestination
     | DiscordAlertDestination({guildId: string, channelId: string})
     | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
+    | TwitterAlertDestination({userId: string, accessToken: destinationOAuthAccessToken})
 }
 
 module Option = {
@@ -27,6 +37,12 @@ module Option = {
         channelId: string,
         incomingWebhookUrl: string,
       })
+    | TwitterAlertDestinationOption({
+        userId: string,
+        username: string,
+        profileImageUrl: string,
+        accessToken: destinationOAuthAccessToken,
+      })
 }
 
 @react.component
@@ -35,6 +51,7 @@ let make = (
   ~onChange,
   ~onConnectDiscord,
   ~onConnectSlack,
+  ~onConnectTwitter,
   ~destinationOptions,
   ~disabled=?,
 ) => {
@@ -50,12 +67,16 @@ let make = (
       } else if newDestination == destinationIdAddSlackIntegration {
         onConnectSlack()
         None
+      } else if newDestination == destinationIdAddTwitterIntegration {
+        onConnectTwitter()
+        None
       } else {
         destinationOptions
         ->Belt.Array.getBy(opt =>
           switch opt {
           | Option.DiscordAlertDestinationOption({channelId}) => channelId == newDestination
           | SlackAlertDestinationOption({channelId}) => channelId == newDestination
+          | TwitterAlertDestinationOption({userId}) => userId === newDestination
           }
         )
         ->Belt.Option.map(opt =>
@@ -70,6 +91,8 @@ let make = (
               incomingWebhookUrl: incomingWebhookUrl,
               channelId: channelId,
             })
+          | TwitterAlertDestinationOption({userId, accessToken}) =>
+            Value.TwitterAlertDestination({userId: userId, accessToken: accessToken})
           }
         )
       }
@@ -83,6 +106,7 @@ let make = (
   | Value.WebPushAlertDestination => MaterialUi.Select.Value.string(pushNotificationDestinationId)
   | DiscordAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
   | SlackAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
+  | TwitterAlertDestination({userId}) => MaterialUi.Select.Value.string(userId)
   }
 
   <MaterialUi.FormControl
@@ -120,6 +144,11 @@ let make = (
             channelId,
             `${channelName} (${teamName})`,
             slackIconUrl,
+          )
+        | TwitterAlertDestinationOption({userId, username, profileImageUrl}) => (
+            userId,
+            `@${username}`,
+            profileImageUrl,
           )
         }
 
@@ -164,6 +193,17 @@ let make = (
           <Externals.MaterialUi_Icons.Add />
         </MaterialUi.Avatar>
         <span className={Cn.make(["ml-2"])}> {React.string("connect slack")} </span>
+      </MaterialUi.MenuItem>
+      <MaterialUi.MenuItem
+        value={MaterialUi.MenuItem.Value.string(destinationIdAddTwitterIntegration)}>
+        <MaterialUi.Avatar
+          classes={MaterialUi.Avatar.Classes.make(
+            ~root=Cn.make(["bg-gray-200", "text-darkDisabled"]),
+            (),
+          )}>
+          <Externals.MaterialUi_Icons.Add />
+        </MaterialUi.Avatar>
+        <span className={Cn.make(["ml-2"])}> {React.string("connect twitter")} </span>
       </MaterialUi.MenuItem>
     </MaterialUi.Select>
   </MaterialUi.FormControl>
