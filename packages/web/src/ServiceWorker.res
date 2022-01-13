@@ -5,6 +5,7 @@ module PushEventData = {
   type t = {
     title: string,
     options: Js.Json.t,
+    sentAt: option<float>,
   }
 
   let decode = t_decode
@@ -36,16 +37,29 @@ let handlePushEvent = pushEvent => {
         ),
       ])->Js.Json.object_,
     )
-    Js.log(pushEventData)
-    PushEvent.waitUntil(
-      pushEvent,
-      self
-      ->registration
-      ->ServiceWorkerRegistration.showNotification(
-        pushEventData->PushEventData.title,
-        pushEventData->PushEventData.options->PushEventData.unsafeOptionsAsShowNotificationOptions,
-      ) |> Js.Promise.then_(_ => Js.Promise.resolve()),
-    )
+
+    let isExpired = {
+      let sentAt =
+        pushEventData
+        ->PushEventData.sentAt
+        ->Belt.Option.getWithDefault(Js.Date.now())
+
+      sentAt <= Js.Date.now() -. 1000.0 *. 60.0 *. 5.0
+    }
+
+    if !isExpired {
+      PushEvent.waitUntil(
+        pushEvent,
+        self
+        ->registration
+        ->ServiceWorkerRegistration.showNotification(
+          pushEventData->PushEventData.title,
+          pushEventData
+          ->PushEventData.options
+          ->PushEventData.unsafeOptionsAsShowNotificationOptions,
+        ) |> Js.Promise.then_(_ => Js.Promise.resolve()),
+      )
+    }
   | exception e =>
     Services.Logger.exn_(~tag="ServiceWorker", ~message="Unable to decode push event data", e)
   | Error(e) => Services.Logger.deccoError("ServiceWorker", "Unable to decode push event data.", e)
