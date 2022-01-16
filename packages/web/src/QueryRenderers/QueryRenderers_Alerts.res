@@ -229,29 +229,35 @@ let make = () => {
         )
 
       let destination = switch item.destination {
-      | #WebPushAlertDestination(_) => AlertRule_Destination.Value.WebPushAlertDestination
+      | #WebPushAlertDestination(_) => Some(AlertRule_Destination.Value.WebPushAlertDestination)
       | #DiscordAlertDestination({guildId, channelId}) =>
-        AlertRule_Destination.Value.DiscordAlertDestination({
-          guildId: guildId,
-          channelId: channelId,
-        })
+        Some(
+          AlertRule_Destination.Value.DiscordAlertDestination({
+            guildId: guildId,
+            channelId: channelId,
+          }),
+        )
       | #SlackAlertDestination({channelId, incomingWebhookUrl}) =>
-        AlertRule_Destination.Value.SlackAlertDestination({
-          channelId: channelId,
-          incomingWebhookUrl: incomingWebhookUrl,
-        })
+        Some(
+          AlertRule_Destination.Value.SlackAlertDestination({
+            channelId: channelId,
+            incomingWebhookUrl: incomingWebhookUrl,
+          }),
+        )
       | #TwitterAlertDestination({userId, accessToken}) =>
-        AlertRule_Destination.Value.TwitterAlertDestination({
-          userId: userId,
-          accessToken: {
-            accessToken: accessToken.accessToken,
-            refreshToken: accessToken.refreshToken,
-            tokenType: accessToken.tokenType,
-            scope: accessToken.scope,
-            expiresAt: accessToken.expiresAt,
-          },
-        })
-      | #FutureAddedValue(_) => AlertRule_Destination.Value.WebPushAlertDestination
+        Some(
+          AlertRule_Destination.Value.TwitterAlertDestination({
+            userId: userId,
+            accessToken: {
+              accessToken: accessToken.accessToken,
+              refreshToken: accessToken.refreshToken,
+              tokenType: accessToken.tokenType,
+              scope: accessToken.scope,
+              expiresAt: accessToken.expiresAt,
+            },
+          }),
+        )
+      | #FutureAddedValue(_) => None
       }
       let eventType = switch item.eventType {
       | #LISTING => #listing

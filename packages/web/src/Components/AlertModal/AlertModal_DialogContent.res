@@ -61,7 +61,7 @@ module Value = {
     collection: option<CollectionOption.t>,
     priceRule: option<CreateAlertRule_Price.t>,
     propertiesRule: option<CreateAlertRule_Properties.Value.t>,
-    destination: AlertRule_Destination.Value.t,
+    destination: option<AlertRule_Destination.Value.t>,
   }
 
   let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination, ~eventType) => {
@@ -79,7 +79,9 @@ module Value = {
     priceRule: None,
     propertiesRule: None,
     eventType: #listing,
-    destination: AlertRule_Destination.Value.WebPushAlertDestination,
+    destination: Config.isBrowser() && Services.PushNotification.isSupported()
+      ? Some(AlertRule_Destination.Value.WebPushAlertDestination)
+      : None,
   }
 }
 
@@ -149,7 +151,7 @@ let make = (
   let handleDestinationChange = destination =>
     onChange({
       ...value,
-      Value.destination: destination,
+      Value.destination: Some(destination),
     })
   let handleEventTypeChange = eventType =>
     onChange({

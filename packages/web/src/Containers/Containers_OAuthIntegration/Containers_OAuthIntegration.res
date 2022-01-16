@@ -2,6 +2,7 @@ open Containers_OAuthIntegration_GraphQL
 
 exception SignInFailed
 exception InvalidState
+exception AlertDestinationRequired
 
 type integrationParams =
   | Discord({code: string, guildId: string, permissions: int, redirectUri: string})
@@ -135,7 +136,7 @@ let makeSteps = (
         element: createDiscordOAuthIntegrationMutationResultData
         ->Belt.Option.map(data => {
           let value = switch alertRuleValue.destination {
-          | AlertRule_Destination.Value.DiscordAlertDestination({channelId}) =>
+          | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId})) =>
             data.discordIntegration.channels
             ->Belt.Array.getBy(c => c.id == channelId)
             ->Belt.Option.map(c => {
@@ -147,10 +148,12 @@ let makeSteps = (
           let handleChange = newValue =>
             setAlertRuleValue(alertRule => {
               ...alertRule,
-              destination: AlertRule_Destination.Value.DiscordAlertDestination({
-                guildId: data.discordIntegration.guildId,
-                channelId: newValue->DiscordIntegrationChannelRadioGroup.id,
-              }),
+              destination: Some(
+                AlertRule_Destination.Value.DiscordAlertDestination({
+                  guildId: data.discordIntegration.guildId,
+                  channelId: newValue->DiscordIntegrationChannelRadioGroup.id,
+                }),
+              ),
             })
 
           <>
@@ -449,19 +452,19 @@ let make = (~onCreated, ~params) => {
       })
 
     let destination = switch alertRuleValue.destination {
-    | DiscordAlertDestination({guildId, channelId}) => {
+    | Some(DiscordAlertDestination({guildId, channelId})) => {
         discordAlertDestination: Some({guildId: guildId, channelId: channelId}),
         webPushAlertDestination: None,
         slackAlertDestination: None,
         twitterAlertDestination: None,
       }
-    | SlackAlertDestination({channelId, incomingWebhookUrl}) => {
+    | Some(SlackAlertDestination({channelId, incomingWebhookUrl})) => {
         slackAlertDestination: Some({channelId: channelId, incomingWebhookUrl: incomingWebhookUrl}),
         webPushAlertDestination: None,
         discordAlertDestination: None,
         twitterAlertDestination: None,
       }
-    | TwitterAlertDestination({userId, accessToken}) => {
+    | Some(TwitterAlertDestination({userId, accessToken})) => {
         discordAlertDestination: None,
         webPushAlertDestination: None,
         slackAlertDestination: None,
@@ -476,12 +479,7 @@ let make = (~onCreated, ~params) => {
           },
         }),
       }
-    | WebPushAlertDestination => {
-        webPushAlertDestination: None,
-        discordAlertDestination: None,
-        slackAlertDestination: None,
-        twitterAlertDestination: None,
-      }
+    | _ => raise(AlertDestinationRequired)
     }
 
     createAlertRuleMutation({
@@ -524,7 +522,7 @@ let make = (~onCreated, ~params) => {
           setActiveStepIdx(idx => idx + 1)
           setAlertRuleValue(alertRuleValue => {
             ...alertRuleValue,
-            destination: destination,
+            destination: Some(destination),
           })
         | Ok(None) => setActiveStepIdx(idx => idx + 1)
         | Error(message) => setCreateIntegrationError(_ => Some(message))

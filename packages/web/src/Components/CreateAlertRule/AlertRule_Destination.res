@@ -103,10 +103,12 @@ let make = (
   }
 
   let unwrappedValue = switch value {
-  | Value.WebPushAlertDestination => MaterialUi.Select.Value.string(pushNotificationDestinationId)
-  | DiscordAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
-  | SlackAlertDestination({channelId}) => MaterialUi.Select.Value.string(channelId)
-  | TwitterAlertDestination({userId}) => MaterialUi.Select.Value.string(userId)
+  | Some(Value.WebPushAlertDestination) =>
+    MaterialUi.Select.Value.string(pushNotificationDestinationId)
+  | Some(DiscordAlertDestination({channelId})) => MaterialUi.Select.Value.string(channelId)
+  | Some(SlackAlertDestination({channelId})) => MaterialUi.Select.Value.string(channelId)
+  | Some(TwitterAlertDestination({userId})) => MaterialUi.Select.Value.string(userId)
+  | None => MaterialUi.Select.Value.string("")
   }
 
   <MaterialUi.FormControl
@@ -122,9 +124,23 @@ let make = (
       disabled=?{disabled}
       classes={MaterialUi.Select.Classes.make(~root=Cn.make(["h-10", "leading-10"]), ())}>
       <MaterialUi.MenuItem
-        classes={MaterialUi.MenuItem.Classes.make(~root=Cn.make(["py-3"]), ())}
-        value={MaterialUi.MenuItem.Value.string(pushNotificationDestinationId)}>
-        {React.string("push notification (this device)")}
+        classes={MaterialUi.MenuItem.Classes.make(
+          ~root=Cn.make([
+            "py-3",
+            Config.isBrowser() && !Services.PushNotification.isSupported()
+              ? "cursor-not-allowed"
+              : "",
+          ]),
+          (),
+        )}
+        value={MaterialUi.MenuItem.Value.string(pushNotificationDestinationId)}
+        disabled={Config.isBrowser() && !Services.PushNotification.isSupported()}>
+        <div className={Cn.make(["flex", "flex-col"])}>
+          <span> {React.string("push notification (this device)")} </span>
+          <span className={Cn.make(["text-sm"])}>
+            {React.string("web push is not supported by your browser.")}
+          </span>
+        </div>
       </MaterialUi.MenuItem>
       {Belt.Array.length(destinationOptions) > 0 ? <MaterialUi.Divider /> : React.null}
       {destinationOptions
@@ -191,7 +207,7 @@ let make = (
           )}>
           <Externals.MaterialUi_Icons.Add />
         </MaterialUi.Avatar>
-        <span className={Cn.make(["ml-2"])}> {React.string("connect discord")} </span>
+        <span className={Cn.make(["ml-4"])}> {React.string("connect discord")} </span>
       </MaterialUi.MenuItem>
       <MaterialUi.MenuItem
         value={MaterialUi.MenuItem.Value.string(destinationIdAddSlackIntegration)}>
@@ -202,7 +218,7 @@ let make = (
           )}>
           <Externals.MaterialUi_Icons.Add />
         </MaterialUi.Avatar>
-        <span className={Cn.make(["ml-2"])}> {React.string("connect slack")} </span>
+        <span className={Cn.make(["ml-4"])}> {React.string("connect slack")} </span>
       </MaterialUi.MenuItem>
       <MaterialUi.MenuItem
         value={MaterialUi.MenuItem.Value.string(destinationIdAddTwitterIntegration)}>
@@ -213,7 +229,7 @@ let make = (
           )}>
           <Externals.MaterialUi_Icons.Add />
         </MaterialUi.Avatar>
-        <span className={Cn.make(["ml-2"])}> {React.string("connect twitter")} </span>
+        <span className={Cn.make(["ml-4"])}> {React.string("connect twitter")} </span>
       </MaterialUi.MenuItem>
     </MaterialUi.Select>
   </MaterialUi.FormControl>

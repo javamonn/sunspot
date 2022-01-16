@@ -1,3 +1,4 @@
+exception AlertDestinationRequired
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 module Mutation_UpdateAlertRule = %graphql(`
   mutation UpdateAlertRuleInput($input: UpdateAlertRuleInput!) {
@@ -19,7 +20,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
   open Mutation_UpdateAlertRule
 
   let destination = switch AlertModal.Value.destination(newValue) {
-  | AlertRule_Destination.Value.WebPushAlertDestination =>
+  | Some(AlertRule_Destination.Value.WebPushAlertDestination) =>
     Services.PushNotification.getSubscription()
     |> Js.Promise.then_(subscription => {
       switch subscription {
@@ -44,7 +45,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
         twitterAlertDestination: None,
       })
     })
-  | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
+  | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId})) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
@@ -54,7 +55,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
       slackAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl}) =>
+  | Some(AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl})) =>
     Js.Promise.resolve({
       slackAlertDestination: Some({
         channelId: channelId,
@@ -64,7 +65,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
       webPushAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken}) =>
+  | Some(AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken})) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -80,6 +81,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
         },
       }),
     })
+    | None => Js.Promise.reject(AlertDestinationRequired)
   }
 
   let priceEventFilter =

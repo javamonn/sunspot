@@ -1,3 +1,4 @@
+exception AlertDestinationRequired
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 module Mutation_CreateAlertRule = %graphql(`
   mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
@@ -11,7 +12,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
   open Mutation_CreateAlertRule
 
   let destination = switch AlertModal.Value.destination(value) {
-  | AlertRule_Destination.Value.WebPushAlertDestination =>
+  | Some(AlertRule_Destination.Value.WebPushAlertDestination) =>
     Services.PushNotification.getSubscription()
     |> Js.Promise.then_(subscription => {
       switch subscription {
@@ -36,7 +37,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         twitterAlertDestination: None,
       })
     })
-  | AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId}) =>
+  | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId})) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
@@ -46,7 +47,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
       slackAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl}) =>
+  | Some(AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl})) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -56,7 +57,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         incomingWebhookUrl: incomingWebhookUrl,
       }),
     })
-  | AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken}) =>
+  | Some(AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken})) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -72,6 +73,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         },
       }),
     })
+  | None => Js.Promise.reject(AlertDestinationRequired)
   }
   let priceEventFilter =
     value

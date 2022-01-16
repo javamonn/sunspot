@@ -24,11 +24,21 @@ let validate = value => {
     Some("properties rule value must include properties")
   | _ => None
   }
+  let destinationValidation = switch value->Value.destination {
+  | None => Some("destination is required")
+  | Some(_) => None
+  }
 
-  switch (collectionValidation, priceRuleValidation, propertiesRuleValidation) {
-  | (Some(_), _, _) => collectionValidation
-  | (_, Some(_), _) => priceRuleValidation
-  | (_, _, Some(_)) => propertiesRuleValidation
+  switch (
+    collectionValidation,
+    priceRuleValidation,
+    propertiesRuleValidation,
+    destinationValidation,
+  ) {
+  | (Some(_), _, _, _) => collectionValidation
+  | (_, Some(_), _, _) => priceRuleValidation
+  | (_, _, Some(_), _) => propertiesRuleValidation
+  | (_, _, _, Some(_)) => destinationValidation
   | _ => None
   }
 }
@@ -59,8 +69,10 @@ let make = (
 
   let handleExited = () => {
     setIsExited(_ => true)
+    setValidationError(_ => None)
     onExited->Belt.Option.forEach(fn => fn())
   }
+
   let handleAction = () => {
     let validationResult = validate(value)
     setValidationError(_ => validationResult)
