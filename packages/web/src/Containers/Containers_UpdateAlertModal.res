@@ -293,12 +293,6 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     | _ => ()
     }
 
-  let isActioning = switch (updateAlertRuleMutationResult, deleteAlertRuleMutationResult) {
-  | ({loading: true}, _) => true
-  | (_, {loading: true}) => true
-  | _ => false
-  }
-
   <AlertModal
     isOpen
     onClose

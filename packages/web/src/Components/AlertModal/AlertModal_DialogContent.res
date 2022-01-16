@@ -114,7 +114,7 @@ let make = (
       let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42
       if isAddress {
         resultsSource.current = Some(#ContractAddress)
-        executeContractAddressQuery({input: {contractAddress: input}})
+        executeContractAddressQuery({input: {contractAddress: Js.String2.toLowerCase(input)}})
       } else {
         resultsSource.current = Some(#NamePrefix)
         executeCollectionNamePrefixQuery({input: {namePrefix: input}})
