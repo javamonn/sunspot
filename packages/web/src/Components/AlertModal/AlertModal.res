@@ -41,7 +41,6 @@ let make = (
   ~value,
   ~destinationOptions,
   ~onChange,
-  ~isActioning,
   ~onAction,
   ~actionLabel,
   ~title,
@@ -49,6 +48,7 @@ let make = (
 ) => {
   let (isExited, setIsExited) = React.useState(_ => isOpen)
   let (validationError, setValidationError) = React.useState(_ => None)
+  let (isActioning, setIsActioning) = React.useState(_ => false)
 
   let _ = React.useEffect1(() => {
     if isOpen {
@@ -65,7 +65,18 @@ let make = (
     let validationResult = validate(value)
     setValidationError(_ => validationResult)
     switch validationResult {
-    | None => onAction()
+    | None =>
+      setIsActioning(_ => true)
+      let _ =
+        onAction()
+        |> Js.Promise.then_(_ => {
+          setIsActioning(_ => false)
+          Js.Promise.resolve()
+        })
+        |> Js.Promise.catch(_ => {
+          setIsActioning(_ => false)
+          Js.Promise.resolve()
+        })
     | Some(_) => ()
     }
   }

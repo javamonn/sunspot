@@ -191,7 +191,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
   let handleUpdate = () =>
     switch (value, newValue) {
     | (Some(oldValue), Some(newValue)) =>
-      let _ = getUpdateAlertRuleInput(
+      getUpdateAlertRuleInput(
         ~oldValue,
         ~newValue,
         ~accountAddress,
@@ -222,7 +222,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
         })
         ->Js.Promise.resolve
       )
-    | _ => ()
+    | _ => Js.Promise.resolve()
     }
 
   let handleDelete = _ =>
@@ -302,7 +302,6 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     onClose
     value={newValue->Belt.Option.getWithDefault(defaultValue)}
     onChange={newValue => setNewValue(_ => Some(newValue))}
-    isActioning={isActioning}
     onAction={handleUpdate}
     actionLabel="update"
     title="update alert"

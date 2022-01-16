@@ -50,7 +50,7 @@ let loadingWidths = [
 ]
 
 @react.component
-let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
+let make = (~rows, ~onRowClick, ~isLoading) => <>
   <MaterialUi.TableContainer
     classes={MaterialUi.TableContainer.Classes.make(~root={Cn.make(["mt-6"])}, ())}>
     <MaterialUi.Table>
@@ -206,7 +206,7 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
       </MaterialUi.TableBody>
     </MaterialUi.Table>
   </MaterialUi.TableContainer>
-  {!isLoading && (Belt.Array.length(rows) == 0 || isUnsupportedBrowser)
+  {!isLoading && (Belt.Array.length(rows) == 0 )
     ? <MaterialUi.Typography
         variant=#Subtitle1
         color=#TextSecondary
@@ -214,11 +214,7 @@ let make = (~rows, ~onRowClick, ~isUnsupportedBrowser, ~isLoading) => <>
           ~subtitle1=Cn.make(["text-center", "mt-12", "whitespace-pre"]),
           (),
         )}>
-        {isUnsupportedBrowser
-          ? React.string(
-              "sunspot uses the web push api, which is not supported by your browser. \n\nto get started, switch to a browser with web push support, such as chrome or firefox.",
-            )
-          : React.string("to get started, connect your wallet and create an alert.")}
+        {React.string("to get started, create an alert.")}
       </MaterialUi.Typography>
     : React.null}
 </>

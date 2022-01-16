@@ -278,7 +278,6 @@ let make = () => {
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
 
-  let isUnsupportedBrowser = Config.isBrowser() && !Services.PushNotification.isSupported()
   let isLoading = switch (eth, alertRulesQuery, authentication) {
   | (_, {loading: true}, _)
   | (_, {called: false}, _)
@@ -295,16 +294,15 @@ let make = () => {
       onConnectWalletClicked={handleConnectWalletClicked}
       onWalletButtonClicked={handleConnectWalletClicked}
       onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
-      isUnsupportedBrowser={isUnsupportedBrowser}
+    />
+    <AlertsTable isLoading={isLoading} rows={tableRows} onRowClick={handleRowClick} />
+    <Containers.CreateAlertModal
+      isOpen={createAlertModalIsOpen}
+      onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+      destinationOptions={integrationOptions}
     />
     {switch authentication {
     | Authenticated({jwt: {accountAddress}}) => <>
-        <Containers.CreateAlertModal
-          isOpen={createAlertModalIsOpen}
-          onClose={_ => setCreateAlertModalIsOpen(_ => false)}
-          accountAddress={accountAddress}
-          destinationOptions={integrationOptions}
-        />
         <Containers.UpdateAlertModal
           isOpen={switch updateAlertModal {
           | UpdateAlertModalOpen(_) => true
@@ -315,17 +313,11 @@ let make = () => {
           | _ => None
           }}
           onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
-          accountAddress={accountAddress}
           destinationOptions={integrationOptions}
+          accountAddress={accountAddress}
         />
       </>
     | _ => React.null
     }}
-    <AlertsTable
-      isLoading={isLoading}
-      rows={isUnsupportedBrowser ? [] : tableRows}
-      onRowClick={handleRowClick}
-      isUnsupportedBrowser={isUnsupportedBrowser}
-    />
   </>
 }

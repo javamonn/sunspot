@@ -162,19 +162,17 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
 }
 
 @react.component
-let make = (~isOpen, ~onClose, ~accountAddress, ~destinationOptions) => {
+let make = (~isOpen, ~onClose, ~destinationOptions) => {
   let (createAlertRuleMutation, createAlertRuleMutationResult) = Mutation_CreateAlertRule.use()
   let (value, setValue) = React.useState(() => AlertModal.Value.empty())
+  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
 
   let handleExited = () => {
     setValue(_ => AlertModal.Value.empty())
   }
 
-  let handleCreate = () => {
-    let _ = getCreateAlertRuleInput(
-      ~value,
-      ~accountAddress,
-    ) |> Js.Promise.then_(createAlertRuleInput =>
+  let handleCreate = (~accountAddress) =>
+    getCreateAlertRuleInput(~value, ~accountAddress) |> Js.Promise.then_(createAlertRuleInput =>
       createAlertRuleInput
       ->Belt.Option.forEach(createAlertRuleInput => {
         let _ = createAlertRuleMutation(
@@ -218,12 +216,28 @@ let make = (~isOpen, ~onClose, ~accountAddress, ~destinationOptions) => {
       })
       ->Js.Promise.resolve
     )
+
+  let handleSignIn = () => {
+    signIn()
+    |> Js.Promise.then_(authentication => {
+      let _ = switch authentication {
+      | Contexts.Auth.Authenticated({jwt: {accountAddress}}) =>
+        let _ = handleCreate(~accountAddress)
+      | _ => ()
+      }
+      Js.Promise.resolve()
+    })
+    |> Js.Promise.catch(err => {
+      Services.Logger.promiseError("Containers_CreateAlertModal", "handleSignIn err", err)
+      Js.Promise.resolve()
+    })
   }
 
-  let isCreating = switch createAlertRuleMutationResult {
-  | {loading: true} => true
-  | _ => false
-  }
+  let handleAction = () =>
+    switch authentication {
+    | Authenticated({jwt: {accountAddress}}) => handleCreate(~accountAddress)
+    | _ => handleSignIn()
+    }
 
   <AlertModal
     isOpen
@@ -232,8 +246,7 @@ let make = (~isOpen, ~onClose, ~accountAddress, ~destinationOptions) => {
     value={value}
     destinationOptions={destinationOptions}
     onChange={newValue => setValue(_ => newValue)}
-    isActioning={isCreating}
-    onAction={handleCreate}
+    onAction={handleAction}
     actionLabel="create"
     title="create alert"
   />
