@@ -25,6 +25,8 @@ module Query_OpenSeaCollectionByContractAddress = %graphql(`
 module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
   query OpenSeaCollectionAggregateAttributes($input: OpenSeaCollectionByContractAddressInput!) {
     collection: getOpenSeaCollectionByContractAddress(input: $input) {
+      contractAddress
+      slug
       attributes {
         traitType
         count
