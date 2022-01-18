@@ -205,6 +205,7 @@ module OptionsEmpty = {
         "rounded",
         "text-sm",
         "bg-gray-100",
+        "font-mono"
       ])}>
       <Externals.MaterialUi_Icons.Error className={Cn.make(["w-5", "h-5", "mr-4", "opacity-50"])} />
       {React.string(copy)}
