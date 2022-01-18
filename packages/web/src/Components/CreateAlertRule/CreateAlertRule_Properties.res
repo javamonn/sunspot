@@ -181,8 +181,46 @@ module OptionsLoading = {
   }
 }
 
+module OptionsEmpty = {
+  @react.component
+  let make = (~isOpenstore, ~isCollectionSelected) => {
+    let copy = if !isCollectionSelected {
+      "select a collection to filter events by asset properties."
+    } else if isOpenstore {
+      "collections utilizing the opensea shared storefront contract do not currently support property filters."
+    } else {
+      "properties for this collection are not indexed. if this seems incorrect, reach out to us for support."
+    }
+
+    <div
+      className={Cn.make([
+        "flex",
+        "flex-row",
+        "p-4",
+        "text-darkSecondary",
+        "items-center",
+        "border",
+        "border-solid",
+        "border-darkDisabled",
+        "rounded",
+        "text-sm",
+        "bg-gray-100",
+      ])}>
+      <Externals.MaterialUi_Icons.Error className={Cn.make(["w-5", "h-5", "mr-4", "opacity-50"])} />
+      {React.string(copy)}
+    </div>
+  }
+}
+
 @react.component
-let make = (~value=?, ~options, ~isOptionsLoading, ~onChange) => {
+let make = (
+  ~value=?,
+  ~options,
+  ~isOptionsLoading,
+  ~isOpenstore,
+  ~isCollectionSelected,
+  ~onChange,
+) => {
   let handleRemoveValueAttribute = idx =>
     value->Belt.Option.forEach(value => {
       let copy = Belt.Array.copy(value)
@@ -193,14 +231,20 @@ let make = (~value=?, ~options, ~isOptionsLoading, ~onChange) => {
     value->Belt.Option.getWithDefault([])->Belt.Array.concat([attribute])->Js.Option.some->onChange
 
   <div className={Cn.make(["flex", "flex-col", "flex-1"])}>
-    <Value value onRemoveValueAttribute={handleRemoveValueAttribute} />
     {isOptionsLoading
-      ? <OptionsLoading />
-      : <Options
+      ? <>
+          <Value value onRemoveValueAttribute={handleRemoveValueAttribute} /> <OptionsLoading />
+        </>
+      : Belt.Array.length(options) > 0
+      ? <>
+        <Value value onRemoveValueAttribute={handleRemoveValueAttribute} />
+        <Options
           value
           options
           onRemoveValueAttribute={handleRemoveValueAttribute}
           onAddValueAttribute={handleAddValueAttribute}
-        />}
+        />
+      </>
+      : <OptionsEmpty isCollectionSelected={isCollectionSelected} isOpenstore={isOpenstore} />}
   </div>
 }

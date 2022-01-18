@@ -23,8 +23,8 @@ module Query_OpenSeaCollectionByContractAddress = %graphql(`
 `)
 
 module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
-  query OpenSeaCollectionAggregateAttributes($input: OpenSeaCollectionByContractAddressInput!) {
-    collection: getOpenSeaCollectionByContractAddress(input: $input) {
+  query OpenSeaCollectionAggregateAttributes($slug: String!) {
+    collection: getOpenSeaCollection(slug: $slug) {
       contractAddress
       slug
       attributes {
@@ -134,7 +134,7 @@ let make = (
     ->Value.collection
     ->Belt.Option.forEach(collection => {
       let _ = executeCollectionAggregateAttributesQuery({
-        input: {contractAddress: collection->CollectionOption.contractAddressGet},
+        slug: collection->CollectionOption.slugGet,
       })
     })
     None
@@ -220,7 +220,7 @@ let make = (
     isLoadingCollectionAggregateAttributes,
     collectionAggregateAttributes,
   ) = switch collectionAggregateAttributesResult {
-  | Executed({data: Some({collection: {attributes}})}) =>
+  | Executed({data: Some({collection: Some({attributes})})}) =>
     let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
       CreateAlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
       count: aggreggateAttribute.count,
@@ -320,6 +320,14 @@ let make = (
         onChange={handlePropertiesRuleChange}
         options=collectionAggregateAttributes
         isOptionsLoading={isLoadingCollectionAggregateAttributes}
+        isCollectionSelected={value->Value.collection->Js.Option.isSome}
+        isOpenstore={value
+        ->Value.collection
+        ->Belt.Option.map(collection =>
+          collection->CollectionOption.contractAddressGet->Js.String2.toLowerCase ==
+            Config.openstoreContractAddress
+        )
+        ->Belt.Option.getWithDefault(false)}
       />}
     />
   </>

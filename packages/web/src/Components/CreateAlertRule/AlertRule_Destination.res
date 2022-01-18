@@ -137,9 +137,11 @@ let make = (
         disabled={Config.isBrowser() && !Services.PushNotification.isSupported()}>
         <div className={Cn.make(["flex", "flex-col"])}>
           <span> {React.string("push notification (this device)")} </span>
-          <span className={Cn.make(["text-sm"])}>
-            {React.string("web push is not supported by your browser.")}
-          </span>
+          {Config.isBrowser() && !Services.PushNotification.isSupported()
+            ? <span className={Cn.make(["text-sm"])}>
+                {React.string("web push is not supported by your browser.")}
+              </span>
+            : React.null}
         </div>
       </MaterialUi.MenuItem>
       {Belt.Array.length(destinationOptions) > 0 ? <MaterialUi.Divider /> : React.null}
