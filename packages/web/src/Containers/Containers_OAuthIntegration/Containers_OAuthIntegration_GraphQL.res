@@ -1,5 +1,17 @@
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
 
+module Mutation_CreateAccessToken = %graphql(`
+  mutation CreateAccessToken($input: CreateAccessTokenInput!) {
+    accessToken: createAccessToken(input: $input) {
+      accessToken 
+      tokenType
+      refreshToken
+      expiresAt
+      scope
+    }
+  }
+`)
+
 module Mutation_CreateDiscordOAuthIntegration = %graphql(`
   mutation CreateDiscordIntegration($input: CreateDiscordIntegrationInput!) {
     discordIntegration: createDiscordIntegration(input: $input) {

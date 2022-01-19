@@ -3,6 +3,15 @@ open Containers_OAuthIntegration_GraphQL
 exception SignInFailed
 exception InvalidState
 exception AlertDestinationRequired
+exception InvalidAccessToken
+
+type accessToken = {
+  accessToken: string,
+  refreshToken: string,
+  tokenType: string,
+  scope: string,
+  expiresAt: string,
+}
 
 type integrationParams =
   | Discord({code: string, guildId: string, permissions: int, redirectUri: string})
@@ -11,9 +20,9 @@ type integrationParams =
 
 let integrationDisplayName = integrationParams =>
   switch integrationParams {
-  | Discord(_) => "discord"
-  | Slack(_) => "slack"
-  | Twitter(_) => "twitter"
+  | Discord(_) => "discord server"
+  | Slack(_) => "slack workspace"
+  | Twitter(_) => "twitter account"
   }
 
 let makeSteps = (
@@ -216,22 +225,24 @@ let make = (~onCreated, ~params) => {
   let (isDialogOpen, setIsDialogOpen) = React.useState(_ => true)
   let (activeStepIdx, setActiveStepIdx) = React.useState(() => 0)
   let (createIntegrationError, setCreateIntegrationError) = React.useState(_ => None)
+  let accessToken = React.useRef(None)
   let (isActioning, setIsActioning) = React.useState(() => false)
   let (step0BodyText, _) = React.useState(() =>
     switch authentication {
     | Authenticated(_) =>
       `sunspot is now installed within your ${integrationDisplayName(
           params,
-        )} server. to start receiving alerts, click next to connect your account.`
+        )}. to start receiving alerts, click next to connect your account.`
     | _ =>
       `sunspot is now installed within your ${integrationDisplayName(
           params,
-        )} server. to start receiving alerts, connect your wallet to create an account.`
+        )}. to start receiving alerts, connect your wallet to create an account.`
     }
   )
   let (alertRuleValue, setAlertRuleValue) = React.useState(_ => AlertModal.Value.empty())
 
   let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
+  let (createAccessToken, _) = Mutation_CreateAccessToken.use()
   let (
     createDiscordOAuthIntegrationMutation,
     createDiscordOAuthIntegrationMutationResult,
@@ -258,22 +269,73 @@ let make = (~onCreated, ~params) => {
     ~params,
   )
 
+  let _ = React.useEffect1(() => {
+    let createAccessTokenInput = switch (params, accessToken.current) {
+    | (Discord({code, redirectUri}), None) if Js.String2.length(code) > 0 =>
+      Some({
+        Mutation_CreateAccessToken.oAuthIntegrationType: #DISCORD,
+        code: code,
+        redirectUri: redirectUri,
+      })
+    | (Twitter({code, redirectUri}), None) if Js.String2.length(code) > 0 =>
+      Some({oAuthIntegrationType: #TWITTER, code: code, redirectUri: redirectUri})
+    | _ => None
+    }
+
+    createAccessTokenInput->Belt.Option.forEach(createAccessTokenInput => {
+      let accessTokenP = createAccessToken({
+        input: createAccessTokenInput,
+      }) |> Js.Promise.then_(result =>
+        switch result {
+        | Ok(
+            result: ApolloClient__React_Types.FetchResult.t__ok<
+              Mutation_CreateAccessToken.Mutation_CreateAccessToken_inner.t,
+            >,
+          ) =>
+          let data = result.data.accessToken
+          Js.Promise.resolve({
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            expiresAt: data.expiresAt,
+            scope: data.scope,
+            tokenType: data.tokenType,
+          })
+        | Error(_) => Js.Promise.reject(InvalidAccessToken)
+        }
+      )
+      accessToken.current = Some(accessTokenP)
+    })
+
+    None
+  }, [params])
+
   let handleCreateOAuthIntegration = () => {
     let executeMutation = () => {
-      let mutation = switch params {
-      | Discord({code, guildId, permissions, redirectUri}) =>
-        createDiscordOAuthIntegrationMutation({
-          input: {
-            code: code,
-            guildId: guildId,
-            permissions: permissions,
-            redirectUri: redirectUri,
-          },
-        }) |> Js.Promise.then_(result =>
+      let mutation = switch (params, accessToken.current) {
+      | (Discord({guildId, permissions}), Some(accessTokenP)) =>
+        accessTokenP
+        |> Js.Promise.then_(accessToken =>
+          createDiscordOAuthIntegrationMutation({
+            input: {
+              guildId: guildId,
+              permissions: permissions,
+              code: None,
+              redirectUri: None,
+              accessToken: Some({
+                accessToken: accessToken.accessToken,
+                refreshToken: accessToken.refreshToken,
+                scope: accessToken.scope,
+                tokenType: accessToken.tokenType,
+                expiresAt: accessToken.expiresAt,
+              }),
+            },
+          })
+        )
+        |> Js.Promise.then_(result =>
           /* * discord alert destination is set in step 2 * */
           result->Belt.Result.map(result => None)->Js.Promise.resolve
         )
-      | Slack({code, redirectUri}) =>
+      | (Slack({code, redirectUri}), _) =>
         createSlackOAuthIntegrationMutation({
           input: {
             code: code,
@@ -293,13 +355,24 @@ let make = (~onCreated, ~params) => {
           ))
           ->Js.Promise.resolve
         )
-      | Twitter({code, redirectUri}) =>
-        createTwitterOAuthIntegrationMutation({
-          input: {
-            code: code,
-            redirectUri: redirectUri,
-          },
-        }) |> Js.Promise.then_(result => {
+      | (Twitter(_), Some(accessTokenP)) =>
+        accessTokenP
+        |> Js.Promise.then_(accessToken =>
+          createTwitterOAuthIntegrationMutation({
+            input: {
+              code: None,
+              redirectUri: None,
+              accessToken: Some({
+                accessToken: accessToken.accessToken,
+                refreshToken: accessToken.refreshToken,
+                scope: accessToken.scope,
+                tokenType: accessToken.tokenType,
+                expiresAt: accessToken.expiresAt,
+              }),
+            },
+          })
+        )
+        |> Js.Promise.then_(result => {
           result
           ->Belt.Result.map((
             result: ApolloClient__React_Types.FetchResult.t__ok<
@@ -322,6 +395,8 @@ let make = (~onCreated, ~params) => {
           })
           ->Js.Promise.resolve
         })
+      | (Discord(_), None) => Js.Promise.reject(InvalidAccessToken)
+      | (Twitter(_), None) => Js.Promise.reject(InvalidAccessToken)
       }
 
       mutation
@@ -337,7 +412,7 @@ let make = (~onCreated, ~params) => {
           Error(
             `an error occurred while connecting your account to your ${integrationDisplayName(
                 params,
-              )} server. try again or contact us for support.`,
+              )}. try again or contact us for support.`,
           )
         }
         Js.Promise.resolve(mappedResult)
@@ -352,7 +427,7 @@ let make = (~onCreated, ~params) => {
           Error(
             `an error occurred while connecting your account to your ${integrationDisplayName(
                 params,
-              )} server. try again or contact us for support.`,
+              )}. try again or contact us for support.`,
           ),
         )
       })
