@@ -319,8 +319,6 @@ let make = (~onCreated, ~params) => {
             input: {
               guildId: guildId,
               permissions: permissions,
-              code: None,
-              redirectUri: None,
               accessToken: Some({
                 accessToken: accessToken.accessToken,
                 refreshToken: accessToken.refreshToken,
@@ -333,7 +331,7 @@ let make = (~onCreated, ~params) => {
         )
         |> Js.Promise.then_(result =>
           /* * discord alert destination is set in step 2 * */
-          result->Belt.Result.map(result => None)->Js.Promise.resolve
+          result->Belt.Result.map(_ => None)->Js.Promise.resolve
         )
       | (Slack({code, redirectUri}), _) =>
         createSlackOAuthIntegrationMutation({
@@ -360,8 +358,6 @@ let make = (~onCreated, ~params) => {
         |> Js.Promise.then_(accessToken =>
           createTwitterOAuthIntegrationMutation({
             input: {
-              code: None,
-              redirectUri: None,
               accessToken: Some({
                 accessToken: accessToken.accessToken,
                 refreshToken: accessToken.refreshToken,
