@@ -42,6 +42,26 @@ const config = {
 
     return config;
   },
+  redirects: [
+    {
+      source: "/install/discord",
+      destination:
+        "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands",
+      permanent: false,
+    },
+    {
+      source: "/install/twitter",
+      destination:
+        "https://twitter.com/i/oauth2/authorize?response_type=code&client_id=clVTSDN2eDc2SExyNzFfdHNhNVc6MTpjaQ&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Ftwitter%2Finstall&scope=tweet.write%20users.read%20tweet.read%20offline.access&state=state&code_challenge=challenge&code_challenge_method=plain",
+      permanent: false,
+    },
+    {
+      source: "/install/slack",
+      destination:
+        "https://slack.com/oauth/v2/authorize?client_id=2851595757074.2853916229636&scope=incoming-webhook&user_scope=",
+      permanent: false,
+    },
+  ],
 };
 
 module.exports = withTM(config);
