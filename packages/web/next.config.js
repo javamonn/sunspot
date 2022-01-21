@@ -42,7 +42,7 @@ const config = {
 
     return config;
   },
-  redirects: [
+  redirects: () => [
     {
       source: "/install/discord",
       destination:
