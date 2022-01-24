@@ -1,0 +1,187 @@
+open AlertModal_Types
+
+module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
+  query OpenSeaCollectionsByNamePrefix($input: OpenSeaCollectionsByNamePrefixInput!) {
+    collections: openSeaCollectionsByNamePrefix(input: $input) {
+      items {
+        name
+        slug
+        imageUrl
+        contractAddress
+      }
+    }
+  }
+`)
+
+module Query_OpenSeaCollectionByContractAddress = %graphql(`
+  query OpenSeaCollectionByContractAddress($input: OpenSeaCollectionByContractAddressInput!) {
+    collection: getOpenSeaCollectionByContractAddress(input: $input) {
+      name
+      slug
+      imageUrl
+      contractAddress
+    }
+  }
+`)
+
+type optionWithFooter =
+  | CollectionOption(CollectionOption.t)
+  | Footer
+
+@react.component
+let make = (~value, ~onChange) => {
+  let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
+  let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
+  let resultsSource = React.useRef(None)
+  let (
+    executeCollectionNamePrefixQuery,
+    collectionNamePrefixQueryResult,
+  ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
+  let (
+    executeContractAddressQuery,
+    contractAddressQueryResult,
+  ) = Query_OpenSeaCollectionByContractAddress.useLazy()
+
+  let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
+      let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42
+      if isAddress {
+        resultsSource.current = Some(#ContractAddress)
+        executeContractAddressQuery({input: {contractAddress: Js.String2.toLowerCase(input)}})
+      } else {
+        resultsSource.current = Some(#NamePrefix)
+        executeCollectionNamePrefixQuery({input: {namePrefix: input}})
+      }
+    }, 200))
+
+  let _ = React.useEffect1(() => {
+    if Js.String2.length(collectionQueryInput) > 0 {
+      debouncedExecuteQuery(. collectionQueryInput)
+    }
+    None
+  }, [collectionQueryInput])
+
+  let (isLoadingCollectionOptions, loadingText) = switch (
+    resultsSource.current,
+    collectionNamePrefixQueryResult,
+    contractAddressQueryResult,
+  ) {
+  | (None, _, _)
+  | (Some(#NamePrefix), Unexecuted(_), _)
+  | (Some(#ContractAddress), _, Unexecuted(_)) => (
+      true,
+      React.string("Filter by name or contract address..."),
+    )
+  | (Some(#NamePrefix), Executed({loading: true}), _)
+  | (Some(#ContractAddress), _, Executed({loading: true})) => (true, React.string("Loading..."))
+  | _ => (false, React.null)
+  }
+  let collectionOptions = switch (
+    resultsSource.current,
+    collectionNamePrefixQueryResult,
+    contractAddressQueryResult,
+  ) {
+  | (None, _, _)
+  | (Some(#NamePrefix), Unexecuted(_), _)
+  | (Some(#NamePrefix), Executed({loading: true}), _)
+  | (Some(#ContractAddress), _, Unexecuted(_))
+  | (Some(#ContractAddress), _, Executed({loading: true})) => []
+  | (
+      Some(#NamePrefix),
+      Executed({data: Some({collections: Some({items: Some(itemConnections)})})}),
+      _,
+    ) =>
+    itemConnections->Belt.Array.keepMap(itemConnection =>
+      itemConnection->Belt.Option.map(itemConnection =>
+        CollectionOption.make(
+          ~name=itemConnection.name,
+          ~slug=itemConnection.slug,
+          ~imageUrl=itemConnection.imageUrl,
+          ~contractAddress=itemConnection.contractAddress,
+        )
+      )
+    )
+  | (Some(#ContractAddress), _, Executed({data: Some({collection})})) => [
+      CollectionOption.make(
+        ~name=collection.name,
+        ~slug=collection.slug,
+        ~imageUrl=collection.imageUrl,
+        ~contractAddress=collection.contractAddress,
+      ),
+    ]
+  | _ => []
+  }
+  let options = if Belt.Array.length(collectionOptions) > 0 {
+    collectionOptions
+    ->Belt.Array.map(c => MaterialUi_Types.Any(CollectionOption(c)))
+    ->Belt.Array.concat([MaterialUi_Types.Any(Footer)])
+  } else {
+    []
+  }
+
+  <MaterialUi_Lab.Autocomplete
+    filterOptions={MaterialUi_Types.Any(i => i)}
+    classes={MaterialUi_Lab.Autocomplete.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
+    _open={autocompleteIsOpen}
+    value={MaterialUi_Types.Any(Js.Null.fromOption(value))}
+    onChange={(_, collection, _) => {
+      switch collection->Obj.magic->Js.Nullable.toOption {
+      | Some(CollectionOption(collectionOption)) => onChange(Some(collectionOption))
+      | _ => ()
+      }
+    }}
+    onInputChange={(_, value, _) => {
+      setCollectionQueryInput(_ => value)
+    }}
+    getOptionLabel={opt =>
+      switch opt {
+      | CollectionOption(collectionOption) =>
+        collectionOption->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")
+      | Footer => ""
+      }}
+    onOpen={_ => setAutocompleteIsOpen(_ => true)}
+    onClose={(_, _) => setAutocompleteIsOpen(_ => false)}
+    loading={isLoadingCollectionOptions}
+    getOptionSelected={(opt1, opt2) =>
+      switch (opt1, opt2) {
+      | (CollectionOption(opt1), CollectionOption(opt2)) =>
+        Obj.magic(CollectionOption.slugGet(opt1) == CollectionOption.slugGet(opt2))
+      | _ => Obj.magic(false)
+      }}
+    options={options}
+    loadingText={loadingText}
+    renderInput={params =>
+      React.cloneElement(
+        <MaterialUi.TextField label={React.string("collection")} variant=#Outlined />,
+        params,
+      )}
+    renderOption={(opt, _) =>
+      switch opt {
+      | CollectionOption(collectionOption) =>
+        <CollectionListItem
+          imageUrl={CollectionOption.imageUrlGet(collectionOption)}
+          primary={collectionOption
+          ->CollectionOption.nameGet
+          ->Belt.Option.getWithDefault("Unnamed Collection")}
+          secondary={CollectionOption.slugGet(collectionOption)}
+          bare={true}
+        />
+      | Footer =>
+        <div className={Cn.make(["cursor-default", "pointer-events-none"])}>
+          <MaterialUi.ListItemText
+            classes={MaterialUi.ListItemText.Classes.make(
+              ~primary=Cn.make([
+                "text-darkDisabled",
+                "text-sm",
+                "text-center",
+                "p-2",
+              ]),
+              (),
+            )}
+            primary={React.string(
+              "can't find the collection that you're looking for? try searching by contract address.",
+            )}
+          />
+        </div>
+      }}
+  />
+}

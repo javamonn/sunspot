@@ -1,7 +1,7 @@
 let styles = %raw("require('./AlertModal.module.css')")
 
 module Value = AlertModal_DialogContent.Value
-module CollectionOption = AlertModal_DialogContent.CollectionOption
+module CollectionOption = AlertModal_Types.CollectionOption
 
 let validate = value => {
   let collectionValidation = switch value->Value.collection {

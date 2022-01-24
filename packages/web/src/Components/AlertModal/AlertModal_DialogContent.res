@@ -1,26 +1,4 @@
-module Query_OpenSeaCollectionsByNamePrefix = %graphql(`
-  query OpenSeaCollectionsByNamePrefix($input: OpenSeaCollectionsByNamePrefixInput!) {
-    collections: openSeaCollectionsByNamePrefix(input: $input) {
-      items {
-        name
-        slug
-        imageUrl
-        contractAddress
-      }
-    }
-  }
-`)
-
-module Query_OpenSeaCollectionByContractAddress = %graphql(`
-  query OpenSeaCollectionByContractAddress($input: OpenSeaCollectionByContractAddressInput!) {
-    collection: getOpenSeaCollectionByContractAddress(input: $input) {
-      name
-      slug
-      imageUrl
-      contractAddress
-    }
-  }
-`)
+open AlertModal_Types
 
 module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
   query OpenSeaCollectionAggregateAttributes($slug: String!) {
@@ -42,18 +20,6 @@ module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
     }
   }
 `)
-
-module CollectionOption = {
-  @deriving(abstract)
-  type t = {
-    name: option<string>,
-    slug: string,
-    imageUrl: option<string>,
-    contractAddress: string,
-  }
-  let make = t
-  external unsafeFromJs: Js.t<'a> => t = "%identity"
-}
 
 module Value = {
   @deriving(accessors)
@@ -96,39 +62,11 @@ let make = (
   ~destinationOptions,
   ~destinationDisabled=?,
 ) => {
-  let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
-  let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
-  let (
-    executeCollectionNamePrefixQuery,
-    collectionNamePrefixQueryResult,
-  ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
-  let (
-    executeContractAddressQuery,
-    contractAddressQueryResult,
-  ) = Query_OpenSeaCollectionByContractAddress.useLazy()
   let (
     executeCollectionAggregateAttributesQuery,
     collectionAggregateAttributesResult,
   ) = Query_OpenSeaCollectionAggregateAttributes.useLazy()
-  let resultsSource = React.useRef(None)
 
-  let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
-      let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42
-      if isAddress {
-        resultsSource.current = Some(#ContractAddress)
-        executeContractAddressQuery({input: {contractAddress: Js.String2.toLowerCase(input)}})
-      } else {
-        resultsSource.current = Some(#NamePrefix)
-        executeCollectionNamePrefixQuery({input: {namePrefix: input}})
-      }
-    }, 200))
-
-  let _ = React.useEffect1(() => {
-    if Js.String2.length(collectionQueryInput) > 0 {
-      debouncedExecuteQuery(. collectionQueryInput)
-    }
-    None
-  }, [collectionQueryInput])
   let _ = React.useEffect1(() => {
     value
     ->Value.collection
@@ -164,58 +102,6 @@ let make = (
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
   let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
 
-  let collectionOptions = switch (
-    resultsSource.current,
-    collectionNamePrefixQueryResult,
-    contractAddressQueryResult,
-  ) {
-  | (None, _, _)
-  | (Some(#NamePrefix), Unexecuted(_), _)
-  | (Some(#NamePrefix), Executed({loading: true}), _)
-  | (Some(#ContractAddress), _, Unexecuted(_))
-  | (Some(#ContractAddress), _, Executed({loading: true})) => []
-  | (
-      Some(#NamePrefix),
-      Executed({data: Some({collections: Some({items: Some(itemConnections)})})}),
-      _,
-    ) =>
-    itemConnections->Belt.Array.keepMap(itemConnection =>
-      itemConnection->Belt.Option.map(itemConnection =>
-        CollectionOption.make(
-          ~name=itemConnection.name,
-          ~slug=itemConnection.slug,
-          ~imageUrl=itemConnection.imageUrl,
-          ~contractAddress=itemConnection.contractAddress,
-        )
-      )
-    )
-  | (Some(#ContractAddress), _, Executed({data: Some({collection})})) => [
-      CollectionOption.make(
-        ~name=collection.name,
-        ~slug=collection.slug,
-        ~imageUrl=collection.imageUrl,
-        ~contractAddress=collection.contractAddress,
-      ),
-    ]
-  | _ => []
-  }
-
-  let (isLoadingCollectionOptions, loadingText) = switch (
-    resultsSource.current,
-    collectionNamePrefixQueryResult,
-    contractAddressQueryResult,
-  ) {
-  | (None, _, _)
-  | (Some(#NamePrefix), Unexecuted(_), _)
-  | (Some(#ContractAddress), _, Unexecuted(_)) => (
-      true,
-      React.string("Filter by name or contract address..."),
-    )
-  | (Some(#NamePrefix), Executed({loading: true}), _)
-  | (Some(#ContractAddress), _, Executed({loading: true})) => (true, React.string("Loading..."))
-  | _ => (false, React.null)
-  }
-
   let (
     isLoadingCollectionAggregateAttributes,
     collectionAggregateAttributes,
@@ -248,41 +134,13 @@ let make = (
       </MaterialUi_Lab.Alert>
     )
     ->Belt.Option.getWithDefault(React.null)}
-    <MaterialUi_Lab.Autocomplete
-      filterOptions={MaterialUi_Types.Any(i => i)}
-      classes={MaterialUi_Lab.Autocomplete.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
-      _open={autocompleteIsOpen}
-      value={MaterialUi_Types.Any(Js.Null.fromOption(value.collection))}
-      onChange={(_, collection, _) => {
+    <AlertRule_CollectionAutocomplete
+      onChange={collection =>
         onChange({
           ...value,
-          collection: collection->Obj.magic->Js.Nullable.toOption,
-        })
-      }}
-      onInputChange={(_, value, _) => {
-        setCollectionQueryInput(_ => value)
-      }}
-      getOptionLabel={opt =>
-        opt->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")}
-      onOpen={_ => setAutocompleteIsOpen(_ => true)}
-      onClose={(_, _) => setAutocompleteIsOpen(_ => false)}
-      loading={isLoadingCollectionOptions}
-      getOptionSelected={(opt1, opt2) =>
-        Obj.magic(CollectionOption.slugGet(opt1) == CollectionOption.slugGet(opt2))}
-      options={collectionOptions->Belt.Array.map(c => MaterialUi_Types.Any(c))}
-      loadingText={loadingText}
-      renderInput={params =>
-        React.cloneElement(
-          <MaterialUi.TextField label={React.string("collection")} variant=#Outlined />,
-          params,
-        )}
-      renderOption={(opt, _) =>
-        <CollectionListItem
-          imageUrl={CollectionOption.imageUrlGet(opt)}
-          primary={opt->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")}
-          secondary={CollectionOption.slugGet(opt)}
-          bare={true}
-        />}
+          collection: collection,
+        })}
+      value={value.collection}
     />
     <AlertRule_EventType value={value->Value.eventType} onChange={handleEventTypeChange} />
     <AlertRule_Destination
