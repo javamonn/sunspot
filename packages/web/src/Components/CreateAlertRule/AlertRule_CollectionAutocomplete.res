@@ -24,10 +24,6 @@ module Query_OpenSeaCollectionByContractAddress = %graphql(`
   }
 `)
 
-type optionWithFooter =
-  | CollectionOption(CollectionOption.t)
-  | Footer
-
 @react.component
 let make = (~value, ~onChange) => {
   let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
@@ -112,8 +108,8 @@ let make = (~value, ~onChange) => {
   }
   let options = if Belt.Array.length(collectionOptions) > 0 {
     collectionOptions
-    ->Belt.Array.map(c => MaterialUi_Types.Any(CollectionOption(c)))
-    ->Belt.Array.concat([MaterialUi_Types.Any(Footer)])
+    ->Belt.Array.map(c => MaterialUi_Types.Any(Some(c)))
+    ->Belt.Array.concat([MaterialUi_Types.Any(None)])
   } else {
     []
   }
@@ -124,8 +120,8 @@ let make = (~value, ~onChange) => {
     _open={autocompleteIsOpen}
     value={MaterialUi_Types.Any(Js.Null.fromOption(value))}
     onChange={(_, collection, _) => {
-      switch collection->Obj.magic->Js.Nullable.toOption {
-      | Some(CollectionOption(collectionOption)) => onChange(Some(collectionOption))
+      switch collection->Obj.magic {
+      | Some(collectionOption) => onChange(Some(collectionOption))
       | _ => ()
       }
     }}
@@ -134,16 +130,15 @@ let make = (~value, ~onChange) => {
     }}
     getOptionLabel={opt =>
       switch opt {
-      | CollectionOption(collectionOption) =>
-        collectionOption->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")
-      | Footer => ""
+      | Some(opt) => opt->CollectionOption.nameGet->Belt.Option.getWithDefault("Unnamed Collection")
+      | None => ""
       }}
     onOpen={_ => setAutocompleteIsOpen(_ => true)}
     onClose={(_, _) => setAutocompleteIsOpen(_ => false)}
     loading={isLoadingCollectionOptions}
     getOptionSelected={(opt1, opt2) =>
       switch (opt1, opt2) {
-      | (CollectionOption(opt1), CollectionOption(opt2)) =>
+      | (Some(opt1), Some(opt2)) =>
         Obj.magic(CollectionOption.slugGet(opt1) == CollectionOption.slugGet(opt2))
       | _ => Obj.magic(false)
       }}
@@ -156,7 +151,7 @@ let make = (~value, ~onChange) => {
       )}
     renderOption={(opt, _) =>
       switch opt {
-      | CollectionOption(collectionOption) =>
+      | Some(collectionOption) =>
         <CollectionListItem
           imageUrl={CollectionOption.imageUrlGet(collectionOption)}
           primary={collectionOption
@@ -165,16 +160,11 @@ let make = (~value, ~onChange) => {
           secondary={CollectionOption.slugGet(collectionOption)}
           bare={true}
         />
-      | Footer =>
+      | None =>
         <div className={Cn.make(["cursor-default", "pointer-events-none"])}>
           <MaterialUi.ListItemText
             classes={MaterialUi.ListItemText.Classes.make(
-              ~primary=Cn.make([
-                "text-darkDisabled",
-                "text-sm",
-                "text-center",
-                "p-2",
-              ]),
+              ~primary=Cn.make(["text-darkDisabled", "text-sm", "text-center", "p-2"]),
               (),
             )}
             primary={React.string(
