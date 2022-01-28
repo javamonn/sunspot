@@ -81,7 +81,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
         },
       }),
     })
-    | None => Js.Promise.reject(AlertDestinationRequired)
+  | None => Js.Promise.reject(AlertDestinationRequired)
   }
 
   let priceEventFilter =
@@ -293,6 +293,13 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     | _ => ()
     }
 
+  let externalUrl =
+    newValue
+    ->Belt.Option.getWithDefault(defaultValue)
+    ->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
+  let handleNavigateExternalUrl = () =>
+    externalUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+
   <AlertModal
     isOpen
     onClose
@@ -302,7 +309,19 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     actionLabel="update"
     title="update alert"
     destinationOptions={destinationOptions}
-    renderOverflowActionMenuItems={(~onClick) =>
+    renderOverflowActionMenuItems={(~onClick) => <>
+      {Js.Option.isSome(externalUrl)
+        ? <MaterialUi.MenuItem
+            onClick={_ => {
+              onClick()
+              handleNavigateExternalUrl()
+            }}>
+            <MaterialUi.ListItemIcon>
+              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+            </MaterialUi.ListItemIcon>
+            <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+          </MaterialUi.MenuItem>
+        : React.null}
       <MaterialUi.MenuItem
         onClick={_ => {
           onClick()
@@ -310,6 +329,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
         }}>
         <MaterialUi.ListItemIcon> <Externals.MaterialUi_Icons.Delete /> </MaterialUi.ListItemIcon>
         <MaterialUi.ListItemText> {React.string("delete")} </MaterialUi.ListItemText>
-      </MaterialUi.MenuItem>}
+      </MaterialUi.MenuItem>
+    </>}
   />
 }

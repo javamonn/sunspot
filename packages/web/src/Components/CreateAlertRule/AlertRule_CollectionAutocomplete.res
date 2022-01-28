@@ -157,7 +157,7 @@ let make = (~value, ~onChange) => {
           primary={collectionOption
           ->CollectionOption.nameGet
           ->Belt.Option.getWithDefault("Unnamed Collection")}
-          secondary={CollectionOption.slugGet(collectionOption)}
+          secondary={collectionOption->CollectionOption.slugGet->React.string}
           bare={true}
         />
       | None =>

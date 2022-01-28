@@ -73,3 +73,13 @@ module LabelOutlined = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module OpenInNew = {
+  @react.component @module("@material-ui/icons/OpenInNew")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

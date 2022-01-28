@@ -34,6 +34,7 @@ type row = {
   collectionName: option<string>,
   collectionSlug: string,
   collectionImageUrl: option<string>,
+  externalUrl: string,
   eventType: string,
   rules: array<rule>,
 }
@@ -121,10 +122,23 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                   <MaterialUi.TableCell>
                     <CollectionListItem
                       primary={row.collectionName->Belt.Option.getWithDefault("Unnamed Collection")}
-                      secondary={row.collectionSlug}
+                      secondary={<a
+                        href={row.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={ReactDOM.Style.make(
+                          ~textDecorationStyle="dotted",
+                          ~textDecorationLine="underline",
+                          (),
+                        )}>
+                        {React.string(row.collectionSlug)}
+                      </a>}
                       imageUrl={row.collectionImageUrl}
                       disableGutters={true}
-                      listItemClasses={MaterialUi.ListItem.Classes.make(~root=Cn.make(["p-0"]), ())}
+                      listItemClasses={MaterialUi.ListItem.Classes.make(
+                        ~root=Cn.make(["p-0", "w-auto"]),
+                        (),
+                      )}
                     />
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell> {React.string(row.eventType)} </MaterialUi.TableCell>
@@ -145,6 +159,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                             {React.string(modifier)}
                             {React.string(" ")}
                             {React.string(price)}
+                            {React.string("")}
                           </MaterialUi.Typography>,
                         )
                       | _ => None
@@ -155,12 +170,12 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                   <MaterialUi.TableCell>
                     <ul className={Cn.make(["flex", "flex-row", "items-center"])}>
                       {row.rules
-                      ->Belt.Array.keepMap((rule) =>
+                      ->Belt.Array.keepMap(rule =>
                         switch rule {
                         | PropertyRule({traitType, displayValue}) =>
                           Some(
                             <li
-                              key="property-rule"
+                              key={`property-rule-${traitType}-${displayValue}`}
                               style={ReactDOM.Style.make(~bottom="10px", ())}
                               className={Cn.make([
                                 "relative",
@@ -186,7 +201,14 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                       )
                       ->Belt.Array.slice(~offset=0, ~len=2)
                       ->React.array}
-                      {Belt.Array.length(row.rules) > 2
+                      {row.rules
+                      ->Belt.Array.keep(rule =>
+                        switch rule {
+                        | PropertyRule(_) => true
+                        | PriceRule(_) => false
+                        }
+                      )
+                      ->Belt.Array.length > 2
                         ? <MaterialUi.Chip
                             label={React.string(
                               `+ ${Belt.Int.toString(Belt.Array.length(row.rules) - 2)}`,
@@ -206,7 +228,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
       </MaterialUi.TableBody>
     </MaterialUi.Table>
   </MaterialUi.TableContainer>
-  {!isLoading && (Belt.Array.length(rows) == 0 )
+  {!isLoading && Belt.Array.length(rows) == 0
     ? <MaterialUi.Typography
         variant=#Subtitle1
         color=#TextSecondary

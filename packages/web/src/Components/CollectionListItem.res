@@ -17,13 +17,13 @@ let make = (
       <MaterialUi.ListItemText
         classes={MaterialUi.ListItemText.Classes.make(~root=Cn.make(["ml-4"]), ())}
         primary={primary->React.string}
-        secondary={secondary->React.string}
+        secondary={secondary}
       />
     </>
 
   bare
     ? contents
-    : <MaterialUi.ListItem disableGutters classes=?{listItemClasses}>
+    : <MaterialUi.ListItem disableGutters classes=?{listItemClasses} alignItems=#Flex_Start>
         {contents}
       </MaterialUi.ListItem>
 }

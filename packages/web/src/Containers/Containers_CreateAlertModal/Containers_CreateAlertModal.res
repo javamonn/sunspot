@@ -241,6 +241,10 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     | _ => handleSignIn()
     }
 
+  let externalUrl = value->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
+  let handleNavigateExternalUrl = () =>
+    externalUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+
   <AlertModal
     isOpen
     onClose
@@ -251,5 +255,17 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     onAction={handleAction}
     actionLabel="create"
     title="create alert"
+    renderOverflowActionMenuItems={(~onClick) => <>
+      <MaterialUi.MenuItem
+        onClick={_ => {
+          onClick()
+          handleNavigateExternalUrl()
+        }}>
+        <MaterialUi.ListItemIcon>
+          <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+        </MaterialUi.ListItemIcon>
+        <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+      </MaterialUi.MenuItem>
+    </>}
   />
 }

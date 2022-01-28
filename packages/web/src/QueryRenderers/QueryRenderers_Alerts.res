@@ -55,51 +55,103 @@ let make = () => {
       )
     )
     ->Belt.Array.map(item => {
-      AlertsTable.id: item.id,
-      collectionName: item.collection.name,
-      collectionSlug: item.collection.slug,
-      collectionImageUrl: item.collection.imageUrl,
-      eventType: switch item.eventType {
+      let rules =
+        item.eventFilters
+        ->Belt.Array.keepMap(eventFilter =>
+          switch eventFilter {
+          | #AlertPriceThresholdEventFilter(eventFilter) =>
+            let modifier = switch eventFilter.direction {
+            | #ALERT_ABOVE => ">"
+            | #ALERT_BELOW => "<"
+            | #FutureAddedValue(v) => v
+            }
+            let formattedPrice =
+              Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
+              ->Belt.Option.map(Belt.Float.toString)
+              ->Belt.Option.getExn
+
+            Some([AlertsTable.PriceRule({modifier: modifier, price: formattedPrice})])
+          | #AlertAttributesEventFilter({attributes}) =>
+            attributes
+            ->Belt.Array.keepMap(attribute =>
+              switch attribute {
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+                Some(
+                  AlertsTable.PropertyRule({
+                    traitType: traitType,
+                    displayValue: Belt.Float.toString(numberValue),
+                  }),
+                )
+              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+                Some(AlertsTable.PropertyRule({traitType: traitType, displayValue: stringValue}))
+              | #FutureAddedValue(_) => None
+              }
+            )
+            ->Js.Option.some
+          | #FutureAddedValue(_) => None
+          }
+        )
+        ->Belt.Array.concatMany
+      let eventType = switch item.eventType {
       | #LISTING => "listing"
       | #SALE => "sale"
       | #FutureAddedValue(v) => Js.String2.toLowerCase(v)
-      },
-      rules: item.eventFilters
-      ->Belt.Array.keepMap(eventFilter =>
-        switch eventFilter {
-        | #AlertPriceThresholdEventFilter(eventFilter) =>
-          let modifier = switch eventFilter.direction {
-          | #ALERT_ABOVE => ">"
-          | #ALERT_BELOW => "<"
-          | #FutureAddedValue(v) => v
+      }
+      let externalUrl = Services.OpenSea.makeAssetsUrl(
+        ~collectionSlug=item.collection.slug,
+        ~eventType=item.eventType,
+        ~priceFilter=?item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch eventFilter {
+          | #AlertPriceThresholdEventFilter(_) => true
+          | _ => false
           }
-          let formattedPrice =
-            Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
-            ->Belt.Option.map(Belt.Float.toString)
-            ->Belt.Option.getExn
-
-          Some([AlertsTable.PriceRule({modifier: modifier, price: formattedPrice})])
-        | #AlertAttributesEventFilter({attributes}) =>
-          attributes
-          ->Belt.Array.keepMap(attribute =>
-            switch attribute {
-            | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
-              Some(
-                AlertsTable.PropertyRule({
-                  traitType: traitType,
-                  displayValue: Belt.Float.toString(numberValue),
-                }),
-              )
-            | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
-              Some(AlertsTable.PropertyRule({traitType: traitType, displayValue: stringValue}))
-            | #FutureAddedValue(_) => None
-            }
-          )
-          ->Js.Option.some
-        | #FutureAddedValue(_) => None
-        }
+        )
+        ->Belt.Option.flatMap(eventFilter =>
+          switch eventFilter {
+          | #AlertPriceThresholdEventFilter(eventFilter) =>
+            Services.PaymentToken.parsePrice(
+              eventFilter.value,
+              eventFilter.paymentToken.decimals,
+            )->Belt.Option.flatMap(price =>
+              switch eventFilter.direction {
+              | #ALERT_ABOVE => Some(Services.OpenSea.Min(price))
+              | #ALERT_BELOW => Some(Services.OpenSea.Max(price))
+              | #FutureAddedValue(_) => None
+              }
+            )
+          | _ => None
+          }
+        ),
+        ~traitsFilter=item.eventFilters
+        ->Belt.Array.map(eventFilter =>
+          switch eventFilter {
+          | #AlertAttributesEventFilter({attributes}) =>
+            attributes->Belt.Array.keepMap(attribute =>
+              switch attribute {
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+                Some(Services.OpenSea.NumberTrait({name: traitType, value: numberValue}))
+              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+                Some(Services.OpenSea.StringTrait({name: traitType, value: stringValue}))
+              | #FutureAddedValue(_) => None
+              }
+            )
+          | _ => []
+          }
+        )
+        ->Belt.Array.concatMany,
+        (),
       )
-      ->Belt.Array.concatMany,
+
+      {
+        AlertsTable.id: item.id,
+        collectionName: item.collection.name,
+        collectionSlug: item.collection.slug,
+        collectionImageUrl: item.collection.imageUrl,
+        eventType: eventType,
+        externalUrl: externalUrl,
+        rules: rules,
+      }
     })
 
   let integrationOptions = {
