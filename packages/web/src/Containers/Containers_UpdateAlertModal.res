@@ -293,12 +293,17 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     | _ => ()
     }
 
-  let externalUrl =
+  let openSeaAssetsUrl =
     newValue
     ->Belt.Option.getWithDefault(defaultValue)
     ->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
-  let handleNavigateExternalUrl = () =>
-    externalUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+  let contractEtherscanUrl =
+    newValue
+    ->Belt.Option.getWithDefault(defaultValue)
+    ->AlertModal.Value.collection
+    ->Belt.Option.map(collection =>
+      `https://etherscan.io/address/${collection->AlertModal.CollectionOption.contractAddressGet}`
+    )
 
   <AlertModal
     isOpen
@@ -310,16 +315,43 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     title="update alert"
     destinationOptions={destinationOptions}
     renderOverflowActionMenuItems={(~onClick) => <>
-      {Js.Option.isSome(externalUrl)
+      {Js.Option.isSome(openSeaAssetsUrl)
         ? <MaterialUi.MenuItem
             onClick={_ => {
               onClick()
-              handleNavigateExternalUrl()
+              openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
             }}>
             <MaterialUi.ListItemIcon>
-              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+              <img
+                className={Cn.make(["opacity-50"])}
+                src="/opensea-icon.svg"
+                style={ReactDOM.Style.make(~width="1.5rem", ~height="1.5rem", ())}
+              />
             </MaterialUi.ListItemIcon>
             <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+          </MaterialUi.MenuItem>
+        : React.null}
+      {Js.Option.isSome(contractEtherscanUrl)
+        ? <MaterialUi.MenuItem
+            onClick={_ => {
+              onClick()
+              contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+            }}>
+            <MaterialUi.ListItemIcon>
+              <img
+                className={Cn.make(["opacity-50"])}
+                style={ReactDOM.Style.make(
+                  ~filter="grayscale(100%)",
+                  ~width="1.5rem",
+                  ~height="1.5rem",
+                  (),
+                )}
+                src="/etherscan-icon.svg"
+              />
+            </MaterialUi.ListItemIcon>
+            <MaterialUi.ListItemText>
+              {React.string("view contract etherscan")}
+            </MaterialUi.ListItemText>
           </MaterialUi.MenuItem>
         : React.null}
       <MaterialUi.MenuItem

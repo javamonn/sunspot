@@ -55,6 +55,11 @@ let make = (~value, ~onChange) => {
     }
     None
   }, [collectionQueryInput])
+  let handleViewCollectionClick = (ev, url) => {
+    let _ = ev->ReactEvent.Synthetic.preventDefault
+    let _ = ev->ReactEvent.Synthetic.stopPropagation
+    Externals.Webapi.Window.open_(url)
+  }
 
   let (isLoadingCollectionOptions, loadingText) = switch (
     resultsSource.current,
@@ -152,14 +157,28 @@ let make = (~value, ~onChange) => {
     renderOption={(opt, _) =>
       switch opt {
       | Some(collectionOption) =>
-        <CollectionListItem
-          imageUrl={CollectionOption.imageUrlGet(collectionOption)}
-          primary={collectionOption
-          ->CollectionOption.nameGet
-          ->Belt.Option.getWithDefault("Unnamed Collection")}
-          secondary={collectionOption->CollectionOption.slugGet->React.string}
-          bare={true}
-        />
+        <div className={Cn.make(["flex", "flex-row", "justify-center", "items-between", "flex-1"])}>
+          <CollectionListItem
+            imageUrl={CollectionOption.imageUrlGet(collectionOption)}
+            primary={collectionOption
+            ->CollectionOption.nameGet
+            ->Belt.Option.getWithDefault("Unnamed Collection")}
+            secondary={collectionOption->CollectionOption.slugGet->React.string}
+            bare={true}
+          />
+          <a
+            className={Cn.make(["flex", "items-center", "justify-center", "opacity-50"])}
+            href={`https://opensea.io/collection/${collectionOption->CollectionOption.slugGet}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={ev =>
+              handleViewCollectionClick(
+                ev,
+                `https://opensea.io/collection/${collectionOption->CollectionOption.slugGet}`,
+              )}>
+            <Externals_MaterialUi_Icons.OpenInNew />
+          </a>
+        </div>
       | None =>
         <div className={Cn.make(["cursor-default", "pointer-events-none"])}>
           <MaterialUi.ListItemText

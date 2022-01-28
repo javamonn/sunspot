@@ -241,9 +241,48 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     | _ => handleSignIn()
     }
 
-  let externalUrl = value->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
-  let handleNavigateExternalUrl = () =>
-    externalUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+  let openSeaAssetsUrl = value->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
+  let contractEtherscanUrl =
+    value.collection->Belt.Option.map(collection =>
+      `https://etherscan.io/address/${collection->AlertModal.CollectionOption.contractAddressGet}`
+    )
+
+  let handleRenderOverflowActionMenuItems = if (
+    Js.Option.isNone(openSeaAssetsUrl) && Js.Option.isNone(contractEtherscanUrl)
+  ) {
+    None
+  } else {
+    Some(
+    (~onClick) => <>
+      {Js.Option.isSome(openSeaAssetsUrl)
+        ? <MaterialUi.MenuItem
+            onClick={_ => {
+              onClick()
+              openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+            }}>
+            <MaterialUi.ListItemIcon>
+              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+            </MaterialUi.ListItemIcon>
+            <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+          </MaterialUi.MenuItem>
+        : React.null}
+      {Js.Option.isSome(contractEtherscanUrl)
+        ? <MaterialUi.MenuItem
+            onClick={_ => {
+              onClick()
+              contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+            }}>
+            <MaterialUi.ListItemIcon>
+              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/etherscan-icon.svg" />
+            </MaterialUi.ListItemIcon>
+            <MaterialUi.ListItemText>
+              {React.string("view contract etherscan")}
+            </MaterialUi.ListItemText>
+          </MaterialUi.MenuItem>
+        : React.null}
+    </>
+  )
+  }
 
   <AlertModal
     isOpen
@@ -255,17 +294,6 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     onAction={handleAction}
     actionLabel="create"
     title="create alert"
-    renderOverflowActionMenuItems={(~onClick) => <>
-      <MaterialUi.MenuItem
-        onClick={_ => {
-          onClick()
-          handleNavigateExternalUrl()
-        }}>
-        <MaterialUi.ListItemIcon>
-          <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
-        </MaterialUi.ListItemIcon>
-        <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
-      </MaterialUi.MenuItem>
-    </>}
+    renderOverflowActionMenuItems=?{handleRenderOverflowActionMenuItems}
   />
 }
