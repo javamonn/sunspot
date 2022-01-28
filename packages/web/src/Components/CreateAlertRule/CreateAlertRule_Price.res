@@ -58,7 +58,10 @@ let make = (~value=?, ~onChange) =>
         placeholder="0.0"
         _type="number"
         _InputLabelProps={{"shrink": true}}
-        _InputProps={{"inputMode": "numeric"}}
+        _InputProps={{
+          "inputMode": "numeric",
+          "startAdornment": <span className={Cn.make(["mr-2"])}> {React.string(`Ξ`)} </span>,
+        }}
         value=?{value
         ->Belt.Option.flatMap(v => v.value)
         ->Belt.Option.map(MaterialUi.TextField.Value.string)}

@@ -157,9 +157,8 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                           <MaterialUi.Typography color=#TextPrimary variant=#Body2>
                             {React.string("price ")}
                             {React.string(modifier)}
-                            {React.string(" ")}
+                            {React.string(` Ξ`)}
                             {React.string(price)}
-                            {React.string("")}
                           </MaterialUi.Typography>,
                         )
                       | _ => None
