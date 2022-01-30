@@ -229,7 +229,7 @@ let make = () => {
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
           | #AlertPriceThresholdEventFilter(eventFilter) =>
-            CreateAlertRule_Price.makeRule(
+            AlertRule_Price.makeRule(
               ~modifier=switch eventFilter.direction {
               | #ALERT_ABOVE => ">"
               | #ALERT_BELOW => "<"
@@ -260,14 +260,14 @@ let make = () => {
               switch attribute {
               | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
                 Some({
-                  CreateAlertRule_Properties.Value.value: CreateAlertRule_Properties.NumberValue({
+                  AlertRule_Properties.Value.value: AlertRule_Properties.NumberValue({
                     value: numberValue,
                   }),
                   traitType: traitType,
                 })
               | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
                 Some({
-                  CreateAlertRule_Properties.Value.value: CreateAlertRule_Properties.StringValue({
+                  AlertRule_Properties.Value.value: AlertRule_Properties.StringValue({
                     value: stringValue,
                   }),
                   traitType: traitType,

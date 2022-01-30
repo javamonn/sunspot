@@ -88,14 +88,14 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
     newValue
     ->AlertModal.Value.priceRule
     ->Belt.Option.flatMap(rule => {
-      let direction = switch CreateAlertRule_Price.modifier(rule) {
+      let direction = switch AlertRule_Price.modifier(rule) {
       | ">" => Some(#ALERT_ABOVE)
       | "<" => Some(#ALERT_BELOW)
       | _ => None
       }
       let value =
         rule
-        ->CreateAlertRule_Price.value
+        ->AlertRule_Price.value
         ->Belt.Option.map(value =>
           value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
         )
@@ -124,18 +124,18 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
     ->AlertModal.Value.propertiesRule
     ->Belt.Option.map(rule => {
       let attributeInputs = rule->Belt.Array.map(a =>
-        switch a->CreateAlertRule_Properties.Value.value {
+        switch a->AlertRule_Properties.Value.value {
         | StringValue({value}) => {
             openSeaAssetStringAttribute: Some({
               value: value,
-              traitType: a->CreateAlertRule_Properties.Value.traitType,
+              traitType: a->AlertRule_Properties.Value.traitType,
             }),
             openSeaAssetNumberAttribute: None,
           }
         | NumberValue({value}) => {
             openSeaAssetNumberAttribute: Some({
               value: value,
-              traitType: a->CreateAlertRule_Properties.Value.traitType,
+              traitType: a->AlertRule_Properties.Value.traitType,
             }),
             openSeaAssetStringAttribute: None,
           }

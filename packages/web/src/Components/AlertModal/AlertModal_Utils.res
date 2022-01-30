@@ -7,15 +7,15 @@ let makeOpenSeaAssetsUrlForValue = value =>
       ->AlertModal_DialogContent.Value.propertiesRule
       ->Belt.Option.getWithDefault([])
       ->Belt.Array.map(propertyRule =>
-        switch propertyRule->CreateAlertRule_Properties.Value.value {
-        | CreateAlertRule_Properties.StringValue({value}) =>
+        switch propertyRule->AlertRule_Properties.Value.value {
+        | AlertRule_Properties.StringValue({value}) =>
           Services.OpenSea.StringTrait({
-            name: propertyRule->CreateAlertRule_Properties.Value.traitType,
+            name: propertyRule->AlertRule_Properties.Value.traitType,
             value: value,
           })
-        | CreateAlertRule_Properties.NumberValue({value}) =>
+        | AlertRule_Properties.NumberValue({value}) =>
           Services.OpenSea.NumberTrait({
-            name: propertyRule->CreateAlertRule_Properties.Value.traitType,
+            name: propertyRule->AlertRule_Properties.Value.traitType,
             value: value,
           })
         }
@@ -24,10 +24,10 @@ let makeOpenSeaAssetsUrlForValue = value =>
       value
       ->AlertModal_DialogContent.Value.priceRule
       ->Belt.Option.flatMap(priceRule =>
-        switch priceRule->CreateAlertRule_Price.value->Belt.Option.flatMap(Belt.Float.fromString) {
-        | Some(value) if priceRule->CreateAlertRule_Price.modifier == ">" =>
+        switch priceRule->AlertRule_Price.value->Belt.Option.flatMap(Belt.Float.fromString) {
+        | Some(value) if priceRule->AlertRule_Price.modifier == ">" =>
           Some(Services.OpenSea.Min(value))
-        | Some(value) if priceRule->CreateAlertRule_Price.modifier == "<" =>
+        | Some(value) if priceRule->AlertRule_Price.modifier == "<" =>
           Some(Services.OpenSea.Max(value))
         | _ => None
         }
