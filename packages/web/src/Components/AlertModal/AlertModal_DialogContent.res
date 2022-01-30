@@ -27,8 +27,8 @@ module Value = {
     id: string,
     eventType: AlertRule_EventType.t,
     collection: option<CollectionOption.t>,
-    priceRule: option<CreateAlertRule_Price.t>,
-    propertiesRule: option<CreateAlertRule_Properties.Value.t>,
+    priceRule: option<AlertRule_Price.t>,
+    propertiesRule: option<AlertRule_Properties.Value.t>,
     destination: option<AlertRule_Destination.Value.t>,
   }
 
@@ -108,14 +108,14 @@ let make = (
   ) = switch collectionAggregateAttributesResult {
   | Executed({data: Some({collection: Some({attributes})})}) =>
     let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
-      CreateAlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
+      AlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
       count: aggreggateAttribute.count,
       values: aggreggateAttribute.values->Belt.Array.keepMap(value =>
         switch value {
         | #OpenSeaCollectionAttributeNumberValue({numberValue}) =>
-          Some(CreateAlertRule_Properties.NumberValue({value: numberValue}))
+          Some(AlertRule_Properties.NumberValue({value: numberValue}))
         | #OpenSeaCollectionAttributeStringValue({stringValue}) =>
-          Some(CreateAlertRule_Properties.StringValue({value: stringValue}))
+          Some(AlertRule_Properties.StringValue({value: stringValue}))
         | #FutureAddedValue(_) => None
         }
       ),
@@ -152,7 +152,7 @@ let make = (
       onConnectSlack={handleConnectSlack}
       onConnectTwitter={handleConnectTwitter}
     />
-    <CreateAlertRule_Accordion
+    <AlertRule_Accordion
       className={Cn.make(["mt-8"])}
       summaryIcon={<MaterialUi.Typography
         variant=#H5
@@ -162,18 +162,18 @@ let make = (
       </MaterialUi.Typography>}
       summaryTitle={React.string("price rule")}
       summaryDescription={React.string("filter events by price threshold")}
-      details={<CreateAlertRule_Price
+      details={<AlertRule_Price
         value=?{value->Value.priceRule} onChange={handlePriceRuleChange}
       />}
     />
-    <CreateAlertRule_Accordion
+    <AlertRule_Accordion
       className={Cn.make(["mt-8"])}
       summaryIcon={<Externals_MaterialUi_Icons.LabelOutlined
         style={ReactDOM.Style.make(~opacity="0.42", ())}
       />}
       summaryTitle={React.string("properties rule")}
       summaryDescription={React.string("filter events by asset properties")}
-      details={<CreateAlertRule_Properties
+      details={<AlertRule_Properties
         value=?{value->Value.propertiesRule}
         onChange={handlePropertiesRuleChange}
         options=collectionAggregateAttributes
