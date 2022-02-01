@@ -157,7 +157,7 @@ let make = (~value, ~onChange) => {
     renderOption={(opt, _) =>
       switch opt {
       | Some(collectionOption) =>
-        <div className={Cn.make(["flex", "flex-row", "justify-center", "items-between", "flex-1"])}>
+        <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center", "flex-1"])}>
           <CollectionListItem
             imageUrl={CollectionOption.imageUrlGet(collectionOption)}
             primary={collectionOption

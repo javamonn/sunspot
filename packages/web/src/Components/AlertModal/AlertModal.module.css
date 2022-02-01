@@ -1,3 +1,4 @@
 .dialogPaper {
-  width: 42rem !important;
+  width: 52rem !important;
+  max-width: 52rem !important;
 }

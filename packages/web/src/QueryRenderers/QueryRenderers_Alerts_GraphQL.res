@@ -19,6 +19,15 @@ module Query_AlertRulesByAccountAddress = %graphql(
       ... on DiscordAlertDestination {
         guildId
         channelId
+        template {
+          title
+          description
+          fields {
+            name
+            value
+            inline
+          }
+        }
       }
       ... on SlackAlertDestination {
         channelId

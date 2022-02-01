@@ -83,3 +83,33 @@ module OpenInNew = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module TextFields = {
+  @react.component @module("@material-ui/icons/TextFields")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
+
+module KeyboardArrowUp = {
+  @react.component @module("@material-ui/icons/KeyboardArrowUp")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
+
+module KeyboardArrowDown = {
+  @react.component @module("@material-ui/icons/KeyboardArrowDown")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
