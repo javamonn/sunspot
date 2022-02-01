@@ -125,7 +125,7 @@ let make = (~value, ~onChange) => {
     _open={autocompleteIsOpen}
     value={MaterialUi_Types.Any(Js.Null.fromOption(value))}
     onChange={(_, collection, _) => {
-      switch collection->Obj.magic {
+      switch collection->Obj.magic->Js.Nullable.toOption {
       | Some(collectionOption) => onChange(Some(collectionOption))
       | _ => ()
       }
