@@ -18,7 +18,9 @@ let make = (~className=?, ~summaryIcon, ~summaryTitle, ~summaryDescription, ~ren
         <MaterialUi.Typography variant=#Body1 color=#Primary>
           {summaryTitle}
         </MaterialUi.Typography>
-        <MaterialUi.Typography variant=#Body2 color=#Secondary>
+        <MaterialUi.Typography
+          variant=#Body2
+          classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["text-darkSecondary"]), ())}>
           {summaryDescription}
         </MaterialUi.Typography>
       </div>

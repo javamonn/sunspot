@@ -15,7 +15,7 @@ let theme = MaterialUi.Theme.create({
   make(
     ~palette=PaletteOptions.make(
       ~primary=Primary.make(~main="#212121", ()),
-      ~secondary=Secondary.make(~main="#9E9E9E", ()),
+      ~secondary=Secondary.make(~main="#e64a19", ()),
       (),
     ),
     ~typography=Typography.make(

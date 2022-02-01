@@ -6,6 +6,7 @@
 /** base **/
 :root {
   --root-height: 100vh;
+  --accent-orange: #e64a19;
 }
 
 html {

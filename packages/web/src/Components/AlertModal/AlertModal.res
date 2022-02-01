@@ -27,6 +27,17 @@ let validate = value => {
   }
   let destinationValidation = switch value->Value.destination {
   | None => Some("destination is required")
+  | Some(DiscordAlertDestination({template: Some({fields: Some(fields)})})) =>
+    if (
+      Belt.Array.some(fields, field =>
+        field->AlertRule_Destination_Types.DiscordTemplate.name->Js.String2.length == 0 ||
+          field->AlertRule_Destination_Types.DiscordTemplate.value->Js.String2.length == 0
+      )
+    ) {
+      Some("discord template fields must not contain empty name or value")
+    } else {
+      None
+    }
   | Some(_) => None
   }
 

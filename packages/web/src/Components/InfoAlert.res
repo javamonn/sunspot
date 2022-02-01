@@ -4,6 +4,7 @@ let make = (~text, ~className="", ~children=?) =>
     className={Cn.make([
       "flex",
       "flex-col",
+      "flex-1",
       "text-darkSecondary",
       "border",
       "border-solid",
