@@ -155,8 +155,10 @@ let make = (
       className={Cn.make(["mt-8"])}
       summaryIcon={<MaterialUi.Typography
         variant=#H5
-        color=#Secondary
-        classes={MaterialUi.Typography.Classes.make(~h5=Cn.make(["leading-none"]), ())}>
+        classes={MaterialUi.Typography.Classes.make(
+          ~h5=Cn.make(["leading-none", "text-darkSecondary"]),
+          (),
+        )}>
         {React.string(`Ξ`)}
       </MaterialUi.Typography>}
       summaryTitle={React.string("price rule")}
@@ -205,8 +207,7 @@ let make = (
           value=?{value->Value.destination}
           eventType={value->Value.eventType}
           accordionExpanded={expanded}
-        />
-      }
+        />}
     />
   </>
 }
