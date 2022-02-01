@@ -1,0 +1,64 @@
+.md {
+  @apply text-darkPrimary;
+}
+.md > h1 {
+  @apply mb-8 font-mono text-xl;
+}
+.md > h2 {
+  @apply pb-2 mt-12 mb-8 font-mono text-xl border-b border-dotted border-lightDisabled;
+}
+.md > h3 {
+  @apply mt-8 mb-4 font-mono text-xl;
+}
+.md > p {
+  @apply mb-8 font-mono text-lg leading-relaxed text-darkPrimary;
+}
+
+.md > details {
+  @apply mt-12;
+}
+
+.md ol li,
+.md ul li {
+  @apply mb-4 font-mono text-lg leading-relaxed text-darkPrimary;
+}
+.md a {
+  @apply underline;
+}
+.md > ul {
+  @apply mb-10 ml-6 list-inside;
+}
+
+.md > blockquote {
+  @apply pl-4 mt-8 mb-8 font-mono text-lg leading-relaxed border-l-2 text-darkPrimary;
+}
+
+.md > figure > figcaption {
+  @apply ml-4 italic text-darkSecondary;
+}
+
+.md > figure {
+  @apply mb-10;
+}
+
+.md > iframe {
+  @apply w-full mt-8 mb-8;
+}
+
+.md > div {
+  @apply mb-8 !important;
+}
+
+.md > p > code,
+.md > ul > li > code {
+  @apply p-1 rounded-sm;
+  color: rgba(0, 0, 0, .92);
+}
+
+.md > details > summary {
+  @apply mb-4;
+}
+
+.md > details > p  {
+  @apply text-lg text-darkPrimary;
+}

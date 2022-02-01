@@ -1,5 +1,6 @@
 const bsconfig = require("./bsconfig.json");
 const fs = require("fs");
+const RemarkHTML = require("remark-html");
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
@@ -38,6 +39,23 @@ const config = {
       resolve: {
         fullySpecified: false,
       },
+    });
+
+    config.module.rules.push({
+      test: /\.md$/,
+      use: [
+        {
+          loader: "html-loader",
+        },
+        {
+          loader: "remark-loader",
+          options: {
+            remarkOptions: {
+              plugins: [RemarkHTML],
+            },
+          },
+        },
+      ],
     });
 
     return config;
