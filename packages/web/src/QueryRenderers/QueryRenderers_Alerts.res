@@ -2,6 +2,7 @@ open QueryRenderers_Alerts_GraphQL
 
 type updateAlertModalState =
   | UpdateAlertModalOpen(AlertModal.Value.t)
+  | UpdateAlertModalClosing(AlertModal.Value.t)
   | UpdateAlertModalClosed
 
 @react.component
@@ -383,10 +384,17 @@ let make = () => {
           | _ => false
           }}
           value=?{switch updateAlertModal {
-          | UpdateAlertModalOpen(v) => Some(v)
+          | UpdateAlertModalOpen(v) | UpdateAlertModalClosing(v) => Some(v)
           | _ => None
           }}
-          onClose={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
+          onExited={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
+          onClose={_ =>
+            setUpdateAlertModal(alertModalValue =>
+              switch alertModalValue {
+              | UpdateAlertModalOpen(v) => UpdateAlertModalClosing(v)
+              | _ => alertModalValue
+              }
+            )}
           destinationOptions={integrationOptions}
           accountAddress={accountAddress}
         />

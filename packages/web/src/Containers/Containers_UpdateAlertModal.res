@@ -201,7 +201,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
 let defaultValue = AlertModal.Value.empty()
 
 @react.component
-let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) => {
+let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinationOptions) => {
   let (updateAlertRuleMutation, updateAlertRuleMutationResult) = Mutation_UpdateAlertRule.use()
   let (deleteAlertRuleMutation, deleteAlertRuleMutationResult) = Mutation_DeleteAlertRule.use()
   let (newValue, setNewValue) = React.useState(_ => value)
@@ -328,6 +328,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
   <AlertModal
     isOpen
     onClose
+    onExited={onExited}
     value={newValue->Belt.Option.getWithDefault(defaultValue)}
     onChange={newValue => setNewValue(_ => Some(newValue))}
     onAction={handleUpdate}

@@ -10,7 +10,6 @@ let makeRule = (~modifier, ~value) => {
 
 @react.component
 let make = (~value=?, ~onChange, ~accordionExpanded) => {
-  Js.log("render price")
   <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
     <MaterialUi.FormControl
       classes={MaterialUi.FormControl.Classes.make(~root={Cn.make(["flex-1"])}, ())}>
