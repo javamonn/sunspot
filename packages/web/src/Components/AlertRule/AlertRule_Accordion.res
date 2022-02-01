@@ -1,7 +1,12 @@
 @react.component
-let make = (~className=?, ~summaryIcon, ~summaryTitle, ~summaryDescription, ~details) => {
+let make = (~className=?, ~summaryIcon, ~summaryTitle, ~summaryDescription, ~renderDetails) => {
+  let (expanded, setExpanded) = React.useState(_ => false)
+
   <MaterialUi.Accordion
-    variant=#Outlined classes={MaterialUi.Accordion.Classes.make(~root=?className, ())}>
+    variant=#Outlined
+    classes={MaterialUi.Accordion.Classes.make(~root=?className, ())}
+    expanded={expanded}
+    onChange={(_, isExpanded) => {setExpanded(_ => isExpanded)}}>
     <MaterialUi.AccordionSummary
       expandIcon={<Externals.MaterialUi_Icons.ExpandMore />}
       classes={MaterialUi.AccordionSummary.Classes.make(
@@ -18,6 +23,6 @@ let make = (~className=?, ~summaryIcon, ~summaryTitle, ~summaryDescription, ~det
         </MaterialUi.Typography>
       </div>
     </MaterialUi.AccordionSummary>
-    <MaterialUi.AccordionDetails> {details} </MaterialUi.AccordionDetails>
+    <MaterialUi.AccordionDetails> {renderDetails(~expanded)} </MaterialUi.AccordionDetails>
   </MaterialUi.Accordion>
 }

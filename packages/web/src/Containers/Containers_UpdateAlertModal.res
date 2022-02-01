@@ -20,7 +20,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
   open Mutation_UpdateAlertRule
 
   let destination = switch AlertModal.Value.destination(newValue) {
-  | Some(AlertRule_Destination.Value.WebPushAlertDestination) =>
+  | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination) =>
     Services.PushNotification.getSubscription()
     |> Js.Promise.then_(subscription => {
       switch subscription {
@@ -45,17 +45,37 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
         twitterAlertDestination: None,
       })
     })
-  | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId})) =>
+  | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({
+      channelId,
+      guildId,
+      template,
+    })) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
         channelId: channelId,
+        template: template->Belt.Option.map(template => {
+          title: template->AlertRule_Destination.Types.DiscordTemplate.title,
+          description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+          fields: template
+          ->AlertRule_Destination.Types.DiscordTemplate.fields
+          ->Belt.Option.map(fields =>
+            fields->Belt.Array.map(field => {
+              name: field->AlertRule_Destination_Types.DiscordTemplate.name,
+              value: field->AlertRule_Destination_Types.DiscordTemplate.value,
+              inline: field->AlertRule_Destination_Types.DiscordTemplate.inline,
+            })
+          ),
+        }),
       }),
       webPushAlertDestination: None,
       slackAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | Some(AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl})) =>
+  | Some(AlertRule_Destination.Types.Value.SlackAlertDestination({
+      channelId,
+      incomingWebhookUrl,
+    })) =>
     Js.Promise.resolve({
       slackAlertDestination: Some({
         channelId: channelId,
@@ -65,7 +85,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
       webPushAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | Some(AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken})) =>
+  | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({userId, accessToken})) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -314,54 +334,59 @@ let make = (~isOpen, ~value=?, ~onClose, ~accountAddress, ~destinationOptions) =
     actionLabel="update"
     title="update alert"
     destinationOptions={destinationOptions}
-    renderOverflowActionMenuItems={(~onClick) => <>
-      {Js.Option.isSome(openSeaAssetsUrl)
-        ? <MaterialUi.MenuItem
-            onClick={_ => {
-              onClick()
-              openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-            }}>
-            <MaterialUi.ListItemIcon>
-              <img
-                className={Cn.make(["opacity-50"])}
-                src="/opensea-icon.svg"
-                style={ReactDOM.Style.make(~width="1.5rem", ~height="1.5rem", ())}
-              />
-            </MaterialUi.ListItemIcon>
-            <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
-          </MaterialUi.MenuItem>
-        : React.null}
-      {Js.Option.isSome(contractEtherscanUrl)
-        ? <MaterialUi.MenuItem
-            onClick={_ => {
-              onClick()
-              contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-            }}>
-            <MaterialUi.ListItemIcon>
-              <img
-                className={Cn.make(["opacity-50"])}
-                style={ReactDOM.Style.make(
-                  ~filter="grayscale(100%)",
-                  ~width="1.5rem",
-                  ~height="1.5rem",
-                  (),
-                )}
-                src="/etherscan-icon.svg"
-              />
-            </MaterialUi.ListItemIcon>
-            <MaterialUi.ListItemText>
-              {React.string("view contract etherscan")}
-            </MaterialUi.ListItemText>
-          </MaterialUi.MenuItem>
-        : React.null}
-      <MaterialUi.MenuItem
-        onClick={_ => {
-          onClick()
-          handleDelete()
-        }}>
-        <MaterialUi.ListItemIcon> <Externals.MaterialUi_Icons.Delete /> </MaterialUi.ListItemIcon>
-        <MaterialUi.ListItemText> {React.string("delete")} </MaterialUi.ListItemText>
-      </MaterialUi.MenuItem>
-    </>}
+    renderOverflowActionMenuItems={(~onClick) =>
+      [
+        {
+          Js.Option.isSome(openSeaAssetsUrl)
+            ? <MaterialUi.MenuItem
+                onClick={_ => {
+                  onClick()
+                  openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+                }}>
+                <MaterialUi.ListItemIcon>
+                  <img
+                    className={Cn.make(["opacity-50"])}
+                    src="/opensea-icon.svg"
+                    style={ReactDOM.Style.make(~width="1.5rem", ~height="1.5rem", ())}
+                  />
+                </MaterialUi.ListItemIcon>
+                <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+              </MaterialUi.MenuItem>
+            : React.null
+        },
+        {
+          Js.Option.isSome(contractEtherscanUrl)
+            ? <MaterialUi.MenuItem
+                onClick={_ => {
+                  onClick()
+                  contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+                }}>
+                <MaterialUi.ListItemIcon>
+                  <img
+                    className={Cn.make(["opacity-50"])}
+                    style={ReactDOM.Style.make(
+                      ~filter="grayscale(100%)",
+                      ~width="1.5rem",
+                      ~height="1.5rem",
+                      (),
+                    )}
+                    src="/etherscan-icon.svg"
+                  />
+                </MaterialUi.ListItemIcon>
+                <MaterialUi.ListItemText>
+                  {React.string("view contract etherscan")}
+                </MaterialUi.ListItemText>
+              </MaterialUi.MenuItem>
+            : React.null
+        },
+        <MaterialUi.MenuItem
+          onClick={_ => {
+            onClick()
+            handleDelete()
+          }}>
+          <MaterialUi.ListItemIcon> <Externals.MaterialUi_Icons.Delete /> </MaterialUi.ListItemIcon>
+          <MaterialUi.ListItemText> {React.string("delete")} </MaterialUi.ListItemText>
+        </MaterialUi.MenuItem>,
+      ]->React.array}
   />
 }

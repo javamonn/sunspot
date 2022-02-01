@@ -12,7 +12,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
   open Mutation_CreateAlertRule
 
   let destination = switch AlertModal.Value.destination(value) {
-  | Some(AlertRule_Destination.Value.WebPushAlertDestination) =>
+  | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination) =>
     Services.PushNotification.getSubscription()
     |> Js.Promise.then_(subscription => {
       switch subscription {
@@ -37,17 +37,37 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         twitterAlertDestination: None,
       })
     })
-  | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId, guildId})) =>
+  | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({
+      channelId,
+      guildId,
+      template,
+    })) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
         channelId: channelId,
+        template: template->Belt.Option.map(template => {
+          title: template->AlertRule_Destination.Types.DiscordTemplate.title,
+          description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+          fields: template
+          ->AlertRule_Destination.Types.DiscordTemplate.fields
+          ->Belt.Option.map(fields =>
+            fields->Belt.Array.map(field => {
+              name: field->AlertRule_Destination_Types.DiscordTemplate.name,
+              value: field->AlertRule_Destination_Types.DiscordTemplate.value,
+              inline: field->AlertRule_Destination_Types.DiscordTemplate.inline,
+            })
+          ),
+        }),
       }),
       webPushAlertDestination: None,
       slackAlertDestination: None,
       twitterAlertDestination: None,
     })
-  | Some(AlertRule_Destination.Value.SlackAlertDestination({channelId, incomingWebhookUrl})) =>
+  | Some(AlertRule_Destination.Types.Value.SlackAlertDestination({
+      channelId,
+      incomingWebhookUrl,
+    })) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -57,7 +77,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         incomingWebhookUrl: incomingWebhookUrl,
       }),
     })
-  | Some(AlertRule_Destination.Value.TwitterAlertDestination({userId, accessToken})) =>
+  | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({userId, accessToken})) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
@@ -253,35 +273,35 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     None
   } else {
     Some(
-    (~onClick) => <>
-      {Js.Option.isSome(openSeaAssetsUrl)
-        ? <MaterialUi.MenuItem
-            onClick={_ => {
-              onClick()
-              openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-            }}>
-            <MaterialUi.ListItemIcon>
-              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
-            </MaterialUi.ListItemIcon>
-            <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
-          </MaterialUi.MenuItem>
-        : React.null}
-      {Js.Option.isSome(contractEtherscanUrl)
-        ? <MaterialUi.MenuItem
-            onClick={_ => {
-              onClick()
-              contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-            }}>
-            <MaterialUi.ListItemIcon>
-              <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/etherscan-icon.svg" />
-            </MaterialUi.ListItemIcon>
-            <MaterialUi.ListItemText>
-              {React.string("view contract etherscan")}
-            </MaterialUi.ListItemText>
-          </MaterialUi.MenuItem>
-        : React.null}
-    </>
-  )
+      (~onClick) => <>
+        {Js.Option.isSome(openSeaAssetsUrl)
+          ? <MaterialUi.MenuItem
+              onClick={_ => {
+                onClick()
+                openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+              }}>
+              <MaterialUi.ListItemIcon>
+                <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+              </MaterialUi.ListItemIcon>
+              <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+            </MaterialUi.MenuItem>
+          : React.null}
+        {Js.Option.isSome(contractEtherscanUrl)
+          ? <MaterialUi.MenuItem
+              onClick={_ => {
+                onClick()
+                contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+              }}>
+              <MaterialUi.ListItemIcon>
+                <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/etherscan-icon.svg" />
+              </MaterialUi.ListItemIcon>
+              <MaterialUi.ListItemText>
+                {React.string("view contract etherscan")}
+              </MaterialUi.ListItemText>
+            </MaterialUi.MenuItem>
+          : React.null}
+      </>,
+    )
   }
 
   <AlertModal

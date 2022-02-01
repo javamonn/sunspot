@@ -192,24 +192,7 @@ module OptionsEmpty = {
       "properties for this collection are not indexed. if this seems incorrect, reach out to us for support."
     }
 
-    <div
-      className={Cn.make([
-        "flex",
-        "flex-row",
-        "p-4",
-        "text-darkSecondary",
-        "items-center",
-        "border",
-        "border-solid",
-        "border-darkDisabled",
-        "rounded",
-        "text-sm",
-        "bg-gray-100",
-        "font-mono"
-      ])}>
-      <Externals.MaterialUi_Icons.Error className={Cn.make(["w-5", "h-5", "mr-4", "opacity-50"])} />
-      {React.string(copy)}
-    </div>
+    <InfoAlert text={copy} />
   }
 }
 
@@ -221,6 +204,7 @@ let make = (
   ~isOpenstore,
   ~isCollectionSelected,
   ~onChange,
+  ~accordionExpanded,
 ) => {
   let handleRemoveValueAttribute = idx =>
     value->Belt.Option.forEach(value => {
@@ -249,3 +233,12 @@ let make = (
       : <OptionsEmpty isCollectionSelected={isCollectionSelected} isOpenstore={isOpenstore} />}
   </div>
 }
+
+let make = React.memoCustomCompareProps(make, (prevProps, nextProps) =>
+  !nextProps["accordionExpanded"] ||
+  (nextProps["isOptionsLoading"] == prevProps["isOptionsLoading"] &&
+  nextProps["isOpenstore"] == prevProps["isOpenstore"] &&
+  nextProps["isCollectionSelected"] == prevProps["isCollectionSelected"] &&
+  nextProps["options"] == prevProps["options"] &&
+  Belt.Option.eq(nextProps["value"], prevProps["value"], (a, b) => a == b))
+)

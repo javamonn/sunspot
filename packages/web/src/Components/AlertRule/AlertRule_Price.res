@@ -9,7 +9,8 @@ let makeRule = (~modifier, ~value) => {
 }
 
 @react.component
-let make = (~value=?, ~onChange) =>
+let make = (~value=?, ~onChange, ~accordionExpanded) => {
+  Js.log("render price")
   <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
     <MaterialUi.FormControl
       classes={MaterialUi.FormControl.Classes.make(~root={Cn.make(["flex-1"])}, ())}>
@@ -33,7 +34,10 @@ let make = (~value=?, ~onChange) =>
       </MaterialUi.InputLabel>
       <MaterialUi.Select
         labelId="CreateAlertModal_rule"
-        value=?{value->Belt.Option.map(v => v->modifier->MaterialUi.Select.Value.string)}
+        value={value
+        ->Belt.Option.map(v => v->modifier)
+        ->Belt.Option.getWithDefault("")
+        ->MaterialUi.Select.Value.string}
         fullWidth=true
         onChange={(ev, _) => {
           let target = ev->ReactEvent.Form.target
@@ -81,3 +85,11 @@ let make = (~value=?, ~onChange) =>
       />
     </MaterialUi.FormControl>
   </div>
+}
+
+let make = React.memoCustomCompareProps(make, (prevProps, nextProps) =>
+  !nextProps["accordionExpanded"] ||
+  Belt.Option.eq(prevProps["value"], nextProps["value"], (a, b) =>
+    modifier(a) == modifier(b) && Belt.Option.eq(value(a), value(b), (a, b) => a == b)
+  )
+)

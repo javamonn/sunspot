@@ -33,6 +33,7 @@ module.exports = {
       darkSecondary: "rgba(0, 0, 0, .60)",
       darkDisabled: "rgba(0, 0, 0, .38)",
       darkBorder: "rgba(0, 0, 0, .20)",
+      darkDivider: "rgba(0, 0, 0, .12)",
       lightPrimary: "rgba(255, 255, 255, .87)",
       lightSecondary: "rgba(255, 255, 255, .60)",
       lightDisabled: "rgba(255, 255, 255, .38)",

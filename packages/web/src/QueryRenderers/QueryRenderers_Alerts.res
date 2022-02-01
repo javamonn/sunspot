@@ -161,7 +161,7 @@ let make = () => {
       ->Belt.Array.keepMap(item =>
         item->Belt.Option.map(item =>
           item.channels->Belt.Array.map(channel => {
-            AlertRule_Destination.Option.DiscordAlertDestinationOption({
+            AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
               channelId: channel.id,
               channelName: channel.name,
               guildId: item.guildId,
@@ -177,30 +177,34 @@ let make = () => {
     let slackIntegrationOptions = switch oauthIntegrationsQuery {
     | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
       slackItems->Belt.Array.keepMap(item =>
-        item->Belt.Option.map(item => AlertRule_Destination.Option.SlackAlertDestinationOption({
-          teamName: item.teamName,
-          channelName: item.channelName,
-          channelId: item.channelId,
-          incomingWebhookUrl: item.incomingWebhookUrl,
-        }))
+        item->Belt.Option.map(
+          item => AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
+            teamName: item.teamName,
+            channelName: item.channelName,
+            channelId: item.channelId,
+            incomingWebhookUrl: item.incomingWebhookUrl,
+          }),
+        )
       )
     | _ => []
     }
     let twitterIntegrationOptions = switch oauthIntegrationsQuery {
     | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
       twitterItems->Belt.Array.keepMap(item =>
-        item->Belt.Option.map(item => AlertRule_Destination.Option.TwitterAlertDestinationOption({
-          userId: item.user.id,
-          username: item.user.username,
-          profileImageUrl: item.user.profileImageUrl,
-          accessToken: {
-            accessToken: item.accessToken.accessToken,
-            refreshToken: item.accessToken.refreshToken,
-            scope: item.accessToken.scope,
-            expiresAt: item.accessToken.expiresAt,
-            tokenType: item.accessToken.tokenType,
-          },
-        }))
+        item->Belt.Option.map(
+          item => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
+            userId: item.user.id,
+            username: item.user.username,
+            profileImageUrl: item.user.profileImageUrl,
+            accessToken: {
+              accessToken: item.accessToken.accessToken,
+              refreshToken: item.accessToken.refreshToken,
+              scope: item.accessToken.scope,
+              expiresAt: item.accessToken.expiresAt,
+              tokenType: item.accessToken.tokenType,
+            },
+          }),
+        )
       )
     | _ => []
     }
@@ -281,24 +285,36 @@ let make = () => {
         )
 
       let destination = switch item.destination {
-      | #WebPushAlertDestination(_) => Some(AlertRule_Destination.Value.WebPushAlertDestination)
-      | #DiscordAlertDestination({guildId, channelId}) =>
+      | #WebPushAlertDestination(_) =>
+        Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
+      | #DiscordAlertDestination({guildId, channelId, template}) =>
         Some(
-          AlertRule_Destination.Value.DiscordAlertDestination({
+          AlertRule_Destination.Types.Value.DiscordAlertDestination({
             guildId: guildId,
             channelId: channelId,
+            template: template->Belt.Option.map(template => {
+              AlertRule_Destination.Types.DiscordTemplate.title: template.title,
+              description: template.description,
+              fields: template.fields->Belt.Option.map(fields =>
+                fields->Belt.Array.map(field => {
+                  AlertRule_Destination.Types.DiscordTemplate.name: field.name,
+                  value: field.value,
+                  inline: field.inline,
+                })
+              ),
+            }),
           }),
         )
       | #SlackAlertDestination({channelId, incomingWebhookUrl}) =>
         Some(
-          AlertRule_Destination.Value.SlackAlertDestination({
+          AlertRule_Destination.Types.Value.SlackAlertDestination({
             channelId: channelId,
             incomingWebhookUrl: incomingWebhookUrl,
           }),
         )
       | #TwitterAlertDestination({userId, accessToken}) =>
         Some(
-          AlertRule_Destination.Value.TwitterAlertDestination({
+          AlertRule_Destination.Types.Value.TwitterAlertDestination({
             userId: userId,
             accessToken: {
               accessToken: accessToken.accessToken,

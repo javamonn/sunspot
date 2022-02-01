@@ -29,7 +29,7 @@ module Value = {
     collection: option<CollectionOption.t>,
     priceRule: option<AlertRule_Price.t>,
     propertiesRule: option<AlertRule_Properties.Value.t>,
-    destination: option<AlertRule_Destination.Value.t>,
+    destination: option<AlertRule_Destination.Types.Value.t>,
   }
 
   let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination, ~eventType) => {
@@ -48,7 +48,7 @@ module Value = {
     propertiesRule: None,
     eventType: #listing,
     destination: Config.isBrowser() && Services.PushNotification.isSupported()
-      ? Some(AlertRule_Destination.Value.WebPushAlertDestination)
+      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
       : None,
   }
 }
@@ -102,28 +102,27 @@ let make = (
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
   let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
 
-  let (
-    isLoadingCollectionAggregateAttributes,
-    collectionAggregateAttributes,
-  ) = switch collectionAggregateAttributesResult {
-  | Executed({data: Some({collection: Some({attributes})})}) =>
-    let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
-      AlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
-      count: aggreggateAttribute.count,
-      values: aggreggateAttribute.values->Belt.Array.keepMap(value =>
-        switch value {
-        | #OpenSeaCollectionAttributeNumberValue({numberValue}) =>
-          Some(AlertRule_Properties.NumberValue({value: numberValue}))
-        | #OpenSeaCollectionAttributeStringValue({stringValue}) =>
-          Some(AlertRule_Properties.StringValue({value: stringValue}))
-        | #FutureAddedValue(_) => None
-        }
-      ),
-    })
-    (false, collectionAggregateAttributes)
-  | Executed({loading: true}) => (true, [])
-  | _ => (false, [])
-  }
+  let (isLoadingCollectionAggregateAttributes, collectionAggregateAttributes) = React.useMemo1(() =>
+    switch collectionAggregateAttributesResult {
+    | Executed({data: Some({collection: Some({attributes})})}) =>
+      let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
+        AlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
+        count: aggreggateAttribute.count,
+        values: aggreggateAttribute.values->Belt.Array.keepMap(value =>
+          switch value {
+          | #OpenSeaCollectionAttributeNumberValue({numberValue}) =>
+            Some(AlertRule_Properties.NumberValue({value: numberValue}))
+          | #OpenSeaCollectionAttributeStringValue({stringValue}) =>
+            Some(AlertRule_Properties.StringValue({value: stringValue}))
+          | #FutureAddedValue(_) => None
+          }
+        ),
+      })
+      (false, collectionAggregateAttributes)
+    | Executed({loading: true}) => (true, [])
+    | _ => (false, [])
+    }
+  , [collectionAggregateAttributesResult])
 
   <>
     {validationError
@@ -162,9 +161,12 @@ let make = (
       </MaterialUi.Typography>}
       summaryTitle={React.string("price rule")}
       summaryDescription={React.string("filter events by price threshold")}
-      details={<AlertRule_Price
-        value=?{value->Value.priceRule} onChange={handlePriceRuleChange}
-      />}
+      renderDetails={(~expanded) =>
+        <AlertRule_Price
+          value=?{value->Value.priceRule}
+          onChange={handlePriceRuleChange}
+          accordionExpanded={expanded}
+        />}
     />
     <AlertRule_Accordion
       className={Cn.make(["mt-8"])}
@@ -173,20 +175,38 @@ let make = (
       />}
       summaryTitle={React.string("properties rule")}
       summaryDescription={React.string("filter events by asset properties")}
-      details={<AlertRule_Properties
-        value=?{value->Value.propertiesRule}
-        onChange={handlePropertiesRuleChange}
-        options=collectionAggregateAttributes
-        isOptionsLoading={isLoadingCollectionAggregateAttributes}
-        isCollectionSelected={value->Value.collection->Js.Option.isSome}
-        isOpenstore={value
-        ->Value.collection
-        ->Belt.Option.map(collection =>
-          collection->CollectionOption.contractAddressGet->Js.String2.toLowerCase ==
-            Config.openstoreContractAddress
-        )
-        ->Belt.Option.getWithDefault(false)}
+      renderDetails={(~expanded) =>
+        <AlertRule_Properties
+          accordionExpanded={expanded}
+          value=?{value->Value.propertiesRule}
+          onChange={handlePropertiesRuleChange}
+          options=collectionAggregateAttributes
+          isOptionsLoading={isLoadingCollectionAggregateAttributes}
+          isCollectionSelected={value->Value.collection->Js.Option.isSome}
+          isOpenstore={value
+          ->Value.collection
+          ->Belt.Option.map(collection =>
+            collection->CollectionOption.contractAddressGet->Js.String2.toLowerCase ==
+              Config.openstoreContractAddress
+          )
+          ->Belt.Option.getWithDefault(false)}
+        />}
+    />
+    <AlertRule_Accordion
+      className={Cn.make(["mt-8"])}
+      summaryIcon={<Externals_MaterialUi_Icons.TextFields
+        style={ReactDOM.Style.make(~opacity="0.42", ())}
       />}
+      summaryTitle={React.string("template")}
+      summaryDescription={React.string("customize alert text and formatting")}
+      renderDetails={(~expanded) =>
+        <AlertRule_Destination_TemplateAccordion
+          onChange={handleDestinationChange}
+          value=?{value->Value.destination}
+          eventType={value->Value.eventType}
+          accordionExpanded={expanded}
+        />
+      }
     />
   </>
 }

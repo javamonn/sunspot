@@ -1,3 +1,6 @@
+module Types = AlertRule_Destination_Types
+open AlertRule_Destination_Types
+
 let pushNotificationDestinationId = "push-notification"
 let destinationIdAddDiscordIntegration = "add-discord-integration"
 let destinationIdAddSlackIntegration = "add-slack-integration"
@@ -5,45 +8,6 @@ let destinationIdAddTwitterIntegration = "add-twitter-integration"
 
 let discordIconUrl = "/discord-icon.svg"
 let slackIconUrl = "/slack-icon.svg"
-
-type destinationOAuthAccessToken = {
-  accessToken: string,
-  refreshToken: string,
-  scope: string,
-  expiresAt: string,
-  tokenType: string,
-}
-
-module Value = {
-  type t =
-    | WebPushAlertDestination
-    | DiscordAlertDestination({guildId: string, channelId: string})
-    | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
-    | TwitterAlertDestination({userId: string, accessToken: destinationOAuthAccessToken})
-}
-
-module Option = {
-  type t =
-    | DiscordAlertDestinationOption({
-        guildId: string,
-        guildIconUrl: option<string>,
-        channelId: string,
-        channelName: string,
-        guildName: string,
-      })
-    | SlackAlertDestinationOption({
-        teamName: string,
-        channelName: string,
-        channelId: string,
-        incomingWebhookUrl: string,
-      })
-    | TwitterAlertDestinationOption({
-        userId: string,
-        username: string,
-        profileImageUrl: string,
-        accessToken: destinationOAuthAccessToken,
-      })
-}
 
 @react.component
 let make = (
@@ -85,6 +49,7 @@ let make = (
             Value.DiscordAlertDestination({
               guildId: guildId,
               channelId: channelId,
+              template: None
             })
           | SlackAlertDestinationOption({incomingWebhookUrl, channelId}) =>
             Value.SlackAlertDestination({

@@ -81,7 +81,7 @@ let makeSteps = (
           onChange={newValue => setAlertRuleValue(_ => newValue)}
           destinationOptions={createSlackOAuthIntegrationMutationResultData
           ->Belt.Option.map(data => [
-            AlertRule_Destination.Option.SlackAlertDestinationOption({
+            AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
               teamName: data.slackIntegration.teamName,
               channelName: data.slackIntegration.channelName,
               channelId: data.slackIntegration.channelId,
@@ -112,7 +112,7 @@ let makeSteps = (
           onChange={newValue => setAlertRuleValue(_ => newValue)}
           destinationOptions={createTwitterOAuthIntegrationMutationResultData
           ->Belt.Option.map(data => [
-            AlertRule_Destination.Option.TwitterAlertDestinationOption({
+            AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
               userId: data.twitterIntegration.user.id,
               username: data.twitterIntegration.user.username,
               profileImageUrl: data.twitterIntegration.user.profileImageUrl,
@@ -145,7 +145,7 @@ let makeSteps = (
         element: createDiscordOAuthIntegrationMutationResultData
         ->Belt.Option.map(data => {
           let value = switch alertRuleValue.destination {
-          | Some(AlertRule_Destination.Value.DiscordAlertDestination({channelId})) =>
+          | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({channelId})) =>
             data.discordIntegration.channels
             ->Belt.Array.getBy(c => c.id == channelId)
             ->Belt.Option.map(c => {
@@ -158,9 +158,10 @@ let makeSteps = (
             setAlertRuleValue(alertRule => {
               ...alertRule,
               destination: Some(
-                AlertRule_Destination.Value.DiscordAlertDestination({
+                AlertRule_Destination.Types.Value.DiscordAlertDestination({
                   guildId: data.discordIntegration.guildId,
                   channelId: newValue->DiscordIntegrationChannelRadioGroup.id,
+                  template: None,
                 }),
               ),
             })
@@ -201,7 +202,7 @@ let makeSteps = (
           destinationOptions={createDiscordOAuthIntegrationMutationResultData
           ->Belt.Option.map(data =>
             data.discordIntegration.channels->Belt.Array.map(
-              channel => AlertRule_Destination.Option.DiscordAlertDestinationOption({
+              channel => AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
                 channelId: channel.id,
                 channelName: channel.name,
                 guildId: data.discordIntegration.guildId,
@@ -346,7 +347,7 @@ let make = (~onCreated, ~params) => {
               Mutation_CreateSlackOAuthIntegration.Mutation_CreateSlackOAuthIntegration_inner.t,
             >,
           ) => Some(
-            AlertRule_Destination.Value.SlackAlertDestination({
+            AlertRule_Destination.Types.Value.SlackAlertDestination({
               channelId: result.data.slackIntegration.channelId,
               incomingWebhookUrl: result.data.slackIntegration.incomingWebhookUrl,
             }),
@@ -377,7 +378,7 @@ let make = (~onCreated, ~params) => {
           ) => {
             let data = result.data.twitterIntegration
             Some(
-              AlertRule_Destination.Value.TwitterAlertDestination({
+              AlertRule_Destination.Types.Value.TwitterAlertDestination({
                 userId: data.user.id,
                 accessToken: {
                   accessToken: data.accessToken.accessToken,
@@ -523,8 +524,24 @@ let make = (~onCreated, ~params) => {
       })
 
     let destination = switch alertRuleValue.destination {
-    | Some(DiscordAlertDestination({guildId, channelId})) => {
-        discordAlertDestination: Some({guildId: guildId, channelId: channelId}),
+    | Some(DiscordAlertDestination({guildId, channelId, template})) => {
+        discordAlertDestination: Some({
+          guildId: guildId,
+          channelId: channelId,
+          template: template->Belt.Option.map(template => {
+            title: template->AlertRule_Destination.Types.DiscordTemplate.title,
+            description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+            fields: template
+            ->AlertRule_Destination.Types.DiscordTemplate.fields
+            ->Belt.Option.map(fields =>
+              fields->Belt.Array.map(field => {
+                name: field->AlertRule_Destination_Types.DiscordTemplate.name,
+                value: field->AlertRule_Destination_Types.DiscordTemplate.value,
+                inline: field->AlertRule_Destination_Types.DiscordTemplate.inline,
+              })
+            ),
+          }),
+        }),
         webPushAlertDestination: None,
         slackAlertDestination: None,
         twitterAlertDestination: None,
