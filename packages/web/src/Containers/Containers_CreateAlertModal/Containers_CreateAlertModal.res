@@ -310,7 +310,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     onExited={handleExited}
     value={value}
     destinationOptions={destinationOptions}
-    onChange={newValue => setValue(_ => newValue)}
+    onChange={setterFn => setValue(value => value->setterFn)}
     onAction={handleAction}
     actionLabel="create"
     title="create alert"

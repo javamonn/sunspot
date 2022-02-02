@@ -78,7 +78,7 @@ let makeSteps = (
           isExited={false}
           validationError={validationError}
           value={alertRuleValue}
-          onChange={newValue => setAlertRuleValue(_ => newValue)}
+          onChange={setterFn => setAlertRuleValue(value => value->setterFn)}
           destinationOptions={createSlackOAuthIntegrationMutationResultData
           ->Belt.Option.map(data => [
             AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
@@ -109,7 +109,7 @@ let makeSteps = (
           isExited={false}
           validationError={validationError}
           value={alertRuleValue}
-          onChange={newValue => setAlertRuleValue(_ => newValue)}
+          onChange={setterFn => setAlertRuleValue(setterFn)}
           destinationOptions={createTwitterOAuthIntegrationMutationResultData
           ->Belt.Option.map(data => [
             AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
@@ -198,7 +198,7 @@ let makeSteps = (
           isExited={false}
           validationError={validationError}
           value={alertRuleValue}
-          onChange={newValue => setAlertRuleValue(_ => newValue)}
+          onChange={setterFn => setAlertRuleValue(setterFn)}
           destinationOptions={createDiscordOAuthIntegrationMutationResultData
           ->Belt.Option.map(data =>
             data.discordIntegration.channels->Belt.Array.map(

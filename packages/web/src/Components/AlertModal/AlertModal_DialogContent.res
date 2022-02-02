@@ -78,26 +78,33 @@ let make = (
     None
   }, [value->Value.collection])
 
-  let handlePriceRuleChange = priceRule =>
-    onChange({
+  let handlePriceRuleChange = priceRule => {
+    onChange(value => {
       ...value,
       Value.priceRule: priceRule,
     })
+  }
   let handlePropertiesRuleChange = propertiesRule =>
-    onChange({
+    onChange(value => {
       ...value,
       Value.propertiesRule: propertiesRule,
     })
   let handleDestinationChange = destination =>
-    onChange({
+    onChange(value => {
       ...value,
       Value.destination: Some(destination),
     })
   let handleEventTypeChange = eventType =>
-    onChange({
+    onChange(value => {
       ...value,
       Value.eventType: eventType,
     })
+  let handleCollectionChange = collection => {
+    onChange(value => {
+      ...value,
+      Value.collection: collection,
+    })
+  }
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
   let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
@@ -133,14 +140,7 @@ let make = (
       </MaterialUi_Lab.Alert>
     )
     ->Belt.Option.getWithDefault(React.null)}
-    <AlertRule_CollectionAutocomplete
-      onChange={collection =>
-        onChange({
-          ...value,
-          collection: collection,
-        })}
-      value={value.collection}
-    />
+    <AlertRule_CollectionAutocomplete onChange={handleCollectionChange} value={value.collection} />
     <AlertRule_EventType value={value->Value.eventType} onChange={handleEventTypeChange} />
     <AlertRule_Destination
       value={value->Value.destination}

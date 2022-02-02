@@ -330,7 +330,10 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
     onClose
     onExited={onExited}
     value={newValue->Belt.Option.getWithDefault(defaultValue)}
-    onChange={newValue => setNewValue(_ => Some(newValue))}
+    onChange={setterFn =>
+      setNewValue(value =>
+        value->Belt.Option.getWithDefault(defaultValue)->setterFn->Js.Option.some
+      )}
     onAction={handleUpdate}
     actionLabel="update"
     title="update alert"
