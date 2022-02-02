@@ -16,6 +16,7 @@ module Mutation_CreateDiscordOAuthIntegration = %graphql(`
   mutation CreateDiscordIntegration($input: CreateDiscordIntegrationInput!) {
     discordIntegration: createDiscordIntegration(input: $input) {
       guildId
+      clientId
       iconUrl
       name
       channels {

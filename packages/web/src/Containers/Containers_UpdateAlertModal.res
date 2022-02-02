@@ -47,12 +47,14 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
     })
   | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({
       channelId,
+      clientId,
       guildId,
       template,
     })) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
+        clientId: Some(clientId),
         channelId: channelId,
         template: template->Belt.Option.map(template => {
           title: template->AlertRule_Destination.Types.DiscordTemplate.title,

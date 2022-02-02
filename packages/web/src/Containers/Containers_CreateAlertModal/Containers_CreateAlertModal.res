@@ -41,10 +41,12 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
       channelId,
       guildId,
       template,
+      clientId,
     })) =>
     Js.Promise.resolve({
       discordAlertDestination: Some({
         guildId: guildId,
+        clientId: Some(clientId),
         channelId: channelId,
         template: template->Belt.Option.map(template => {
           title: template->AlertRule_Destination.Types.DiscordTemplate.title,

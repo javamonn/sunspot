@@ -163,6 +163,7 @@ let make = () => {
         item->Belt.Option.map(item =>
           item.channels->Belt.Array.map(channel => {
             AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
+              clientId: item.clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
               channelId: channel.id,
               channelName: channel.name,
               guildId: item.guildId,
@@ -288,9 +289,10 @@ let make = () => {
       let destination = switch item.destination {
       | #WebPushAlertDestination(_) =>
         Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
-      | #DiscordAlertDestination({guildId, channelId, template}) =>
+      | #DiscordAlertDestination({guildId, channelId, template, clientId}) =>
         Some(
           AlertRule_Destination.Types.Value.DiscordAlertDestination({
+            clientId: clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
             guildId: guildId,
             channelId: channelId,
             template: template->Belt.Option.map(template => {

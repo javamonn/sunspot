@@ -159,6 +159,9 @@ let makeSteps = (
               ...alertRule,
               destination: Some(
                 AlertRule_Destination.Types.Value.DiscordAlertDestination({
+                  clientId: data.discordIntegration.clientId->Belt.Option.getWithDefault(
+                    Config.discord1ClientId,
+                  ),
                   guildId: data.discordIntegration.guildId,
                   channelId: newValue->DiscordIntegrationChannelRadioGroup.id,
                   template: None,
@@ -205,6 +208,9 @@ let makeSteps = (
               channel => AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
                 channelId: channel.id,
                 channelName: channel.name,
+                clientId: data.discordIntegration.clientId->Belt.Option.getWithDefault(
+                  Config.discord2ClientId,
+                ),
                 guildId: data.discordIntegration.guildId,
                 guildName: data.discordIntegration.name,
                 guildIconUrl: data.discordIntegration.iconUrl,
@@ -274,7 +280,13 @@ let make = (~onCreated, ~params) => {
     let createAccessTokenInput = switch (params, accessToken.current) {
     | (Discord({code, redirectUri}), None) if Js.String2.length(code) > 0 =>
       Some({
-        Mutation_CreateAccessToken.oAuthIntegrationType: #DISCORD,
+        Mutation_CreateAccessToken.oAuthIntegrationType: if (
+          Config.activeDiscordClientId == Config.discord1ClientId
+        ) {
+          #DISCORD
+        } else {
+          #DISCORD_2
+        },
         code: code,
         redirectUri: redirectUri,
       })
@@ -318,6 +330,7 @@ let make = (~onCreated, ~params) => {
         |> Js.Promise.then_(accessToken =>
           createDiscordOAuthIntegrationMutation({
             input: {
+              clientId: Config.activeDiscordClientId,
               guildId: guildId,
               permissions: permissions,
               accessToken: Some({
@@ -524,10 +537,11 @@ let make = (~onCreated, ~params) => {
       })
 
     let destination = switch alertRuleValue.destination {
-    | Some(DiscordAlertDestination({guildId, channelId, template})) => {
+    | Some(DiscordAlertDestination({guildId, channelId, template, clientId})) => {
         discordAlertDestination: Some({
           guildId: guildId,
           channelId: channelId,
+          clientId: Some(clientId),
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,

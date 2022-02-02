@@ -97,6 +97,7 @@ module Value = {
     | DiscordAlertDestination({
         guildId: string,
         channelId: string,
+        clientId: string,
         template: option<DiscordTemplate.t>,
       })
     | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
@@ -107,6 +108,7 @@ module Option = {
   type t =
     | DiscordAlertDestinationOption({
         guildId: string,
+        clientId: string,
         guildIconUrl: option<string>,
         channelId: string,
         channelName: string,

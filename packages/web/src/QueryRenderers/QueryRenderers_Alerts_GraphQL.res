@@ -19,6 +19,7 @@ module Query_AlertRulesByAccountAddress = %graphql(
       ... on DiscordAlertDestination {
         guildId
         channelId
+        clientId
         template {
           title
           description
@@ -93,6 +94,7 @@ module Query_OAuthIntegrationsByAccountAddress = %graphql(`
     discordIntegrations: discordIntegrationsByAccountAddress(input: $discordIntegrationsInput) {
       items {
         guildId
+        clientId
         name
         iconUrl
         channels {
