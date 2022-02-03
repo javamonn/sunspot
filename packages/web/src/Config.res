@@ -10,10 +10,17 @@ let openstoreContractAddress = "0x495f947276749ce646f68ac8c248420045cb7b5e"
 let sentryDsn = "https://46f76de2bfc64d10a89fc90865bb1d47@o1060100.ingest.sentry.io/6049323"
 let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
 
-let discord1ClientId = "909830001363394593" 
+let discord1ClientId = "909830001363394593"
 let discord2ClientId = "938507879974043679"
-let activeDiscordClientId = discord2ClientId
-
+let discord3ClientId = "938802177223303198"
+let activeDiscordClientId = discord3ClientId
+let activeDiscordClient = if activeDiscordClientId == discord1ClientId {
+  #DISCORD
+} else if activeDiscordClientId == discord2ClientId {
+  #DISCORD_2
+} else {
+  #DISCORD_3
+}
 
 let discordOAuthUrl = isProduction
   ? `https://discord.com/api/oauth2/authorize?client_id=${activeDiscordClientId}&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands`

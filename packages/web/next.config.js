@@ -4,6 +4,7 @@ const RemarkHTML = require("remark-html");
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
+const activeDiscordClientId = "938802177223303198"
 
 const config = {
   target: "serverless",
@@ -63,8 +64,7 @@ const config = {
   redirects: () => [
     {
       source: "/install/discord",
-      destination:
-        "https://discord.com/api/oauth2/authorize?client_id=909830001363394593&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands",
+      destination: `https://discord.com/api/oauth2/authorize?client_id=${activeDiscordClientId}&permissions=19456&redirect_uri=https%3A%2F%2Fsunspot.gg%2Fintegrations%2Fdiscord%2Finstall&response_type=code&scope=guilds%20bot%20applications.commands`,
       permanent: false,
     },
     {

@@ -209,7 +209,7 @@ let makeSteps = (
                 channelId: channel.id,
                 channelName: channel.name,
                 clientId: data.discordIntegration.clientId->Belt.Option.getWithDefault(
-                  Config.discord2ClientId,
+                  Config.discord1ClientId,
                 ),
                 guildId: data.discordIntegration.guildId,
                 guildName: data.discordIntegration.name,
@@ -280,13 +280,7 @@ let make = (~onCreated, ~params) => {
     let createAccessTokenInput = switch (params, accessToken.current) {
     | (Discord({code, redirectUri}), None) if Js.String2.length(code) > 0 =>
       Some({
-        Mutation_CreateAccessToken.oAuthIntegrationType: if (
-          Config.activeDiscordClientId == Config.discord1ClientId
-        ) {
-          #DISCORD
-        } else {
-          #DISCORD_2
-        },
+        Mutation_CreateAccessToken.oAuthIntegrationType: Config.activeDiscordClient,
         code: code,
         redirectUri: redirectUri,
       })
