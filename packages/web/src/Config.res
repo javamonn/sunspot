@@ -13,13 +13,17 @@ let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
 let discord1ClientId = "909830001363394593"
 let discord2ClientId = "938507879974043679"
 let discord3ClientId = "938802177223303198"
-let activeDiscordClientId = discord3ClientId
+let discord4ClientId = "939216494129209444"
+
+let activeDiscordClientId = discord4ClientId
 let activeDiscordClient = if activeDiscordClientId == discord1ClientId {
   #DISCORD
 } else if activeDiscordClientId == discord2ClientId {
   #DISCORD_2
-} else {
+} else if activeDiscordClientId == discord3ClientId {
   #DISCORD_3
+} else {
+  #DISCORD_4
 }
 
 let discordOAuthUrl = isProduction

@@ -4,7 +4,7 @@ const RemarkHTML = require("remark-html");
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
-const activeDiscordClientId = "938802177223303198"
+const activeDiscordClientId = "939216494129209444"
 
 const config = {
   target: "serverless",
