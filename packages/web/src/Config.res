@@ -14,16 +14,19 @@ let discord1ClientId = "909830001363394593"
 let discord2ClientId = "938507879974043679"
 let discord3ClientId = "938802177223303198"
 let discord4ClientId = "939216494129209444"
+let discord5ClientId = "939764059039993886"
 
-let activeDiscordClientId = discord4ClientId
+let activeDiscordClientId = discord5ClientId
 let activeDiscordClient = if activeDiscordClientId == discord1ClientId {
   #DISCORD
 } else if activeDiscordClientId == discord2ClientId {
   #DISCORD_2
 } else if activeDiscordClientId == discord3ClientId {
   #DISCORD_3
-} else {
+} else if activeDiscordClientId == discord4ClientId {
   #DISCORD_4
+} else {
+  #DISCORD_5
 }
 
 let discordOAuthUrl = isProduction
