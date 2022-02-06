@@ -94,6 +94,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
       slackAlertDestination: None,
       twitterAlertDestination: Some({
         userId: userId,
+        template: None,
         accessToken: {
           accessToken: accessToken.accessToken,
           refreshToken: accessToken.refreshToken,
@@ -172,6 +173,17 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
       }
     })
 
+  let (disabled, disabledReason, disabledExpiresAt) = switch newValue->AlertModal.Value.disabled {
+  | Some(DestinationRateLimitExceeded(disabledExpiresAt)) => (
+      Some(true),
+      Some(#DESTINATION_RATE_LIMIT_EXCEEDED),
+      disabledExpiresAt,
+    )
+  | Some(DestinationMissingAccess) => (Some(true), Some(#DESTINATION_MISSING_ACCESS), None)
+  | Some(Snoozed) => (Some(true), Some(#SNOOZED), None)
+  | _ => (None, None, None)
+  }
+
   switch (oldValue->AlertModal.Value.collection, newValue->AlertModal.Value.collection) {
   | (Some(oldCollection), Some(newCollection)) =>
     destination |> Js.Promise.then_(destination =>
@@ -187,6 +199,9 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress) => {
           | #listing => #LISTING
           | #sale => #SALE
           },
+          disabled: disabled,
+          disabledReason: disabledReason,
+          disabledExpiresAt: disabledExpiresAt,
         },
         key: {
           contractAddress: AlertModal.CollectionOption.contractAddressGet(oldCollection),
@@ -315,6 +330,17 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
     | _ => ()
     }
 
+  let handleToggleDisabled = () =>
+    setNewValue(value =>
+      value->Belt.Option.map(value => {
+        ...value,
+        AlertModal.Value.disabled: switch value->AlertModal.Value.disabled {
+        | Some(_) => None
+        | None => Some(AlertModal.Value.Snoozed)
+        },
+      })
+    )
+
   let openSeaAssetsUrl =
     newValue
     ->Belt.Option.getWithDefault(defaultValue)
@@ -326,6 +352,10 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
     ->Belt.Option.map(collection =>
       `https://etherscan.io/address/${collection->AlertModal.CollectionOption.contractAddressGet}`
     )
+  let isDisabled =
+    newValue
+    ->Belt.Option.map(v => v->AlertModal.Value.disabled->Js.Option.isSome)
+    ->Belt.Option.getWithDefault(false)
 
   <AlertModal
     isOpen
@@ -385,6 +415,27 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
               </MaterialUi.MenuItem>
             : React.null
         },
+        <MaterialUi.MenuItem
+          disabled={switch newValue->Belt.Option.flatMap(AlertModal.Value.disabled) {
+          | Some(AlertModal.Value.DestinationRateLimitExceeded(_)) => true
+          | _ => false
+          }}
+          onClick={_ => {
+            handleToggleDisabled()
+          }}>
+          <MaterialUi.ListItemIcon>
+            <MaterialUi.Checkbox
+              color=#Primary
+              classes={MaterialUi.Checkbox.Classes.make(
+                ~root=Cn.make(["p-0"]),
+                ~checked=Cn.make(["opacity-50"]),
+                (),
+              )}
+              checked={!isDisabled}
+            />
+          </MaterialUi.ListItemIcon>
+          <MaterialUi.ListItemText> {React.string("enabled")} </MaterialUi.ListItemText>
+        </MaterialUi.MenuItem>,
         <MaterialUi.MenuItem
           onClick={_ => {
             onClick()

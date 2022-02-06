@@ -6,6 +6,9 @@ module Query_AlertRulesByAccountAddress = %graphql(
     updatedAt
     contractAddress
     accountAddress
+    disabled
+    disabledReason
+    disabledExpiresAt
     collection {
       slug
       name

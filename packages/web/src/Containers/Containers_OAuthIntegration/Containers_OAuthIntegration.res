@@ -566,6 +566,7 @@ let make = (~onCreated, ~params) => {
         slackAlertDestination: None,
         twitterAlertDestination: Some({
           userId: userId,
+          template: None,
           accessToken: {
             accessToken: accessToken.accessToken,
             refreshToken: accessToken.refreshToken,
@@ -576,6 +577,17 @@ let make = (~onCreated, ~params) => {
         }),
       }
     | _ => raise(AlertDestinationRequired)
+    }
+
+    let (disabled, disabledReason, disabledExpiresAt) = switch alertRuleValue->AlertModal.Value.disabled {
+    | Some(DestinationRateLimitExceeded(disabledExpiresAt)) => (
+        Some(true),
+        Some(#DESTINATION_RATE_LIMIT_EXCEEDED),
+        disabledExpiresAt,
+      )
+    | Some(DestinationMissingAccess) => (Some(true), Some(#DESTINATION_MISSING_ACCESS), None)
+    | Some(Snoozed) => (Some(true), Some(#SNOOZED), None)
+    | _ => (None, None, None)
     }
 
     createAlertRuleMutation({
@@ -599,6 +611,9 @@ let make = (~onCreated, ~params) => {
         | #listing => #LISTING
         | #sale => #SALE
         },
+        disabled: disabled,
+        disabledExpiresAt: disabledExpiresAt,
+        disabledReason: disabledReason
       },
     }) |> Js.Promise.then_(_ => {
       onCreated()

@@ -122,23 +122,42 @@ let make = (
         classes={MaterialUi.Typography.Classes.make(~root=Cn.make(["leading-none"]), ())}>
         {React.string(title)}
       </MaterialUi.Typography>
-      {renderOverflowActionMenuItems
-      ->Belt.Option.map(renderOverflowActionMenuItems =>
-        <IconMenu
-          icon={<Externals.MaterialUi_Icons.MoreVert />}
-          renderItems={renderOverflowActionMenuItems}
-          anchorOrigin={
-            open MaterialUi.Menu
-            AnchorOrigin.make(
-              ~horizontal=Horizontal.enum(Horizontal_enum.left),
-              ~vertical=Vertical.enum(Vertical_enum.bottom),
-              (),
-            )
+      <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+        {value
+        ->Value.disabled
+        ->Belt.Option.map(disabled => {
+          let title = switch disabled {
+          | Snoozed => "alert has been disabled."
+          | DestinationMissingAccess => "unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
+          | DestinationRateLimitExceeded(_) => "alert has been ratelimited and will automatically re-enable after a period of time."
           }
-          menuClasses={MaterialUi.Menu.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
-        />
-      )
-      ->Belt.Option.getWithDefault(React.null)}
+
+          <MaterialUi.Tooltip title={React.string(title)}>
+            <Externals.MaterialUi_Icons.Error
+              style={ReactDOM.Style.make(~color="#e64a19", ())}
+              className={Cn.make(["w-6", "h-6", "mr-2"])}
+            />
+          </MaterialUi.Tooltip>
+        })
+        ->Belt.Option.getWithDefault(React.null)}
+        {renderOverflowActionMenuItems
+        ->Belt.Option.map(renderOverflowActionMenuItems =>
+          <IconMenu
+            icon={<Externals.MaterialUi_Icons.MoreVert />}
+            renderItems={renderOverflowActionMenuItems}
+            anchorOrigin={
+              open MaterialUi.Menu
+              AnchorOrigin.make(
+                ~horizontal=Horizontal.enum(Horizontal_enum.left),
+                ~vertical=Vertical.enum(Vertical_enum.bottom),
+                (),
+              )
+            }
+            menuClasses={MaterialUi.Menu.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
+          />
+        )
+        ->Belt.Option.getWithDefault(React.null)}
+      </div>
     </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>

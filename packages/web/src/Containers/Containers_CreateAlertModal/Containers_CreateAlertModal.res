@@ -86,6 +86,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
       slackAlertDestination: None,
       twitterAlertDestination: Some({
         userId: userId,
+        template: None,
         accessToken: {
           accessToken: accessToken.accessToken,
           refreshToken: accessToken.refreshToken,
@@ -162,6 +163,17 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
       }
     })
 
+  let (disabled, disabledReason, disabledExpiresAt) = switch value->AlertModal.Value.disabled {
+  | Some(DestinationRateLimitExceeded(disabledExpiresAt)) => (
+      Some(true),
+      Some(#DESTINATION_RATE_LIMIT_EXCEEDED),
+      disabledExpiresAt,
+    )
+  | Some(DestinationMissingAccess) => (Some(true), Some(#DESTINATION_MISSING_ACCESS), None)
+  | Some(Snoozed) => (Some(true), Some(#SNOOZED), None)
+  | _ => (None, None, None)
+  }
+
   value
   ->AlertModal.Value.collection
   ->Belt.Option.map(collection =>
@@ -177,6 +189,9 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         | #listing => #LISTING
         | #sale => #SALE
         },
+        disabled: disabled,
+        disabledReason: disabledReason,
+        disabledExpiresAt: disabledExpiresAt,
       }
       ->Js.Option.some
       ->Js.Promise.resolve
@@ -262,12 +277,21 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     | Authenticated({jwt: {accountAddress}}) => handleCreate(~accountAddress)
     | _ => handleSignIn()
     }
+  let handleToggleDisabled = () =>
+    setValue(value => {
+      ...value,
+      AlertModal.Value.disabled: switch value->AlertModal.Value.disabled {
+      | Some(_) => None
+      | None => Some(AlertModal.Value.Snoozed)
+      },
+    })
 
   let openSeaAssetsUrl = value->AlertModal.Utils.makeOpenSeaAssetsUrlForValue
   let contractEtherscanUrl =
     value.collection->Belt.Option.map(collection =>
       `https://etherscan.io/address/${collection->AlertModal.CollectionOption.contractAddressGet}`
     )
+  let isDisabled = value->AlertModal.Value.disabled->Js.Option.isSome
 
   let handleRenderOverflowActionMenuItems = if (
     Js.Option.isNone(openSeaAssetsUrl) && Js.Option.isNone(contractEtherscanUrl)
@@ -275,34 +299,61 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     None
   } else {
     Some(
-      (~onClick) => <>
-        {Js.Option.isSome(openSeaAssetsUrl)
-          ? <MaterialUi.MenuItem
-              onClick={_ => {
-                onClick()
-                openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-              }}>
-              <MaterialUi.ListItemIcon>
-                <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
-              </MaterialUi.ListItemIcon>
-              <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
-            </MaterialUi.MenuItem>
-          : React.null}
-        {Js.Option.isSome(contractEtherscanUrl)
-          ? <MaterialUi.MenuItem
-              onClick={_ => {
-                onClick()
-                contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
-              }}>
-              <MaterialUi.ListItemIcon>
-                <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/etherscan-icon.svg" />
-              </MaterialUi.ListItemIcon>
-              <MaterialUi.ListItemText>
-                {React.string("view contract etherscan")}
-              </MaterialUi.ListItemText>
-            </MaterialUi.MenuItem>
-          : React.null}
-      </>,
+      (~onClick) => [
+        {
+          Js.Option.isSome(openSeaAssetsUrl)
+            ? <MaterialUi.MenuItem
+                onClick={_ => {
+                  onClick()
+                  openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+                }}>
+                <MaterialUi.ListItemIcon>
+                  <img className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/opensea-icon.svg" />
+                </MaterialUi.ListItemIcon>
+                <MaterialUi.ListItemText> {React.string("view opensea")} </MaterialUi.ListItemText>
+              </MaterialUi.MenuItem>
+            : React.null
+        },
+        {
+          Js.Option.isSome(contractEtherscanUrl)
+            ? <MaterialUi.MenuItem
+                onClick={_ => {
+                  onClick()
+                  contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
+                }}>
+                <MaterialUi.ListItemIcon>
+                  <img
+                    className={Cn.make(["w-6", "h-6", "opacity-50"])} src="/etherscan-icon.svg"
+                  />
+                </MaterialUi.ListItemIcon>
+                <MaterialUi.ListItemText>
+                  {React.string("view contract etherscan")}
+                </MaterialUi.ListItemText>
+              </MaterialUi.MenuItem>
+            : React.null
+        },
+        <MaterialUi.MenuItem
+          disabled={switch value->AlertModal.Value.disabled {
+          | Some(AlertModal.Value.DestinationRateLimitExceeded(_)) => true
+          | _ => false
+          }}
+          onClick={_ => {
+            handleToggleDisabled()
+          }}>
+          <MaterialUi.ListItemIcon>
+            <MaterialUi.Checkbox
+              color=#Primary
+              classes={MaterialUi.Checkbox.Classes.make(
+                ~root=Cn.make(["p-0"]),
+                ~checked=Cn.make(["opacity-50"]),
+                (),
+              )}
+              checked={!isDisabled}
+            />
+          </MaterialUi.ListItemIcon>
+          <MaterialUi.ListItemText> {React.string("enabled")} </MaterialUi.ListItemText>
+        </MaterialUi.MenuItem>,
+      ],
     )
   }
 

@@ -22,6 +22,11 @@ module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
 `)
 
 module Value = {
+  type disabledReason =
+    | DestinationRateLimitExceeded(option<Js.Json.t>)
+    | DestinationMissingAccess
+    | Snoozed
+
   @deriving(accessors)
   type t = {
     id: string,
@@ -30,15 +35,25 @@ module Value = {
     priceRule: option<AlertRule_Price.t>,
     propertiesRule: option<AlertRule_Properties.Value.t>,
     destination: option<AlertRule_Destination.Types.Value.t>,
+    disabled: option<disabledReason>,
   }
 
-  let make = (~id, ~collection, ~priceRule, ~propertiesRule, ~destination, ~eventType) => {
+  let make = (
+    ~id,
+    ~collection,
+    ~priceRule,
+    ~propertiesRule,
+    ~destination,
+    ~eventType,
+    ~disabled,
+  ) => {
     id: id,
     collection: collection,
     eventType: eventType,
     priceRule: priceRule,
     propertiesRule: propertiesRule,
     destination: destination,
+    disabled: disabled,
   }
 
   let empty = () => {
@@ -50,6 +65,7 @@ module Value = {
     destination: Config.isBrowser() && Services.PushNotification.isSupported()
       ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
       : None,
+    disabled: None,
   }
 }
 

@@ -37,6 +37,7 @@ type row = {
   externalUrl: string,
   eventType: string,
   rules: array<rule>,
+  disabledInfo: option<string>,
 }
 
 // static widths to support ssr rehydration
@@ -120,26 +121,40 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                     (),
                   )}>
                   <MaterialUi.TableCell>
-                    <CollectionListItem
-                      primary={row.collectionName->Belt.Option.getWithDefault("Unnamed Collection")}
-                      secondary={<a
-                        href={row.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={ReactDOM.Style.make(
-                          ~textDecorationStyle="dotted",
-                          ~textDecorationLine="underline",
+                    <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+                      <CollectionListItem
+                        primary={row.collectionName->Belt.Option.getWithDefault(
+                          "Unnamed Collection",
+                        )}
+                        secondary={<a
+                          href={row.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={ReactDOM.Style.make(
+                            ~textDecorationStyle="dotted",
+                            ~textDecorationLine="underline",
+                            (),
+                          )}>
+                          {React.string(row.collectionSlug)}
+                        </a>}
+                        imageUrl={row.collectionImageUrl}
+                        disableGutters={true}
+                        listItemClasses={MaterialUi.ListItem.Classes.make(
+                          ~root=Cn.make(["p-0", "w-auto"]),
                           (),
-                        )}>
-                        {React.string(row.collectionSlug)}
-                      </a>}
-                      imageUrl={row.collectionImageUrl}
-                      disableGutters={true}
-                      listItemClasses={MaterialUi.ListItem.Classes.make(
-                        ~root=Cn.make(["p-0", "w-auto"]),
-                        (),
-                      )}
-                    />
+                        )}
+                      />
+                      {row.disabledInfo
+                      ->Belt.Option.map(copy =>
+                        <MaterialUi.Tooltip title={React.string(copy)}>
+                          <Externals.MaterialUi_Icons.Error
+                            style={ReactDOM.Style.make(~color="#e64a19", ())}
+                            className={Cn.make(["w-5", "h-5", "ml-2"])}
+                          />
+                        </MaterialUi.Tooltip>
+                      )
+                      ->Belt.Option.getWithDefault(React.null)}
+                    </div>
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell> {React.string(row.eventType)} </MaterialUi.TableCell>
                   <MaterialUi.TableCell>

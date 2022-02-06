@@ -144,6 +144,17 @@ let make = () => {
         (),
       )
 
+      let disabledInfo = switch (item.disabled, item.disabledReason) {
+      | (Some(true), Some(#DESTINATION_RATE_LIMIT_EXCEEDED)) =>
+        Some("alert has been ratelimited and will automatically re-enable after a period of time.")
+      | (Some(true), Some(#DESTINATION_MISSING_ACCESS)) =>
+        Some(
+          "unable to connect to the destination. try reconnecting or adjusting permissions and re-enable.",
+        )
+      | (Some(true), Some(#SNOOZED)) => Some("alert has been disabled.")
+      | _ => None
+      }
+
       {
         AlertsTable.id: item.id,
         collectionName: item.collection.name,
@@ -152,6 +163,7 @@ let make = () => {
         eventType: eventType,
         externalUrl: externalUrl,
         rules: rules,
+        disabledInfo: disabledInfo,
       }
     })
 
@@ -336,6 +348,15 @@ let make = () => {
       | _ => #listing
       }
 
+      let disabled = switch (item.disabled, item.disabledReason) {
+      | (Some(true), Some(#DESTINATION_MISSING_ACCESS)) =>
+        Some(AlertModal.Value.DestinationMissingAccess)
+      | (Some(true), Some(#DESTINATION_RATE_LIMIT_EXCEEDED)) =>
+        Some(AlertModal.Value.DestinationRateLimitExceeded(item.disabledExpiresAt))
+      | (Some(true), Some(#SNOOZED)) => Some(AlertModal.Value.Snoozed)
+      | _ => None
+      }
+
       let alertModalValue = AlertModal.Value.make(
         ~collection=Some(
           AlertModal.CollectionOption.make(
@@ -350,6 +371,7 @@ let make = () => {
         ~destination,
         ~id=item.id,
         ~eventType,
+        ~disabled,
       )
 
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
