@@ -19,6 +19,9 @@ module.exports = {
       listStyleType: {
         circle: "circle",
       },
+      colors: {
+        themePrimary: "#212121"
+      },
     },
     textColor: {
       darkPrimary: "rgba(0, 0, 0, .87)",

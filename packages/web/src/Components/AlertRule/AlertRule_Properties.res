@@ -22,7 +22,18 @@ module Value = {
   type t = array<item>
 
   @react.component
-  let make = (~value, ~onRemoveValueAttribute) =>
+  let make = (~value, ~onRemoveValueAttribute) => {
+    let valuesByTraitType =
+      value
+      ->Belt.Option.getWithDefault([])
+      ->Belt.Array.reduce(Belt.Map.String.empty, (memo, value) =>
+        Belt.Map.String.set(
+          memo,
+          value->traitType,
+          Belt.Array.concat(Belt.Map.String.getWithDefault(memo, value->traitType, []), [value]),
+        )
+      )
+
     <ul
       className={Cn.make([
         "flex",
@@ -36,9 +47,10 @@ module Value = {
         "py-2",
         "mb-6",
         "rounded-t-md",
+        "overflow-x-auto",
       ])}
       style={ReactDOM.Style.make(~minHeight="4.5rem", ())}>
-      {value->Belt.Option.getWithDefault([])->Belt.Array.length == 0
+      {valuesByTraitType->Belt.Map.String.size == 0
         ? <MaterialUi.Typography
             color=#TextSecondary
             variant=#Body1
@@ -49,41 +61,88 @@ module Value = {
             {React.string("filtered properties")}
           </MaterialUi.Typography>
         : React.null}
-      {value
-      ->Belt.Option.getWithDefault([])
-      ->Belt.Array.mapWithIndex((idx, attribute) => {
-        let (traitType, displayValue) = switch attribute.value {
-        | StringValue({value}) => (attribute.traitType, value)
-        | NumberValue({value}) => (attribute.traitType, Belt.Float.toString(value))
-        }
-
-        <li
-          key={`${traitType}-${displayValue}`}
-          className={Cn.make([
-            "flex",
-            "flex-col",
-            "items-start",
-            "mb-3",
-            CnRe.on(
-              Cn.make(["mr-3"]),
-              value->Belt.Option.getWithDefault([])->Belt.Array.length - 1 != idx,
-            ),
-          ])}>
-          <MaterialUi.Typography color=#TextSecondary variant=#Caption>
-            {React.string(traitType)}
-          </MaterialUi.Typography>
-          <MaterialUi.Chip
-            label={React.string(displayValue)}
-            onDelete={_ => onRemoveValueAttribute(idx)}
-            clickable={true}
-            color=#Primary
-            variant=#Default
-            size=#Small
-          />
-        </li>
+      {valuesByTraitType
+      ->Belt.Map.String.toArray
+      ->Belt.Array.mapWithIndex((idx, (traitType, values)) => {
+        <div className={Cn.make(["flex", "flex-row"])}>
+          {idx !== 0
+            ? <div
+                style={ReactDOM.Style.make(~height="24px", ())}
+                className={Cn.make([
+                  "font-mono",
+                  "text-darkSecondary",
+                  "italic",
+                  "text-xs",
+                  "px-2",
+                  "flex",
+                  "items-center",
+                  "self-end",
+                  "mb-3",
+                ])}>
+                {React.string("and")}
+              </div>
+            : React.null}
+          <li key={traitType} className={Cn.make(["flex", "flex-col", "items-start", "mb-3"])}>
+            <MaterialUi.Typography color=#TextSecondary variant=#Caption>
+              {React.string(traitType)}
+            </MaterialUi.Typography>
+            <div className={Cn.make(["flex", "flex-row"])}>
+              {values
+              ->Belt.Array.mapWithIndex((idx, value) => {
+                let displayValue = switch value.value {
+                | StringValue({value}) => value
+                | NumberValue({value}) => Belt.Float.toString(value)
+                }
+                <>
+                  <MaterialUi.Chip
+                    classes={MaterialUi.Chip.Classes.make(
+                      ~root=Cn.make(
+                        if idx === 0 && Belt.Array.length(values) > 1 {
+                          ["rounded-r-none"]
+                        } else if (
+                          idx === Belt.Array.length(values) - 1 && Belt.Array.length(values) > 1
+                        ) {
+                          ["rounded-l-none"]
+                        } else if Belt.Array.length(values) > 1 {
+                          ["rounded-r-none", "rounded-l-none"]
+                        } else {
+                          []
+                        },
+                      ),
+                      (),
+                    )}
+                    label={React.string(displayValue)}
+                    onDelete={_ => onRemoveValueAttribute(value)}
+                    clickable={true}
+                    color=#Primary
+                    variant=#Default
+                    size=#Small
+                  />
+                  {idx !== Belt.Array.length(values) - 1
+                    ? <div
+                        className={Cn.make([
+                          "bg-themePrimary",
+                          "text-lightSecondary",
+                          "font-mono",
+                          "text-xs",
+                          "italic",
+                          "px-2",
+                          "flex",
+                          "items-center",
+                        ])}>
+                        {React.string("or")}
+                      </div>
+                    : React.null}
+                </>
+              })
+              ->React.array}
+            </div>
+          </li>
+        </div>
       })
       ->React.array}
     </ul>
+  }
 }
 
 module Options = {
@@ -135,15 +194,16 @@ module Options = {
                       color=#Primary
                       label={React.string(displayValue)}
                       clickable={true}
-                      onClick={_ =>
+                      onClick={_ => {
+                        let value = {
+                          Value.traitType: aggreggateAttribute->Option.traitType,
+                          value: attributeValue,
+                        }
                         switch valueIdx {
-                        | Some(idx) => onRemoveValueAttribute(idx)
-                        | None =>
-                          onAddValueAttribute({
-                            Value.traitType: aggreggateAttribute->Option.traitType,
-                            value: attributeValue,
-                          })
-                        }}
+                        | Some(_) => onRemoveValueAttribute(value)
+                        | None => onAddValueAttribute(value)
+                        }
+                      }}
                     />
                   </li>
                 })
@@ -206,16 +266,29 @@ let make = (
   ~onChange,
   ~accordionExpanded,
 ) => {
-  let handleRemoveValueAttribute = idx =>
+  let handleRemoveValueAttribute = valueToRemove =>
     value->Belt.Option.forEach(value => {
-      let copy = Belt.Array.copy(value)
-      let _ = Js.Array2.spliceInPlace(copy, ~pos=idx, ~remove=1, ~add=[])
-      onChange(Belt.Array.length(copy) == 0 ? None : Some(copy))
+      value
+      ->Belt.Array.getIndexBy(prospect => {
+        let traitTypeEq = prospect->Value.traitType === valueToRemove->Value.traitType
+        switch (prospect->Value.value, valueToRemove->Value.value) {
+        | (StringValue({value: valueA}), StringValue({value: valueB})) if traitTypeEq =>
+          valueA === valueB
+        | (NumberValue({value: valueA}), NumberValue({value: valueB})) if traitTypeEq =>
+          valueA === valueB
+        | _ => false
+        }
+      })
+      ->Belt.Option.forEach(idx => {
+        let copy = Belt.Array.copy(value)
+        let _ = Js.Array2.spliceInPlace(copy, ~pos=idx, ~remove=1, ~add=[])
+        onChange(Belt.Array.length(copy) == 0 ? None : Some(copy))
+      })
     })
   let handleAddValueAttribute = attribute =>
     value->Belt.Option.getWithDefault([])->Belt.Array.concat([attribute])->Js.Option.some->onChange
 
-  <div className={Cn.make(["flex", "flex-col", "flex-1"])}>
+  <div className={Cn.make(["flex", "flex-col", "flex-1", "overflow-x-hidden"])}>
     {isOptionsLoading
       ? <>
           <Value value onRemoveValueAttribute={handleRemoveValueAttribute} /> <OptionsLoading />
