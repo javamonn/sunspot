@@ -6,6 +6,14 @@ type destinationOAuthAccessToken = {
   tokenType: string,
 }
 
+module TwitterTemplate = {
+  @deriving(accessors)
+  type t = {text: string}
+
+  let defaultListingTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
+  let defaultSaleTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
+}
+
 module DiscordTemplate = {
   @deriving(accessors)
   type field = {name: string, value: string, inline: bool}
@@ -101,7 +109,11 @@ module Value = {
         template: option<DiscordTemplate.t>,
       })
     | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
-    | TwitterAlertDestination({userId: string, accessToken: destinationOAuthAccessToken})
+    | TwitterAlertDestination({
+        userId: string,
+        accessToken: destinationOAuthAccessToken,
+        template: option<TwitterTemplate.t>,
+      })
 }
 
 module Option = {

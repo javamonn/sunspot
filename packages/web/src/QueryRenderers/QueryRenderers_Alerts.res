@@ -327,10 +327,13 @@ let make = () => {
             incomingWebhookUrl: incomingWebhookUrl,
           }),
         )
-      | #TwitterAlertDestination({userId, accessToken}) =>
+      | #TwitterAlertDestination({userId, accessToken, template}) =>
         Some(
           AlertRule_Destination.Types.Value.TwitterAlertDestination({
             userId: userId,
+            template: template->Belt.Option.map(template => {
+              AlertRule_Destination.Types.TwitterTemplate.text: template.text,
+            }),
             accessToken: {
               accessToken: accessToken.accessToken,
               refreshToken: accessToken.refreshToken,

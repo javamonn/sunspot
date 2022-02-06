@@ -387,6 +387,7 @@ let make = (~onCreated, ~params) => {
             Some(
               AlertRule_Destination.Types.Value.TwitterAlertDestination({
                 userId: data.user.id,
+                template: None,
                 accessToken: {
                   accessToken: data.accessToken.accessToken,
                   refreshToken: data.accessToken.refreshToken,
@@ -560,13 +561,15 @@ let make = (~onCreated, ~params) => {
         discordAlertDestination: None,
         twitterAlertDestination: None,
       }
-    | Some(TwitterAlertDestination({userId, accessToken})) => {
+    | Some(TwitterAlertDestination({userId, accessToken, template})) => {
         discordAlertDestination: None,
         webPushAlertDestination: None,
         slackAlertDestination: None,
         twitterAlertDestination: Some({
           userId: userId,
-          template: None,
+          template: template->Belt.Option.map(template => {
+            text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+          }),
           accessToken: {
             accessToken: accessToken.accessToken,
             refreshToken: accessToken.refreshToken,
@@ -579,7 +582,11 @@ let make = (~onCreated, ~params) => {
     | _ => raise(AlertDestinationRequired)
     }
 
-    let (disabled, disabledReason, disabledExpiresAt) = switch alertRuleValue->AlertModal.Value.disabled {
+    let (
+      disabled,
+      disabledReason,
+      disabledExpiresAt,
+    ) = switch alertRuleValue->AlertModal.Value.disabled {
     | Some(DestinationRateLimitExceeded(disabledExpiresAt)) => (
         Some(true),
         Some(#DESTINATION_RATE_LIMIT_EXCEEDED),
@@ -613,7 +620,7 @@ let make = (~onCreated, ~params) => {
         },
         disabled: disabled,
         disabledExpiresAt: disabledExpiresAt,
-        disabledReason: disabledReason
+        disabledReason: disabledReason,
       },
     }) |> Js.Promise.then_(_ => {
       onCreated()

@@ -79,14 +79,20 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         incomingWebhookUrl: incomingWebhookUrl,
       }),
     })
-  | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({userId, accessToken})) =>
+  | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({
+      userId,
+      accessToken,
+      template,
+    })) =>
     Js.Promise.resolve({
       discordAlertDestination: None,
       webPushAlertDestination: None,
       slackAlertDestination: None,
       twitterAlertDestination: Some({
         userId: userId,
-        template: None,
+        template: template->Belt.Option.map(template => {
+          text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+        }),
         accessToken: {
           accessToken: accessToken.accessToken,
           refreshToken: accessToken.refreshToken,

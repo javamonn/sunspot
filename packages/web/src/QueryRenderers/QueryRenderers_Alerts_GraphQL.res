@@ -39,6 +39,9 @@ module Query_AlertRulesByAccountAddress = %graphql(
       }
       ... on TwitterAlertDestination {
         userId
+        template {
+          text
+        }
         accessToken {
           accessToken 
           tokenType

@@ -50,7 +50,7 @@ let make = (
               guildId: guildId,
               channelId: channelId,
               clientId: clientId,
-              template: None
+              template: None,
             })
           | SlackAlertDestinationOption({incomingWebhookUrl, channelId}) =>
             Value.SlackAlertDestination({
@@ -58,7 +58,11 @@ let make = (
               channelId: channelId,
             })
           | TwitterAlertDestinationOption({userId, accessToken}) =>
-            Value.TwitterAlertDestination({userId: userId, accessToken: accessToken})
+            Value.TwitterAlertDestination({
+              userId: userId,
+              accessToken: accessToken,
+              template: None,
+            })
           }
         )
       }
