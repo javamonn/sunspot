@@ -20,7 +20,8 @@ module.exports = {
         circle: "circle",
       },
       colors: {
-        themePrimary: "#212121"
+        themePrimary: "#212121",
+        black: "#000"
       },
     },
     textColor: {

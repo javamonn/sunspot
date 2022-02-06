@@ -1,44 +1,5 @@
-type column = {
-  label: string,
-  minWidth: int,
-}
-
-let columns = [
-  {
-    label: "collection",
-    minWidth: 200,
-  },
-  {
-    label: "event",
-    minWidth: 120,
-  },
-  {
-    label: "price",
-    minWidth: 120,
-  },
-  {
-    label: "properties",
-    minWidth: 120,
-  },
-]
-
-type priceRule = {modifier: string, price: string}
-type propertyRule = {traitType: string, displayValue: string}
-type rule =
-  | PriceRule(priceRule)
-  | PropertyRule(propertyRule)
-
-@deriving(accessors)
-type row = {
-  id: string,
-  collectionName: option<string>,
-  collectionSlug: string,
-  collectionImageUrl: option<string>,
-  externalUrl: string,
-  eventType: string,
-  rules: array<rule>,
-  disabledInfo: option<string>,
-}
+include AlertsTable_Types
+open AlertsTable_Types
 
 // static widths to support ssr rehydration
 let loadingWidths = [
@@ -182,58 +143,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                     ->Belt.Option.getWithDefault(React.null)}
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell>
-                    <ul className={Cn.make(["flex", "flex-row", "items-center"])}>
-                      {row.rules
-                      ->Belt.Array.keepMap(rule =>
-                        switch rule {
-                        | PropertyRule({traitType, displayValue}) =>
-                          Some(
-                            <li
-                              key={`property-rule-${traitType}-${displayValue}`}
-                              style={ReactDOM.Style.make(~bottom="10px", ())}
-                              className={Cn.make([
-                                "relative",
-                                "flex",
-                                "flex-col",
-                                "items-start",
-                                "mr-3",
-                              ])}>
-                              <MaterialUi.Typography color=#TextSecondary variant=#Caption>
-                                {React.string(traitType)}
-                              </MaterialUi.Typography>
-                              <MaterialUi.Chip
-                                label={React.string(displayValue)}
-                                color=#Primary
-                                variant=#Outlined
-                                size=#Small
-                                clickable={true}
-                              />
-                            </li>,
-                          )
-                        | PriceRule(_) => None
-                        }
-                      )
-                      ->Belt.Array.slice(~offset=0, ~len=2)
-                      ->React.array}
-                      {row.rules
-                      ->Belt.Array.keep(rule =>
-                        switch rule {
-                        | PropertyRule(_) => true
-                        | PriceRule(_) => false
-                        }
-                      )
-                      ->Belt.Array.length > 2
-                        ? <MaterialUi.Chip
-                            label={React.string(
-                              `+ ${Belt.Int.toString(Belt.Array.length(row.rules) - 2)}`,
-                            )}
-                            color=#Primary
-                            variant=#Outlined
-                            size=#Small
-                            clickable={true}
-                          />
-                        : React.null}
-                    </ul>
+                    <AlertsTable_PropertiesCell row={row} />
                   </MaterialUi.TableCell>
                 </MaterialUi.TableRow>,
                 {"onClick": _ => onRowClick(row)},
