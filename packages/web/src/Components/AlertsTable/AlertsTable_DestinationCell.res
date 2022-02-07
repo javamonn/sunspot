@@ -15,7 +15,7 @@ let make = (~row) =>
       ->Belt.Option.getWithDefault(React.null)}
       <MaterialUi.ListItemText
         classes={MaterialUi.ListItemText.Classes.make(
-          ~root=Cn.make(["ml-3"]),
+          ~root=Cn.make(destination->AlertsTable_Types.iconUrl->Js.Option.isSome ? ["ml-3"] : []),
           ~primary=Cn.make(["text-sm"]),
           ~secondary=Cn.make(["text-sm"]),
           (),
