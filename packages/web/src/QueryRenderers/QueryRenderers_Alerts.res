@@ -373,6 +373,7 @@ let make = () => {
             template: template->Belt.Option.map(template => {
               AlertRule_Destination.Types.DiscordTemplate.title: template.title,
               description: template.description,
+              displayProperties: template.displayProperties->Belt.Option.getWithDefault(false),
               fields: template.fields->Belt.Option.map(fields =>
                 fields->Belt.Array.map(field => {
                   AlertRule_Destination.Types.DiscordTemplate.name: field.name,

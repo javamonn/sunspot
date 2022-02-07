@@ -20,6 +20,7 @@ module DiscordTemplate = {
   @deriving(accessors)
   type t = {
     title: string,
+    displayProperties: bool,
     description: option<string>,
     fields: option<array<field>>,
   }
@@ -27,6 +28,7 @@ module DiscordTemplate = {
   let defaultSaleTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     description: None,
+    displayProperties: false,
     fields: Some([
       {
         name: "event",
@@ -69,6 +71,7 @@ module DiscordTemplate = {
   let defaultListingTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     description: None,
+    displayProperties: false,
     fields: Some([
       {
         name: "event",

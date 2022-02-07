@@ -26,6 +26,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         template {
           title
           description
+          displayProperties
           fields {
             name
             value

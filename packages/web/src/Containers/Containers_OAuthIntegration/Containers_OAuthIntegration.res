@@ -540,6 +540,7 @@ let make = (~onCreated, ~params) => {
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+            displayProperties: template->AlertRule_Destination.Types.DiscordTemplate.displayProperties->Js.Option.some,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>

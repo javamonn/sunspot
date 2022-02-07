@@ -77,6 +77,14 @@ let make = (~value=?, ~onChange, ~eventType) => {
     onChange(Some({...valueWithDefault, fields: Some(newFields)}))
   }
 
+  let onToggleDisplayProperties = () =>
+    onChange(
+      Some({
+        ...valueWithDefault,
+        displayProperties: !(valueWithDefault->displayProperties),
+      }),
+    )
+
   <div className={Cn.make(["flex", "flex-col"])}>
     <AlertRule_Destination_TemplateAccordion_InfoAlert eventType={eventType} />
     <MaterialUi.FormControl fullWidth={true}>
@@ -113,6 +121,17 @@ let make = (~value=?, ~onChange, ~eventType) => {
             }),
           )
         }}
+      />
+      <MaterialUi.FormControlLabel
+        classes={MaterialUi.FormControlLabel.Classes.make(~root=Cn.make(["mt-6"]), ())}
+        control={<MaterialUi.Checkbox
+          color=#Primary
+          checked={valueWithDefault->displayProperties}
+          onChange={_ => onToggleDisplayProperties()}
+        />}
+        label={<MaterialUi.Typography variant=#Subtitle2>
+          {React.string("display asset properties")}
+        </MaterialUi.Typography>}
       />
       <div
         className={Cn.make([
