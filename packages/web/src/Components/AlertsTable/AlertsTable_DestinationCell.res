@@ -1,3 +1,5 @@
+let discordIconUrl = "/discord-icon.svg"
+
 @react.component
 let make = (~row) =>
   row
@@ -8,8 +10,14 @@ let make = (~row) =>
       ->AlertsTable_Types.iconUrl
       ->Belt.Option.map(iconUrl =>
         <MaterialUi.Avatar
-          classes={MaterialUi.Avatar.Classes.make(~root=Cn.make(["w-8", "h-8"]), ())}>
-          <img src={iconUrl} />
+          classes={MaterialUi.Avatar.Classes.make(
+            ~root=Cn.make(["w-8", "h-8", "bg-gray-200"]),
+            (),
+          )}>
+          <img
+            src={iconUrl}
+            className={Cn.make(iconUrl == discordIconUrl ? ["w-5", "h-5", "opacity-70"] : [])}
+          />
         </MaterialUi.Avatar>
       )
       ->Belt.Option.getWithDefault(React.null)}
