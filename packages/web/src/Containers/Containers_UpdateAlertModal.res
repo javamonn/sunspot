@@ -1,5 +1,5 @@
 exception AlertDestinationRequired
-module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
+module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRule
 module Mutation_UpdateAlertRule = %graphql(`
   mutation UpdateAlertRuleInput($input: UpdateAlertRuleInput!) {
     alertRule: updateAlertRule(input: $input) {
@@ -250,7 +250,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
               ->Belt.Option.forEach(alertRule => {
                 let _ = writeFragment(
                   ~fragment=module(
-                    QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
+                    QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRule
                   ),
                   ~data=alertRule,
                   ~id=alertRule.id,
@@ -279,28 +279,40 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
             data
             ->Belt.Option.flatMap(({alertRule}) => alertRule)
             ->Belt.Option.forEach(alertRule => {
-              let newItems = switch readQuery(
+              let (
+                newItems,
+                discordIntegrations,
+                slackIntegrations,
+                twitterIntegrations,
+              ) = switch readQuery(
                 ~query=module(
-                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress
+                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
                 ),
                 QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
               ) {
-              | Some(Ok({alertRules: Some({items: Some(items)})})) =>
-                items
-                ->Belt.Array.keep(item =>
-                  switch item {
-                  | Some(item) => item.id != alertRule.id
-                  | None => false
-                  }
-                )
-                ->Js.Option.some
-              | _ => None
+              | Some(Ok({
+                  alertRules: Some({items: Some(items)}),
+                  discordIntegrations,
+                  slackIntegrations,
+                  twitterIntegrations,
+                })) =>
+                let newItems =
+                  items
+                  ->Belt.Array.keep(item =>
+                    switch item {
+                    | Some(item) => item.id != alertRule.id
+                    | None => false
+                    }
+                  )
+                  ->Js.Option.some
+                (newItems, discordIntegrations, slackIntegrations, twitterIntegrations)
+              | _ => (None, None, None, None)
               }
 
               newItems->Belt.Option.forEach(newItems => {
                 let _ = writeQuery(
                   ~query=module(
-                    QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress
+                    QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
                   ),
                   ~data={
                     alertRules: Some({
@@ -308,6 +320,9 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
                       nextToken: None,
                       items: Some(newItems),
                     }),
+                    discordIntegrations: discordIntegrations,
+                    slackIntegrations: slackIntegrations,
+                    twitterIntegrations: twitterIntegrations,
                   },
                   QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
                 )

@@ -1,4 +1,4 @@
-module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesByAccountAddress.AlertRule
+module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRule
 
 module Mutation_CreateAccessToken = %graphql(`
   mutation CreateAccessToken($input: CreateAccessTokenInput!) {

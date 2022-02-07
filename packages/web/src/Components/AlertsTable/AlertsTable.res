@@ -73,7 +73,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                 <MaterialUi.TableCell>
                   <MaterialUi_Lab.Skeleton
                     variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                    height={MaterialUi_Lab.Skeleton.Height.int(48)}
                     width={MaterialUi_Lab.Skeleton.Width.int(width5)}
                   />
                 </MaterialUi.TableCell>

@@ -1,4 +1,4 @@
-module Query_AlertRulesByAccountAddress = %graphql(
+module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
   `
   fragment AlertRule on AlertRule {
     id 
@@ -79,24 +79,20 @@ module Query_AlertRulesByAccountAddress = %graphql(
     }
   }
 
-  query AlertRulesByAccountAddress($accountAddress: String!, $limit: Int, $nextToken: String) {
+  query AlertRulesAndOAuthIntegrationsByAccountAddress(
+    $accountAddress: String!, 
+    $limit: Int,
+    $nextToken: String,
+    $discordIntegrationsInput: DiscordIntegrationsByAccountAddressInput!,
+    $slackIntegrationsInput: SlackIntegrationsByAccountAddressInput!,
+    $twitterIntegrationsInput: TwitterIntegrationsByAccountAddressInput!
+  ) {
     alertRules: alertRulesByAccountAddress(accountAddress: $accountAddress, limit: $limit, nextToken: $nextToken) {
       items {
         ...AlertRule
       }
       nextToken
     }
-  }
-`
-  {inline: true}
-)
-
-module Query_OAuthIntegrationsByAccountAddress = %graphql(`
-  query OAuthIntegrationsByAccountAddress(
-    $discordIntegrationsInput: DiscordIntegrationsByAccountAddressInput!
-    $slackIntegrationsInput: SlackIntegrationsByAccountAddressInput!
-    $twitterIntegrationsInput: TwitterIntegrationsByAccountAddressInput!
-  ) {
     discordIntegrations: discordIntegrationsByAccountAddress(input: $discordIntegrationsInput) {
       items {
         guildId
@@ -135,10 +131,21 @@ module Query_OAuthIntegrationsByAccountAddress = %graphql(`
       }
     }
   }
-`)
+`
+  {inline: true}
+)
 
 let makeVariables = (~accountAddress) => {
-  Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.accountAddress: accountAddress,
+  Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress.accountAddress: accountAddress,
   limit: None,
   nextToken: None,
+  discordIntegrationsInput: {
+    accountAddress: accountAddress,
+  },
+  slackIntegrationsInput: {
+    accountAddress: accountAddress,
+  },
+  twitterIntegrationsInput: {
+    accountAddress: accountAddress,
+  },
 }

@@ -9,7 +9,7 @@ type updateAlertModalState =
 let make = () => {
   let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let alertRulesQuery = Query_AlertRulesByAccountAddress.AlertRulesByAccountAddress.use(
+  let alertRulesQuery = Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress.use(
     ~skip=switch authentication {
     | Authenticated(_) => false
     | _ => true
@@ -17,24 +17,6 @@ let make = () => {
     switch authentication {
     | Authenticated({jwt: {accountAddress}}) => makeVariables(~accountAddress)
     | _ => makeVariables(~accountAddress="")
-    },
-  )
-  let oauthIntegrationsQuery = Query_OAuthIntegrationsByAccountAddress.use(
-    ~skip=switch authentication {
-    | Authenticated(_) => false
-    | _ => true
-    },
-    switch authentication {
-    | Authenticated({jwt: {accountAddress}}) => {
-        discordIntegrationsInput: {accountAddress: accountAddress},
-        slackIntegrationsInput: {accountAddress: accountAddress},
-        twitterIntegrationsInput: {accountAddress: accountAddress},
-      }
-    | _ => {
-        discordIntegrationsInput: {accountAddress: ""},
-        slackIntegrationsInput: {accountAddress: ""},
-        twitterIntegrationsInput: {accountAddress: ""},
-      }
     },
   )
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
@@ -45,7 +27,7 @@ let make = () => {
     items->Belt.Array.keepMap(item => item)
   | _ => []
   }
-  let discordIntegrationOptions = switch oauthIntegrationsQuery {
+  let discordIntegrationOptions = switch alertRulesQuery {
   | {data: Some({discordIntegrations: Some({items: Some(discordItems)})})} =>
     discordItems
     ->Belt.Array.keepMap(item =>
@@ -65,7 +47,7 @@ let make = () => {
     ->Belt.Array.concatMany
   | _ => []
   }
-  let slackIntegrationOptions = switch oauthIntegrationsQuery {
+  let slackIntegrationOptions = switch alertRulesQuery {
   | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
     slackItems->Belt.Array.keepMap(item =>
       item->Belt.Option.map(item => AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
@@ -77,7 +59,7 @@ let make = () => {
     )
   | _ => []
   }
-  let twitterIntegrationOptions = switch oauthIntegrationsQuery {
+  let twitterIntegrationOptions = switch alertRulesQuery {
   | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
     twitterItems->Belt.Array.keepMap(item =>
       item->Belt.Option.map(
