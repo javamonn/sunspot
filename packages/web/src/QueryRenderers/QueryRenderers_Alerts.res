@@ -45,6 +45,65 @@ let make = () => {
     items->Belt.Array.keepMap(item => item)
   | _ => []
   }
+  let discordIntegrationOptions = switch oauthIntegrationsQuery {
+  | {data: Some({discordIntegrations: Some({items: Some(discordItems)})})} =>
+    discordItems
+    ->Belt.Array.keepMap(item =>
+      item->Belt.Option.map(item =>
+        item.channels->Belt.Array.map(channel => {
+          AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
+            clientId: item.clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
+            channelId: channel.id,
+            channelName: channel.name,
+            guildId: item.guildId,
+            guildName: item.name,
+            guildIconUrl: item.iconUrl,
+          })
+        })
+      )
+    )
+    ->Belt.Array.concatMany
+  | _ => []
+  }
+  let slackIntegrationOptions = switch oauthIntegrationsQuery {
+  | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
+    slackItems->Belt.Array.keepMap(item =>
+      item->Belt.Option.map(item => AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
+        teamName: item.teamName,
+        channelName: item.channelName,
+        channelId: item.channelId,
+        incomingWebhookUrl: item.incomingWebhookUrl,
+      }))
+    )
+  | _ => []
+  }
+  let twitterIntegrationOptions = switch oauthIntegrationsQuery {
+  | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
+    twitterItems->Belt.Array.keepMap(item =>
+      item->Belt.Option.map(
+        item => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
+          userId: item.user.id,
+          username: item.user.username,
+          profileImageUrl: item.user.profileImageUrl,
+          accessToken: {
+            accessToken: item.accessToken.accessToken,
+            refreshToken: item.accessToken.refreshToken,
+            scope: item.accessToken.scope,
+            expiresAt: item.accessToken.expiresAt,
+            tokenType: item.accessToken.tokenType,
+          },
+        }),
+      )
+    )
+  | _ => []
+  }
+
+  let integrationOptions = Belt.Array.concatMany([
+    discordIntegrationOptions,
+    slackIntegrationOptions,
+    twitterIntegrationOptions,
+  ])
+
   let tableRows =
     alertRuleItems
     ->Externals.Lodash.sortBy(item =>
@@ -155,6 +214,89 @@ let make = () => {
       | _ => None
       }
 
+      let destination = switch item.destination {
+      | #WebPushAlertDestination(_) =>
+        Some({
+          AlertsTable_Types.primary: "push notification",
+          secondary: Some("this device"),
+          iconUrl: None,
+        })
+      | #DiscordAlertDestination({guildId, channelId}) =>
+        discordIntegrationOptions
+        ->Belt.Array.getBy(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
+              guildId: optGuildId,
+              channelId: optChannelId,
+            }) if optGuildId === guildId && optChannelId === channelId => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption(o) => Some(o)
+          | _ => None
+          }
+        )
+        ->Belt.Option.map(({
+          AlertRule_Destination.Types.Option.channelName: channelName,
+          guildName,
+          guildIconUrl,
+        }) => {
+          AlertsTable_Types.primary: `#${channelName} (${guildName})`,
+          secondary: Some("discord"),
+          iconUrl: guildIconUrl->Belt.Option.getWithDefault("/discord-icon.svg")->Js.Option.some,
+        })
+      | #TwitterAlertDestination({userId}) =>
+        twitterIntegrationOptions
+        ->Belt.Array.getBy(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({userId: optUserId})
+            if userId === optUserId => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.TwitterAlertDestinationOption(o) => Some(o)
+          | _ => None
+          }
+        )
+        ->Belt.Option.map(({
+          AlertRule_Destination.Types.Option.username: username,
+          profileImageUrl,
+        }) => {
+          AlertsTable_Types.primary: `@${username}`,
+          secondary: Some("twitter"),
+          iconUrl: Some(profileImageUrl),
+        })
+      | #SlackAlertDestination({channelId}) =>
+        slackIntegrationOptions
+        ->Belt.Array.getBy(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
+              channelId: optChannelId,
+            }) if optChannelId === channelId => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(opt =>
+          switch opt {
+          | AlertRule_Destination.Types.Option.SlackAlertDestinationOption(o) => Some(o)
+          | _ => None
+          }
+        )
+        ->Belt.Option.map(({
+          AlertRule_Destination.Types.Option.teamName: teamName,
+          channelName,
+        }) => {
+          AlertsTable_Types.primary: `${channelName} (${teamName})`,
+          secondary: Some("slack"),
+          iconUrl: Some("/slack-icon.svg"),
+        })
+      | _ => None
+      }
+
       {
         AlertsTable.id: item.id,
         collectionName: item.collection.name,
@@ -164,70 +306,9 @@ let make = () => {
         externalUrl: externalUrl,
         rules: rules,
         disabledInfo: disabledInfo,
+        destination: destination,
       }
     })
-
-  let integrationOptions = {
-    let discordIntegrationOptions = switch oauthIntegrationsQuery {
-    | {data: Some({discordIntegrations: Some({items: Some(discordItems)})})} =>
-      discordItems
-      ->Belt.Array.keepMap(item =>
-        item->Belt.Option.map(item =>
-          item.channels->Belt.Array.map(channel => {
-            AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
-              clientId: item.clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
-              channelId: channel.id,
-              channelName: channel.name,
-              guildId: item.guildId,
-              guildName: item.name,
-              guildIconUrl: item.iconUrl,
-            })
-          })
-        )
-      )
-      ->Belt.Array.concatMany
-    | _ => []
-    }
-    let slackIntegrationOptions = switch oauthIntegrationsQuery {
-    | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
-      slackItems->Belt.Array.keepMap(item =>
-        item->Belt.Option.map(
-          item => AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
-            teamName: item.teamName,
-            channelName: item.channelName,
-            channelId: item.channelId,
-            incomingWebhookUrl: item.incomingWebhookUrl,
-          }),
-        )
-      )
-    | _ => []
-    }
-    let twitterIntegrationOptions = switch oauthIntegrationsQuery {
-    | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
-      twitterItems->Belt.Array.keepMap(item =>
-        item->Belt.Option.map(
-          item => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
-            userId: item.user.id,
-            username: item.user.username,
-            profileImageUrl: item.user.profileImageUrl,
-            accessToken: {
-              accessToken: item.accessToken.accessToken,
-              refreshToken: item.accessToken.refreshToken,
-              scope: item.accessToken.scope,
-              expiresAt: item.accessToken.expiresAt,
-              tokenType: item.accessToken.tokenType,
-            },
-          }),
-        )
-      )
-    | _ => []
-    }
-    Belt.Array.concatMany([
-      discordIntegrationOptions,
-      slackIntegrationOptions,
-      twitterIntegrationOptions,
-    ])
-  }
 
   let handleConnectWalletClicked = _ => {
     let _ = signIn()

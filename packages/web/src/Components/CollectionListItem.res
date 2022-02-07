@@ -23,7 +23,7 @@ let make = (
 
   bare
     ? contents
-    : <MaterialUi.ListItem disableGutters classes=?{listItemClasses} alignItems=#Flex_Start>
+    : <MaterialUi.ListItem disableGutters classes=?{listItemClasses} alignItems=#Center>
         {contents}
       </MaterialUi.ListItem>
 }

@@ -3,13 +3,13 @@ open AlertsTable_Types
 
 // static widths to support ssr rehydration
 let loadingWidths = [
-  (0, 139, 131, 140, 160),
-  (1, 217, 147, 140, 120),
-  (2, 147, 141, 117, 0),
-  (3, 190, 109, 113, 140),
-  (4, 187, 154, 102, 130),
-  (5, 126, 96, 108, 100),
-  (6, 192, 127, 118, 0),
+  (0, 139, 131, 140, 160, 130),
+  (1, 217, 147, 140, 120, 130),
+  (2, 147, 141, 117, 0, 200),
+  (3, 190, 109, 113, 140, 100),
+  (4, 187, 154, 102, 130, 80),
+  (5, 126, 96, 108, 100, 140),
+  (6, 192, 127, 118, 0, 160),
 ]
 
 @react.component
@@ -30,7 +30,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
       </MaterialUi.TableHead>
       <MaterialUi.TableBody>
         {isLoading
-          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4)) =>
+          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4, width5)) =>
               <MaterialUi.TableRow key={Belt.Int.toString(idx)}>
                 <MaterialUi.TableCell
                   classes={MaterialUi.TableCell.Classes.make(
@@ -68,6 +68,13 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                     variant=#Text
                     height={MaterialUi_Lab.Skeleton.Height.int(28)}
                     width={MaterialUi_Lab.Skeleton.Width.int(width4)}
+                  />
+                </MaterialUi.TableCell>
+                <MaterialUi.TableCell>
+                  <MaterialUi_Lab.Skeleton
+                    variant=#Text
+                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                    width={MaterialUi_Lab.Skeleton.Width.int(width5)}
                   />
                 </MaterialUi.TableCell>
               </MaterialUi.TableRow>
@@ -144,6 +151,9 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell>
                     <AlertsTable_PropertiesCell row={row} />
+                  </MaterialUi.TableCell>
+                  <MaterialUi.TableCell>
+                    <AlertsTable_DestinationCell row={row} />
                   </MaterialUi.TableCell>
                 </MaterialUi.TableRow>,
                 {"onClick": _ => onRowClick(row)},

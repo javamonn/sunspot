@@ -10,8 +10,8 @@ let default = () =>
       "flex-1",
       "overflow-y-auto",
       "bg-white",
-      "max-w-6xl",
       "mx-auto",
-    ])}>
+    ])}
+    style={ReactDOM.Style.make(~maxWidth="100rem", ())}>
     <QueryRenderers_Alerts />
   </main>

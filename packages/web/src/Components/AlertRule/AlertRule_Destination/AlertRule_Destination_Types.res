@@ -117,25 +117,31 @@ module Value = {
 }
 
 module Option = {
+  type discordDestinationOption = {
+    guildId: string,
+    clientId: string,
+    guildIconUrl: option<string>,
+    channelId: string,
+    channelName: string,
+    guildName: string,
+  }
+
+  type slackDestinationOption = {
+    teamName: string,
+    channelName: string,
+    channelId: string,
+    incomingWebhookUrl: string,
+  }
+
+  type twitterDestinationOption = {
+    userId: string,
+    username: string,
+    profileImageUrl: string,
+    accessToken: destinationOAuthAccessToken,
+  }
+
   type t =
-    | DiscordAlertDestinationOption({
-        guildId: string,
-        clientId: string,
-        guildIconUrl: option<string>,
-        channelId: string,
-        channelName: string,
-        guildName: string,
-      })
-    | SlackAlertDestinationOption({
-        teamName: string,
-        channelName: string,
-        channelId: string,
-        incomingWebhookUrl: string,
-      })
-    | TwitterAlertDestinationOption({
-        userId: string,
-        username: string,
-        profileImageUrl: string,
-        accessToken: destinationOAuthAccessToken,
-      })
+    | DiscordAlertDestinationOption(discordDestinationOption)
+    | SlackAlertDestinationOption(slackDestinationOption)
+    | TwitterAlertDestinationOption(twitterDestinationOption)
 }
