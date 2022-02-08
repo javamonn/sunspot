@@ -113,3 +113,13 @@ module KeyboardArrowDown = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module CheckCircleOutline = {
+  @react.component @module("@material-ui/icons/CheckCircleOutline")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

@@ -54,7 +54,9 @@ let default = (props: props): React.element => {
     </Externals.Next.Head>
     <MaterialUi.ThemeProvider theme={theme}>
       <Contexts.Eth>
-        <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
+        <Contexts.Auth>
+          <Contexts.Apollo> <Contexts.Snackbar> {elem} </Contexts.Snackbar> </Contexts.Apollo>
+        </Contexts.Auth>
       </Contexts.Eth>
     </MaterialUi.ThemeProvider>
   </>
