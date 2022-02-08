@@ -99,6 +99,22 @@ module ServiceWorkerRegistration = {
   @send @scope("pushManager")
   external subscribe: (t, subscribeOptions) => Js.Promise.t<PushSubscription.t> = "subscribe"
 
+  module PermissionState = {
+    @deriving(abstract)
+    type options = {
+      userVisibleOnly: bool,
+      applicationServerKey: string,
+    }
+    type result = [
+      | #denied
+      | #prompt
+      | #granted
+    ]
+
+    @send @scope("pushManager")
+    external execute: (t, options) => Js.Promise.t<result> = "permissionState"
+  }
+
   @send @scope("pushManager")
   external getSubscription: t => Js.Promise.t<Js.Nullable.t<PushSubscription.t>> = "getSubscription"
 

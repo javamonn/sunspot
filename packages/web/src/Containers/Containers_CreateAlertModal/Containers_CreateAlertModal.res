@@ -1,4 +1,7 @@
 exception AlertDestinationRequired
+exception AlertCollectionRequired
+exception PushNotificationPermissionDenied
+
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRule
 module Mutation_CreateAlertRule = %graphql(`
   mutation CreateAlertRuleInput($input: CreateAlertRuleInput!) {
@@ -8,34 +11,48 @@ module Mutation_CreateAlertRule = %graphql(`
   }
 `)
 
-let getCreateAlertRuleInput = (~value, ~accountAddress) => {
+let getCreateAlertRuleDestination = (~value) => {
   open Mutation_CreateAlertRule
 
-  let destination = switch AlertModal.Value.destination(value) {
+  switch AlertModal.Value.destination(value) {
   | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination) =>
-    Services.PushNotification.getSubscription()
-    |> Js.Promise.then_(subscription => {
-      switch subscription {
-      | Some(subscription) => Js.Promise.resolve(subscription)
-      | None => Services.PushNotification.subscribe()
+    Services.PushNotification.permissionState()
+    |> Js.Promise.then_(permissionState =>
+      switch permissionState {
+      | #denied => Js.Promise.resolve(Error(PushNotificationPermissionDenied))
+      | _ =>
+        Services.PushNotification.getSubscription()
+        |> Js.Promise.then_(subscription => {
+          switch subscription {
+          | Some(subscription) => Js.Promise.resolve(subscription)
+          | None => Services.PushNotification.subscribe()
+          }
+        })
+        |> Js.Promise.then_(subscription => Js.Promise.resolve(Ok(subscription)))
       }
-    })
-    |> Js.Promise.then_(pushSubscription => {
-      open Externals.ServiceWorkerGlobalScope.PushSubscription
-      let s = getSerialized(pushSubscription)
+    )
+    |> Js.Promise.then_(pushSubscriptionResult => {
+      switch pushSubscriptionResult {
+      | Ok(pushSubscription) =>
+        open Externals.ServiceWorkerGlobalScope.PushSubscription
+        let s = getSerialized(pushSubscription)
 
-      Js.Promise.resolve({
-        webPushAlertDestination: Some({
-          endpoint: s->endpoint,
-          keys: {
-            p256dh: s->keys->p256dh,
-            auth: s->keys->auth,
-          },
-        }),
-        discordAlertDestination: None,
-        slackAlertDestination: None,
-        twitterAlertDestination: None,
-      })
+        Js.Promise.resolve(
+          Ok({
+            webPushAlertDestination: Some({
+              endpoint: s->endpoint,
+              keys: {
+                p256dh: s->keys->p256dh,
+                auth: s->keys->auth,
+              },
+            }),
+            discordAlertDestination: None,
+            slackAlertDestination: None,
+            twitterAlertDestination: None,
+          }),
+        )
+      | Error(e) => Js.Promise.resolve(Error(e))
+      }
     })
   | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({
       channelId,
@@ -43,70 +60,81 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
       template,
       clientId,
     })) =>
-    Js.Promise.resolve({
-      discordAlertDestination: Some({
-        guildId: guildId,
-        clientId: Some(clientId),
-        channelId: channelId,
-        template: template->Belt.Option.map(template => {
-          title: template->AlertRule_Destination.Types.DiscordTemplate.title,
-          description: template->AlertRule_Destination.Types.DiscordTemplate.description,
-          displayProperties: template
-          ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
-          ->Js.Option.some,
-          fields: template
-          ->AlertRule_Destination.Types.DiscordTemplate.fields
-          ->Belt.Option.map(fields =>
-            fields->Belt.Array.map(field => {
-              name: field->AlertRule_Destination_Types.DiscordTemplate.name,
-              value: field->AlertRule_Destination_Types.DiscordTemplate.value,
-              inline: field->AlertRule_Destination_Types.DiscordTemplate.inline,
-            })
-          ),
+    Js.Promise.resolve(
+      Ok({
+        discordAlertDestination: Some({
+          guildId: guildId,
+          clientId: Some(clientId),
+          channelId: channelId,
+          template: template->Belt.Option.map(template => {
+            title: template->AlertRule_Destination.Types.DiscordTemplate.title,
+            description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+            displayProperties: template
+            ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
+            ->Js.Option.some,
+            fields: template
+            ->AlertRule_Destination.Types.DiscordTemplate.fields
+            ->Belt.Option.map(fields =>
+              fields->Belt.Array.map(field => {
+                name: field->AlertRule_Destination_Types.DiscordTemplate.name,
+                value: field->AlertRule_Destination_Types.DiscordTemplate.value,
+                inline: field->AlertRule_Destination_Types.DiscordTemplate.inline,
+              })
+            ),
+          }),
         }),
+        webPushAlertDestination: None,
+        slackAlertDestination: None,
+        twitterAlertDestination: None,
       }),
-      webPushAlertDestination: None,
-      slackAlertDestination: None,
-      twitterAlertDestination: None,
-    })
+    )
   | Some(AlertRule_Destination.Types.Value.SlackAlertDestination({
       channelId,
       incomingWebhookUrl,
     })) =>
-    Js.Promise.resolve({
-      discordAlertDestination: None,
-      webPushAlertDestination: None,
-      twitterAlertDestination: None,
-      slackAlertDestination: Some({
-        channelId: channelId,
-        incomingWebhookUrl: incomingWebhookUrl,
+    Js.Promise.resolve(
+      Ok({
+        discordAlertDestination: None,
+        webPushAlertDestination: None,
+        twitterAlertDestination: None,
+        slackAlertDestination: Some({
+          channelId: channelId,
+          incomingWebhookUrl: incomingWebhookUrl,
+        }),
       }),
-    })
+    )
   | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({
       userId,
       accessToken,
       template,
     })) =>
-    Js.Promise.resolve({
-      discordAlertDestination: None,
-      webPushAlertDestination: None,
-      slackAlertDestination: None,
-      twitterAlertDestination: Some({
-        userId: userId,
-        template: template->Belt.Option.map(template => {
-          text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+    Js.Promise.resolve(
+      Ok({
+        discordAlertDestination: None,
+        webPushAlertDestination: None,
+        slackAlertDestination: None,
+        twitterAlertDestination: Some({
+          userId: userId,
+          template: template->Belt.Option.map(template => {
+            text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+          }),
+          accessToken: {
+            accessToken: accessToken.accessToken,
+            refreshToken: accessToken.refreshToken,
+            tokenType: accessToken.tokenType,
+            scope: accessToken.scope,
+            expiresAt: accessToken.expiresAt,
+          },
         }),
-        accessToken: {
-          accessToken: accessToken.accessToken,
-          refreshToken: accessToken.refreshToken,
-          tokenType: accessToken.tokenType,
-          scope: accessToken.scope,
-          expiresAt: accessToken.expiresAt,
-        },
       }),
-    })
-  | None => Js.Promise.reject(AlertDestinationRequired)
+    )
+  | None => Js.Promise.resolve(Belt.Result.Error(AlertDestinationRequired))
   }
+}
+
+let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
+  open Mutation_CreateAlertRule
+
   let priceEventFilter =
     value
     ->AlertModal.Value.priceRule
@@ -183,11 +211,10 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
   | _ => (None, None, None)
   }
 
-  value
-  ->AlertModal.Value.collection
-  ->Belt.Option.map(collection =>
-    destination |> Js.Promise.then_(destination => {
-      {
+  switch AlertModal.Value.collection(value) {
+  | Some(collection) =>
+    Js.Promise.resolve(
+      Ok({
         id: AlertModal.Value.id(value),
         accountAddress: accountAddress,
         collectionSlug: AlertModal.CollectionOption.slugGet(collection),
@@ -201,85 +228,125 @@ let getCreateAlertRuleInput = (~value, ~accountAddress) => {
         disabled: disabled,
         disabledReason: disabledReason,
         disabledExpiresAt: disabledExpiresAt,
-      }
-      ->Js.Option.some
-      ->Js.Promise.resolve
-    })
+      }),
+    )
+  | None => Js.Promise.resolve(Belt.Result.Error(AlertCollectionRequired))
+  }
+}
+
+let handleCreateAlertRule = (
+  ~accountAddress,
+  ~input,
+  ~mutation: ApolloClient__React_Hooks_UseMutation.MutationTuple.t_mutationFn<
+    Mutation_CreateAlertRule.Mutation_CreateAlertRule_inner.t,
+    Mutation_CreateAlertRule.Mutation_CreateAlertRule_inner.t_variables,
+    Mutation_CreateAlertRule.Mutation_CreateAlertRule_inner.Raw.t_variables,
+  >,
+) => {
+  mutation(
+    ~update=({writeQuery, readQuery}, {data}) => {
+      data
+      ->Belt.Option.flatMap(({alertRule}) => alertRule)
+      ->Belt.Option.forEach(alertRule => {
+        let (
+          newItems,
+          discordIntegrations,
+          slackIntegrations,
+          twitterIntegrations,
+        ) = switch readQuery(
+          ~query=module(
+            QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
+          ),
+          QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
+        ) {
+        | Some(Ok({
+            alertRules: Some({items: Some(items)}),
+            discordIntegrations,
+            slackIntegrations,
+            twitterIntegrations,
+          })) => (
+            Belt.Array.concat([Some(alertRule)], items),
+            discordIntegrations,
+            slackIntegrations,
+            twitterIntegrations,
+          )
+        | _ => ([Some(alertRule)], None, None, None)
+        }
+
+        let _ = writeQuery(
+          ~query=module(
+            QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
+          ),
+          ~data={
+            alertRules: Some({
+              __typename: "ModelAlertRuleConnection",
+              nextToken: None,
+              items: Some(newItems),
+            }),
+            discordIntegrations: discordIntegrations,
+            slackIntegrations: slackIntegrations,
+            twitterIntegrations: twitterIntegrations,
+          },
+          QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
+        )
+      })
+    },
+    {
+      input: input,
+    },
   )
-  ->Belt.Option.getWithDefault(Js.Promise.resolve(None))
 }
 
 @react.component
 let make = (~isOpen, ~onClose, ~destinationOptions) => {
-  let (createAlertRuleMutation, createAlertRuleMutationResult) = Mutation_CreateAlertRule.use()
+  let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
   let (value, setValue) = React.useState(() => AlertModal.Value.empty())
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
 
   let handleExited = () => {
     setValue(_ => AlertModal.Value.empty())
   }
 
   let handleCreate = (~accountAddress) =>
-    getCreateAlertRuleInput(~value, ~accountAddress) |> Js.Promise.then_(createAlertRuleInput =>
-      createAlertRuleInput
-      ->Belt.Option.forEach(createAlertRuleInput => {
-        let _ = createAlertRuleMutation(
-          ~update=({writeQuery, readQuery}, {data}) => {
-            data
-            ->Belt.Option.flatMap(({alertRule}) => alertRule)
-            ->Belt.Option.forEach(alertRule => {
-              let (
-                newItems,
-                discordIntegrations,
-                slackIntegrations,
-                twitterIntegrations,
-              ) = switch readQuery(
-                ~query=module(
-                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
-                ),
-                QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
-              ) {
-              | Some(Ok({
-                  alertRules: Some({items: Some(items)}),
-                  discordIntegrations,
-                  slackIntegrations,
-                  twitterIntegrations,
-                })) => (
-                  Belt.Array.concat([Some(alertRule)], items),
-                  discordIntegrations,
-                  slackIntegrations,
-                  twitterIntegrations,
-                )
-              | _ => ([Some(alertRule)], None, None, None)
-              }
-
-              let _ = writeQuery(
-                ~query=module(
-                  QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
-                ),
-                ~data={
-                  alertRules: Some({
-                    __typename: "ModelAlertRuleConnection",
-                    nextToken: None,
-                    items: Some(newItems),
-                  }),
-                  discordIntegrations: discordIntegrations,
-                  slackIntegrations: slackIntegrations,
-                  twitterIntegrations: twitterIntegrations,
-                },
-                QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
-              )
-            })
-          },
-          {
-            input: createAlertRuleInput,
-          },
+    getCreateAlertRuleDestination(~value)
+    |> Js.Promise.then_(alertRuleDestinationResult =>
+      switch alertRuleDestinationResult {
+      | Ok(destination) => getCreateAlertRuleInput(~value, ~accountAddress, ~destination)
+      | Error(error) => Js.Promise.resolve(Error(error))
+      }
+    )
+    |> Js.Promise.then_(createAlertRuleInputResult =>
+      switch createAlertRuleInputResult {
+      | Ok(input) =>
+        handleCreateAlertRule(
+          ~accountAddress,
+          ~input,
+          ~mutation=createAlertRuleMutation,
         ) |> Js.Promise.then_(_result => {
           onClose()
+          openSnackbar(
+            ~message="alert created.",
+            ~type_=Contexts.Snackbar.TypeSuccess,
+            ~duration=4000,
+          )
           Js.Promise.resolve()
         })
-      })
-      ->Js.Promise.resolve
+      | Error(PushNotificationPermissionDenied) =>
+        openSnackbar(
+          ~message="browser push notification permission has been denied. enable permission or select an alternate destination.",
+          ~type_=Contexts.Snackbar.TypeError,
+          ~duration=8000,
+        )
+        Js.Promise.resolve()
+      | Error(_) =>
+        openSnackbar(
+          ~message="an unknown error occurred. try creating the alert again and contact support if the issue persists.",
+          ~type_=Contexts.Snackbar.TypeError,
+          ~duration=8000,
+        )
+        Js.Promise.resolve()
+      }
     )
 
   let handleSignIn = () => {

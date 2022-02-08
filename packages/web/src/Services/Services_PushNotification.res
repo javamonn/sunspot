@@ -42,6 +42,23 @@ let getSubscription = () =>
   )
   |> Js.Promise.then_(subscription => subscription->Js.Nullable.toOption->Js.Promise.resolve)
 
+let permissionState = () => {
+  open Externals.ServiceWorkerGlobalScope
+
+  Js.Promise.all2((
+    getApplicationServerKey(),
+    Externals.Webapi.Navigator.ServiceWorkerContainer.ready,
+  )) |> Js.Promise.then_(((applicationServerKey, registration)) =>
+    ServiceWorkerRegistration.PermissionState.execute(
+      registration,
+      ServiceWorkerRegistration.PermissionState.options(
+        ~userVisibleOnly=true,
+        ~applicationServerKey,
+      ),
+    )
+  )
+}
+
 let subscribe = () => {
   open Externals.ServiceWorkerGlobalScope
 
