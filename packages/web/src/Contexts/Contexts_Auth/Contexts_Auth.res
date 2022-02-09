@@ -7,11 +7,24 @@ exception UnableToRefreshCredentials
 exception UserDecline_ConnectFailed
 
 type authentication =
-  | Unauthenticated
-  | InProgress
-  | AuthenticationChallengeRequired
-  | RefreshRequired(Contexts_Auth_Credentials.t)
+  | Unauthenticated_ConnectRequired
+  | Unauthenticated_AuthenticationChallengeRequired(Externals.Wagmi.UseAccount.data)
+  | InProgress_PromptConnectWallet
+  | InProgress_PromptAuthenticationChallenge(Externals.Wagmi.UseAccount.data)
+  | InProgress_JWTRefresh(Contexts_Auth_Credentials.t)
   | Authenticated(Contexts_Auth_Credentials.t)
+
+let authenticationToString = a =>
+  switch a {
+  | Unauthenticated_ConnectRequired => "Unauthenticated_ConnectRequired"
+  | Unauthenticated_AuthenticationChallengeRequired(
+      _,
+    ) => "Unauthenticated_AuthenticationChallengeRequired"
+  | InProgress_PromptConnectWallet => "InProgress_PromptConnectWallet"
+  | InProgress_PromptAuthenticationChallenge(_) => "InProgress_PromptAuthenticationChallenge"
+  | InProgress_JWTRefresh(_) => "InProgress_JWTRefresh"
+  | Authenticated(_) => "Authenticated"
+  }
 
 type t = {
   authentication: authentication,
@@ -20,7 +33,7 @@ type t = {
 }
 
 let context = React.createContext({
-  authentication: Unauthenticated,
+  authentication: Unauthenticated_ConnectRequired,
   signIn: () => Js.Promise.reject(InvalidState_Uninitalized),
   refreshCredentials: _ => Js.Promise.reject(InvalidState_Uninitalized),
 })
@@ -74,261 +87,294 @@ module Mutation_AuthenticationCredentialsRefresh = %graphql(`
   }
 `)
 
+let getInitialAuthenticationState = account =>
+  Contexts_Auth_Credentials.LocalStorage.read()
+  ->Belt.Option.map(credentials => {
+    let isAwsCredentialValid =
+      credentials
+      ->Contexts_Auth_Credentials.awsCredentials
+      ->Contexts_Auth_Credentials.isAwsCredentialValid
+    let isJwtValid =
+      credentials->Contexts_Auth_Credentials.jwt->Contexts_Auth_Credentials.isJwtValid
+
+    if !isAwsCredentialValid && isJwtValid {
+      InProgress_JWTRefresh(credentials)
+    } else if !isAwsCredentialValid && !isJwtValid {
+      switch account {
+      | Some(account) => Unauthenticated_AuthenticationChallengeRequired(account)
+      | None => Unauthenticated_ConnectRequired
+      }
+    } else {
+      Authenticated(credentials)
+    }
+  })
+  ->Belt.Option.getWithDefault(Unauthenticated_ConnectRequired)
+
+let refreshCredentials = jwt =>
+  Contexts_Apollo_Client.inst.contents.mutate(
+    ~mutation=module(Mutation_AuthenticationCredentialsRefresh),
+    {input: {jwt: jwt}},
+  ) |> Js.Promise.then_(result => {
+    switch result {
+    | Ok(
+        {
+          data: {
+            credentials: {
+              credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
+              jwt,
+            },
+          },
+        }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
+          Mutation_AuthenticationCredentialsRefresh.t,
+        >,
+      ) =>
+      switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
+      | Some(jwt) =>
+        Js.Promise.resolve(
+          Contexts_Auth_Credentials.make(
+            ~identityId,
+            ~accessKeyId,
+            ~secretKey,
+            ~sessionToken,
+            ~expiration,
+            ~jwt,
+          ),
+        )
+      | None => Js.Promise.reject(UnableToRefreshCredentials)
+      }
+    | Ok(_)
+    | Error(_) =>
+      Js.Promise.reject(UnableToRefreshCredentials)
+    }
+  })
+
+let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~signMessage, ()) =>
+  Contexts_Apollo_Client.inst.contents.mutate(
+    ~mutation=module(Mutation_AuthenticationChallengeCreate),
+    {input: {address: address}},
+  )
+  |> Js.Promise.then_(result =>
+    switch result {
+    | Ok(
+        {data: {challenge: {message}}}: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
+          Mutation_AuthenticationChallengeCreate.t,
+        >,
+      ) =>
+      Js.Promise.make((~resolve, ~reject) => {
+        let unit_ = ()
+        if waitForMetamaskClose {
+          // wait a bit to ensure MM window has closed
+          let _ = Js.Global.setTimeout(() => {
+            resolve(. unit_)
+          }, 3000)
+        } else {
+          resolve(. unit_)
+        }
+      })
+      |> Js.Promise.then_(_ => signMessage({Externals.Wagmi.UseSignMessage.message: message}))
+      |> Js.Promise.then_(({data, error}: Externals.Wagmi.UseSignMessage.result) =>
+        switch (data, error) {
+        | (Some(data), _) => Js.Promise.resolve(data)
+        | (_, Some(error)) => Js.Promise.reject(AuthenticationChallengeFailed) // todo handle error
+        | _ => Js.Promise.reject(AuthenticationChallengeFailed)
+        }
+      )
+      |> Js.Promise.catch(err => Js.Promise.reject(AuthenticationChallengeFailed))
+    | Error(_) => Js.Promise.reject(AuthenticationChallengeFailed)
+    }
+  )
+  |> Js.Promise.then_(signedMessage =>
+    Contexts_Apollo_Client.inst.contents.mutate(
+      ~mutation=module(Mutation_AuthenticationChallengeVerify),
+      {input: {address: address, signedMessage: signedMessage}},
+    )
+  )
+  |> Js.Promise.then_(result => {
+    switch result {
+    | Ok(
+        {
+          data: {
+            credentials: {
+              credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
+              jwt,
+            },
+          },
+        }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
+          Mutation_AuthenticationChallengeVerify.t,
+        >,
+      ) =>
+      switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
+      | Some(jwt) =>
+        Js.Promise.resolve(
+          Contexts_Auth_Credentials.make(
+            ~identityId,
+            ~accessKeyId,
+            ~secretKey,
+            ~sessionToken,
+            ~expiration,
+            ~jwt,
+          ),
+        )
+      | None => Js.Promise.reject(AuthenticationChallengeFailed)
+      }
+    | Error(_) => Js.Promise.reject(AuthenticationChallengeFailed)
+    }
+  })
+
 @react.component
 let make = (~children) => {
-  let {eth}: Contexts_Eth.t = React.useContext(Contexts_Eth.context)
-  let (authentication, setAuthentication) = React.useState(() =>
-    Contexts_Auth_Credentials.LocalStorage.read()
-    ->Belt.Option.map(credentials => {
-      let isAwsCredentialValid =
-        credentials
-        ->Contexts_Auth_Credentials.awsCredentials
-        ->Contexts_Auth_Credentials.isAwsCredentialValid
-      let isJwtValid =
-        credentials->Contexts_Auth_Credentials.jwt->Contexts_Auth_Credentials.isJwtValid
-
-      if !isAwsCredentialValid && isJwtValid {
-        RefreshRequired(credentials)
-      } else if !isAwsCredentialValid && !isJwtValid {
-        AuthenticationChallengeRequired
-      } else {
-        Authenticated(credentials)
-      }
-    })
-    ->Belt.Option.getWithDefault(Unauthenticated)
+  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
+  let (authentication, setAuthentication) = React.useState(_ =>
+    getInitialAuthenticationState(account)
   )
+  let (_, signMessage) = Externals.Wagmi.UseSignMessage.use()
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
+  let previousAuthentication = React.useRef(authentication)
+  let authenticationDeferred = React.useRef(None)
 
   let handleRefreshCredentials = jwt =>
-    Contexts_Apollo_Client.inst.contents.mutate(
-      ~mutation=module(Mutation_AuthenticationCredentialsRefresh),
-      {input: {jwt: jwt}},
-    )
-    |> Js.Promise.then_(result => {
-      switch result {
-      | Ok(
-          {
-            data: {
-              credentials: {
-                credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
-                jwt,
-              },
-            },
-          }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
-            Mutation_AuthenticationCredentialsRefresh.t,
-          >,
-        ) =>
-        switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
-        | Some(jwt) =>
-          Js.Promise.resolve(
-            Contexts_Auth_Credentials.make(
-              ~identityId,
-              ~accessKeyId,
-              ~secretKey,
-              ~sessionToken,
-              ~expiration,
-              ~jwt,
-            ),
-          )
-        | None => Js.Promise.reject(UnableToRefreshCredentials)
-        }
-      | Ok(_)
-      | Error(_) =>
-        Js.Promise.reject(UnableToRefreshCredentials)
-      }
-    })
+    refreshCredentials(jwt)
     |> Js.Promise.then_(credentials => {
       setAuthentication(_ => Authenticated(credentials))
       Js.Promise.resolve(Some(credentials))
     })
     |> Js.Promise.catch(err => {
       Services.Logger.promiseError("Contexts_Auth", "Unable to refresh credentials.", err)
-      setAuthentication(_ => AuthenticationChallengeRequired)
+      setAuthentication(_ =>
+        switch account {
+        | Some(account) => Unauthenticated_AuthenticationChallengeRequired(account)
+        | None => Unauthenticated_ConnectRequired
+        }
+      )
       Js.Promise.resolve(None)
     })
+  let handleAuthenticatedEffect = credentials =>
+    Contexts_Auth_Credentials.LocalStorage.write(credentials)
+  let handleUnauthenticatedConnectRequiredEffect = () =>
+    Contexts_Auth_Credentials.LocalStorage.clear()
+  let handleInProgressJWTRefreshEffect = jwt => {
+    let _ =
+      jwt
+      |> Contexts_Auth_Credentials.JWT.raw
+      |> handleRefreshCredentials
+      |> Js.Promise.then_(credentials => {
+        let _ = switch credentials {
+        | Some(credentials) => setAuthentication(_ => Authenticated(credentials))
+        | None => ()
+        }
+        Js.Promise.resolve()
+      })
+      |> Js.Promise.catch(err => {
+        Services.Logger.promiseError("Contexts_Auth", "handleInProgressJWTRefreshEffect error", err)
+        let _ = setAuthentication(_ =>
+          switch account {
+          | Some(account) => Unauthenticated_AuthenticationChallengeRequired(account)
+          | None => Unauthenticated_ConnectRequired
+          }
+        )
+        Js.Promise.resolve()
+      })
+  }
+  let handleInProgressPromptAuthenticationChallengeEffect = account => {
+    let _ =
+      handleAuthenticationChallenge(
+        ~address=account->Externals.Wagmi.UseAccount.address,
+        ~waitForMetamaskClose=switch previousAuthentication.current {
+        | InProgress_PromptConnectWallet => true
+        | _ => false
+        },
+        ~signMessage,
+        (),
+      )
+      |> Js.Promise.then_(credentials => {
+        let _ = setAuthentication(_ => Authenticated(credentials))
+        Js.Promise.resolve()
+      })
+      |> Js.Promise.catch(err => {
+        Services.Logger.promiseError(
+          "Contexts_Auth",
+          "handleInProgressPromptAuthenticationChallengeEffect error",
+          err,
+        )
+        let _ = setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
+        let _ = openSnackbar(
+          ~message="authentication challenge failed. try again, and contact support if the issue persists.",
+          ~type_=Contexts_Snackbar.TypeError,
+          ~duration=8000,
+        )
+        Js.Promise.resolve()
+      })
+  }
+
+  let _ = React.useEffect2(() => {
+    let _ = switch (authentication, account) {
+    | (Unauthenticated_ConnectRequired, Some(account)) =>
+      setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
+    | (Authenticated(_), None) | (Unauthenticated_AuthenticationChallengeRequired(_), None) =>
+      setAuthentication(_ => Unauthenticated_ConnectRequired)
+    | (InProgress_PromptConnectWallet, Some(account)) =>
+      setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
+    | _ => ()
+    }
+
+    None
+  }, (authentication, account))
 
   let _ = React.useEffect1(() => {
     Services.Logger.logWithData(
       "Contexts_Auth",
       "context changed",
       Js.Json.object_(
-        Js.Dict.fromArray([
-          (
-            "state",
-            Js.Json.string(
-              switch authentication {
-              | Unauthenticated => "Unauthenticated"
-              | AuthenticationChallengeRequired => "AuthenticationChallengeRequired"
-              | RefreshRequired(_) => "RefreshRequired"
-              | Authenticated(_) => "Authenticated"
-              | InProgress => "InProgress"
-              },
-            ),
-          ),
-        ]),
+        Js.Dict.fromArray([("state", authentication->authenticationToString->Js.Json.string)]),
       ),
     )
 
     switch authentication {
-    | Authenticated(credentials) => Contexts_Auth_Credentials.LocalStorage.write(credentials)
-    | Unauthenticated => Contexts_Auth_Credentials.LocalStorage.clear()
-    | RefreshRequired({jwt}) =>
-      let _ =
-        jwt
-        |> Contexts_Auth_Credentials.JWT.raw
-        |> handleRefreshCredentials
-        |> Js.Promise.then_(credentials => {
-          let _ = switch credentials {
-          | Some(credentials) => setAuthentication(_ => Authenticated(credentials))
-          | None => ()
-          }
-          Js.Promise.resolve()
-        })
-        |> Js.Promise.catch(err => {
-          Services.Logger.promiseError("Contexts_Auth", "Unable to refresh credentials.", err)
-          let _ = setAuthentication(_ => AuthenticationChallengeRequired)
-          Js.Promise.resolve()
-        })
+    | Authenticated(credentials) => handleAuthenticatedEffect(credentials)
+    | Unauthenticated_ConnectRequired => handleUnauthenticatedConnectRequiredEffect()
+    | InProgress_JWTRefresh({jwt}) => handleInProgressJWTRefreshEffect(jwt)
+    | InProgress_PromptAuthenticationChallenge(account) =>
+      handleInProgressPromptAuthenticationChallengeEffect(account)
     | _ => ()
     }
+
+    switch (authentication, authenticationDeferred.current) {
+    | (Authenticated(_), Some(d))
+    | (Unauthenticated_ConnectRequired(_), Some(d))
+    | (Unauthenticated_AuthenticationChallengeRequired(_), Some(d)) =>
+      d->Externals.PDefer.resolve(authentication)
+      authenticationDeferred.current = None
+    | _ => ()
+    }
+    previousAuthentication.current = authentication
+
     None
   }, [authentication])
 
-  let _ = React.useEffect2(() => {
-    switch (eth, authentication) {
-    | (NotConnected(_), Authenticated(_))
-    | (NotConnected(_), AuthenticationChallengeRequired) =>
-      setAuthentication(_ => Unauthenticated)
-    | (Connected(_), Unauthenticated) => setAuthentication(_ => AuthenticationChallengeRequired)
-    | _ => ()
-    }
-    None
-  }, (eth, authentication))
-
-  let handleRequestAccount = (~provider, ~web3) =>
-    provider
-    |> Externals.Ethereum.requestAccounts
-    |> Js.Promise.then_(addresses => {
-      switch addresses->Externals.Ethereum.result->Belt.Array.get(0) {
-      | Some(address) => Externals.Web3.toChecksumAddress(web3, address)->Js.Promise.resolve
-      | None => Js.Promise.reject(UserDecline_ConnectFailed)
-      }
-    })
-
-  let handleAuthenticationChallenge = (~web3, ~address, ~waitForMetamaskClose=false, ()) =>
-    Contexts_Apollo_Client.inst.contents.mutate(
-      ~mutation=module(Mutation_AuthenticationChallengeCreate),
-      {input: {address: address}},
-    )
-    |> Js.Promise.then_(result =>
-      switch result {
-      | Ok(
-          {data: {challenge: {message}}}: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
-            Mutation_AuthenticationChallengeCreate.t,
-          >,
-        ) =>
-        Js.Promise.make((~resolve, ~reject) => {
-          let unit_ = ()
-          if waitForMetamaskClose {
-            // wait a bit to ensure MM window has closed
-            let _ = Js.Global.setTimeout(() => {
-              resolve(. unit_)
-            }, 3000)
-          } else {
-            resolve(. unit_)
-          }
-        })
-        |> Js.Promise.then_(_ => Externals.Web3.personalSign(web3, message, address))
-        |> Js.Promise.catch(err => {
-          setAuthentication(_ => AuthenticationChallengeRequired)
-          Js.Promise.reject(AuthenticationChallengeFailed)
-        })
-      | Error(_) => Js.Promise.reject(AuthenticationChallengeFailed)
-      }
-    )
-    |> Js.Promise.then_(signedMessage =>
-      Contexts_Apollo_Client.inst.contents.mutate(
-        ~mutation=module(Mutation_AuthenticationChallengeVerify),
-        {input: {address: address, signedMessage: signedMessage}},
+  let handleConnectWalletModalClose = connected => {
+    if !connected {
+      setAuthentication(_ => Unauthenticated_ConnectRequired)
+      openSnackbar(
+        ~message="failed to connect wallet. try connecting again, and contact support if the issue persists.",
+        ~type_=Contexts_Snackbar.TypeError,
+        ~duration=8000,
       )
-    )
-    |> Js.Promise.then_(result => {
-      switch result {
-      | Ok(
-          {
-            data: {
-              credentials: {
-                credentials: {identityId, accessKeyId, secretKey, sessionToken, expiration},
-                jwt,
-              },
-            },
-          }: ApolloClient__Core_ApolloClient.FetchResult.t__ok<
-            Mutation_AuthenticationChallengeVerify.t,
-          >,
-        ) =>
-        switch Contexts_Auth_Credentials.JWT.makeFromString(jwt) {
-        | Some(jwt) =>
-          Js.Promise.resolve(
-            Contexts_Auth_Credentials.make(
-              ~identityId,
-              ~accessKeyId,
-              ~secretKey,
-              ~sessionToken,
-              ~expiration,
-              ~jwt,
-            ),
-          )
-        | None => Js.Promise.reject(AuthenticationChallengeFailed)
-        }
-      | Ok(_)
-      | Error(_) =>
-        Js.Promise.reject(AuthenticationChallengeFailed)
-      }
-    })
+    }
+  }
 
   let handleSignIn = () => {
-    switch (authentication, eth) {
-    | (Unauthenticated, NotConnected({provider, web3})) =>
-      setAuthentication(_ => InProgress)
-      handleRequestAccount(~provider, ~web3)
-      |> Js.Promise.then_(address => handleAuthenticationChallenge(~web3, ~address, ~waitForMetamaskClose=true, ()))
-      |> Js.Promise.then_(credentials => {
-        setAuthentication(_ => Authenticated(credentials))
-        Js.Promise.resolve(Authenticated(credentials))
-      })
-      |> Js.Promise.catch(err => {
-        Services_Logger.promiseError("Contexts_Auth", "Unable to sign in.", err)
-        Js.Promise.resolve(authentication)
-      })
-    | (AuthenticationChallengeRequired, Connected({web3, address})) =>
-      setAuthentication(_ => InProgress)
-      handleAuthenticationChallenge(~web3, ~address, ())
-      |> Js.Promise.then_(credentials => {
-        setAuthentication(_ => Authenticated(credentials))
-        Js.Promise.resolve(Authenticated(credentials))
-      })
-      |> Js.Promise.catch(err => {
-        Services.Logger.promiseError("Contexts_Auth", "Failed authentication challenge.", err)
-        Js.Promise.resolve(authentication)
-      })
-    | (RefreshRequired({jwt}), _) =>
-      jwt
-      |> Contexts_Auth_Credentials.JWT.raw
-      |> handleRefreshCredentials
-      |> Js.Promise.then_(credentials => {
-        switch credentials {
-        | Some(credentials) => Js.Promise.resolve(Authenticated(credentials))
-        | None => Js.Promise.resolve(authentication)
-        }
-      })
-    | (_, Web3Unavailable)
-    | (_, Unknown) =>
-      Js.Promise.reject(InvalidState_Web3Unavailable)
-    | (AuthenticationChallengeRequired(_), _)
-    | (Unauthenticated, _)
-    | (InProgress, _) =>
-      Js.Promise.reject(InvalidState_Desync)
-    | (Authenticated(_), _) => Js.Promise.reject(InvalidState_AlreadyAuthenticated)
-    }
+    let deferred = Externals.PDefer.make()
+    authenticationDeferred.current = Some(deferred)
+    setAuthentication(authentication =>
+      switch authentication {
+      | Unauthenticated_ConnectRequired => InProgress_PromptConnectWallet
+      | Unauthenticated_AuthenticationChallengeRequired(account) =>
+        InProgress_PromptAuthenticationChallenge(account)
+      | s => s
+      }
+    )
+
+    deferred->Externals.PDefer.promise
   }
 
   <ContextProvider
@@ -338,5 +384,12 @@ let make = (~children) => {
       refreshCredentials: handleRefreshCredentials,
     }>
     {children}
+    <ConnectWalletModal
+      isOpen={switch authentication {
+      | InProgress_PromptConnectWallet => true
+      | _ => false
+      }}
+      onClose={connected => handleConnectWalletModalClose(connected)}
+    />
   </ContextProvider>
 }
