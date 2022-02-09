@@ -7,6 +7,7 @@ type updateAlertModalState =
 
 @react.component
 let make = () => {
+  let {eth}: Contexts.Eth.t = React.useContext(Contexts.Eth.context)
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
   let alertRulesQuery = Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress.use(
     ~skip=switch authentication {
@@ -443,16 +444,18 @@ let make = () => {
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
 
-  let isLoading = switch (alertRulesQuery, authentication) {
-  | ({loading: true}, _)
-  | ({called: false}, _)
-  | (_, InProgress_JWTRefresh(_)) => true
+  let isLoading = switch (eth, alertRulesQuery, authentication) {
+  | (_, {loading: true}, _)
+  | (_, {called: false}, _)
+  | (Unknown, _, _)
+  | (_, _, RefreshRequired(_)) => true
   | _ if !Config.isBrowser() => true
   | _ => false
   }
 
   <>
     <AlertsHeader
+      eth
       authentication
       onConnectWalletClicked={handleConnectWalletClicked}
       onWalletButtonClicked={handleConnectWalletClicked}

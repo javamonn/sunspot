@@ -1,13 +1,11 @@
 @react.component
 let make = (
+  ~eth: Contexts.Eth.state,
   ~authentication: Contexts.Auth.authentication,
   ~onConnectWalletClicked,
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
 ) => {
-
-  let ({data:account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
-
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
       {React.string("sunspot / alerts")}
@@ -28,15 +26,12 @@ let make = (
         )}>
         {React.string("create alert")}
       </MaterialUi.Button>
-      {switch account {
-      | Some({ address, connector }) =>
+      {switch eth {
+      | Connected({address, provider}) =>
         <WalletButton
-          onClick={onWalletButtonClicked} 
-          authentication={authentication} 
-          address={address}
-          provider={connector->Externals_Wagmi.Connector.provider}
+          provider onClick={onWalletButtonClicked} authentication={authentication} address={address}
         />
-      | None => <ConnectWalletButton onClick={onConnectWalletClicked} />
+      | _ => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}
       <AboutPopover />
     </div>
