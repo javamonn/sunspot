@@ -1,6 +1,7 @@
 const bsconfig = require("./bsconfig.json");
 const fs = require("fs");
 const RemarkHTML = require("remark-html");
+const webpack = require("webpack")
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
@@ -27,6 +28,7 @@ const config = {
         https: require.resolve("https-browserify"),
         os: require.resolve("os-browserify"),
         assert: require.resolve("assert"),
+        process: require.resolve("process/browser")
       };
     }
 
@@ -58,6 +60,12 @@ const config = {
         },
       ],
     });
+
+    config.plugins.push(
+      new webpack.ProvidePlugin({
+        process: "process/browser",
+      })
+    );
 
     return config;
   },
