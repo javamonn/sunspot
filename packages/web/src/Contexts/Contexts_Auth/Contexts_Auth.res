@@ -223,7 +223,10 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
 
 @react.component
 let make = (~children) => {
-  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
+  let (
+    {data: account, loading: isAccountLoading}: Externals.Wagmi.UseAccount.result,
+    _,
+  ) = Externals.Wagmi.UseAccount.use()
   let (authentication, setAuthentication) = React.useState(_ =>
     getInitialAuthenticationState(account)
   )
@@ -251,7 +254,12 @@ let make = (~children) => {
   let handleAuthenticatedEffect = credentials =>
     Contexts_Auth_Credentials.LocalStorage.write(credentials)
   let handleUnauthenticatedConnectRequiredEffect = () =>
-    Contexts_Auth_Credentials.LocalStorage.clear()
+    switch previousAuthentication.current {
+    | Authenticated(_)
+    | InProgress_JWTRefresh(_) =>
+      Contexts_Auth_Credentials.LocalStorage.clear()
+    | _ => ()
+    }
   let handleInProgressJWTRefreshEffect = jwt => {
     let _ =
       jwt
@@ -310,8 +318,6 @@ let make = (~children) => {
     let _ = switch (authentication, account) {
     | (Unauthenticated_ConnectRequired, Some(account)) =>
       setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
-    | (Authenticated(_), None) | (Unauthenticated_AuthenticationChallengeRequired(_), None) =>
-      setAuthentication(_ => Unauthenticated_ConnectRequired)
     | (InProgress_PromptConnectWallet, Some(account)) =>
       setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
     | _ => ()

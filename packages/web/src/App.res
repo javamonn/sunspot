@@ -84,7 +84,7 @@ let default = (props: props): React.element => {
     </Externals.Next.Head>
     <MaterialUi.ThemeProvider theme={theme}>
       <Contexts.Snackbar>
-        <Externals.Wagmi.Provider connectors={wagmiConnector}>
+        <Externals.Wagmi.Provider connectors={wagmiConnector} autoConnect={true}>
           <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
         </Externals.Wagmi.Provider>
       </Contexts.Snackbar>
