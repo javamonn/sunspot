@@ -129,13 +129,14 @@ let make = (
           let title = switch disabled {
           | Snoozed => "alert has been disabled."
           | DestinationMissingAccess => "unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
-          | DestinationRateLimitExceeded(_) => "alert has been ratelimited and will automatically re-enable after a period of time."
+          | DestinationRateLimitExceeded(
+              _,
+            ) => "alert has been ratelimited and will automatically re-enable after a period of time."
           }
 
           <MaterialUi.Tooltip title={React.string(title)}>
             <Externals.MaterialUi_Icons.Error
-              style={ReactDOM.Style.make(~color="#e64a19", ())}
-              className={Cn.make(["w-6", "h-6", "mr-2"])}
+              className={Cn.make(["w-6", "h-6", "mr-2", "text-red-400"])}
             />
           </MaterialUi.Tooltip>
         })

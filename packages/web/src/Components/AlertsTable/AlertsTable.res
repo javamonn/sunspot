@@ -116,8 +116,7 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
                       ->Belt.Option.map(copy =>
                         <MaterialUi.Tooltip title={React.string(copy)}>
                           <Externals.MaterialUi_Icons.Error
-                            style={ReactDOM.Style.make(~color="#e64a19", ())}
-                            className={Cn.make(["w-5", "h-5", "ml-2"])}
+                            className={Cn.make(["w-5", "h-5", "ml-2", "text-red-400"])}
                           />
                         </MaterialUi.Tooltip>
                       )

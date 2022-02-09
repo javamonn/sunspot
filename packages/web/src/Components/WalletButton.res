@@ -33,8 +33,7 @@ let make = (~provider, ~address, ~onClick, ~authentication: Contexts.Auth.authen
         {switch authentication {
         | Unauthenticated_AuthenticationChallengeRequired(_) =>
           <Externals.MaterialUi_Icons.Error
-            style={ReactDOM.Style.make(~color="#f44336", ())}
-            className={Cn.make(["w-5", "h-5", "ml-2"])}
+            className={Cn.make(["w-5", "h-5", "ml-2", "text-red-400"])}
           />
         | Authenticated(_) => <Externals.Davatar address={address} size={16} provider={provider} />
         | _ => React.null
