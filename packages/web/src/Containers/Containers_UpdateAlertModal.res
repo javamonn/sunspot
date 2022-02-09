@@ -383,9 +383,16 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
           Js.Promise.resolve()
         | Error(_) =>
           openSnackbar(
-            ~message=React.string(
-              "an unknown error occurred. try creating the alert again and contact support if the issue persists.",
-            ),
+            ~message=<>
+              {React.string("an unknown error occurred. try again, and ")}
+              <a
+                href={Config.discordGuildInviteUrl}
+                target="_blank"
+                className={Cn.make(["underline"])}>
+                {React.string("contact support")}
+              </a>
+              {React.string("if the issue persists.")}
+            </>,
             ~type_=Contexts.Snackbar.TypeError,
             ~duration=8000,
             (),

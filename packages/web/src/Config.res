@@ -11,6 +11,8 @@ let sentryDsn = "https://46f76de2bfc64d10a89fc90865bb1d47@o1060100.ingest.sentry
 let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
 let infuraId = "d7556e9450a54b58a042dcc5d322e620"
 
+let discordGuildInviteUrl = "https://discord.gg/y3wcMgagsF"
+
 let discord1ClientId = "909830001363394593"
 let discord2ClientId = "938507879974043679"
 let discord3ClientId = "938802177223303198"

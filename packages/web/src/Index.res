@@ -27,15 +27,15 @@ let default = () =>
         </li>
         <li>
           {React.string("install bot (")}
-          <a className={Cn.make(["underline"])} href={Config.discordOAuthUrl}>
+          <a className={Cn.make(["underline"])} href={Config.discordOAuthUrl} target="_blank">
             {React.string("discord")}
           </a>
           {React.string(", ")}
-          <a className={Cn.make(["underline"])} href={Config.twitterOAuthUrl}>
+          <a className={Cn.make(["underline"])} href={Config.twitterOAuthUrl} target="_blank">
             {React.string("twitter")}
           </a>
           {React.string(", ")}
-          <a className={Cn.make(["underline"])} href={Config.slackOAuthUrl}>
+          <a className={Cn.make(["underline"])} href={Config.slackOAuthUrl} target="_blank">
             {React.string("slack")}
           </a>
           {React.string(")")}
@@ -64,17 +64,21 @@ let default = () =>
       <p className={Cn.make(["mb-2", "font-bold"])}> {React.string("etc:")} </p>
       <ul className={Cn.make(["list-circle", "list-inside"])}>
         <li>
-          <a className={Cn.make(["underline"])} href="https://discord.gg/y3wcMgagsF">
+          <a className={Cn.make(["underline"])} href={Config.discordGuildInviteUrl} target="_blank">
             {React.string("discord")}
           </a>
         </li>
         <li>
-          <a className={Cn.make(["underline"])} href="https://twitter.com/javamonnn">
+          <a
+            className={Cn.make(["underline"])} href="https://twitter.com/javamonnn" target="_blank">
             {React.string("twitter")}
           </a>
         </li>
         <li>
-          <a className={Cn.make(["underline"])} href="https://github.com/javamonn/sunspot">
+          <a
+            className={Cn.make(["underline"])}
+            href="https://github.com/javamonn/sunspot"
+            target="_blank">
             {React.string("github")}
           </a>
         </li>
