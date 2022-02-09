@@ -5,12 +5,12 @@ let make = (
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
 ) => {
-
-  let ({data:account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
+  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
 
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
-      {React.string("sunspot / alerts")}
+      <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
+      {React.string(" / alerts")}
     </h1>
     <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center"])}>
       <MaterialUi.Button
@@ -29,10 +29,10 @@ let make = (
         {React.string("create alert")}
       </MaterialUi.Button>
       {switch account {
-      | Some({ address, connector }) =>
+      | Some({address, connector}) =>
         <WalletButton
-          onClick={onWalletButtonClicked} 
-          authentication={authentication} 
+          onClick={onWalletButtonClicked}
+          authentication={authentication}
           address={address}
           provider={connector->Externals_Wagmi.Connector.provider}
         />

@@ -69,16 +69,12 @@ let default = () =>
           </a>
         </li>
         <li>
-          <a
-            className={Cn.make(["underline"])} href="https://twitter.com/javamonnn" target="_blank">
+          <a className={Cn.make(["underline"])} href={Config.twitterUrl} target="_blank">
             {React.string("twitter")}
           </a>
         </li>
         <li>
-          <a
-            className={Cn.make(["underline"])}
-            href="https://github.com/javamonn/sunspot"
-            target="_blank">
+          <a href={Config.githubUrl} className={Cn.make(["underline"])} target="_blank">
             {React.string("github")}
           </a>
         </li>

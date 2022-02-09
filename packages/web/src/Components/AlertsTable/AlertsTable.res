@@ -13,10 +13,10 @@ let loadingWidths = [
 ]
 
 @react.component
-let make = (~rows, ~onRowClick, ~isLoading) => <>
+let make = (~rows, ~onRowClick, ~isLoading) =>
   <MaterialUi.TableContainer
-    classes={MaterialUi.TableContainer.Classes.make(~root={Cn.make(["mt-6"])}, ())}>
-    <MaterialUi.Table>
+    classes={MaterialUi.TableContainer.Classes.make(~root={Cn.make(["mt-4", "flex-1"])}, ())}>
+    <MaterialUi.Table stickyHeader={true}>
       <MaterialUi.TableHead>
         <MaterialUi.TableRow>
           {columns
@@ -160,16 +160,17 @@ let make = (~rows, ~onRowClick, ~isLoading) => <>
             )}
       </MaterialUi.TableBody>
     </MaterialUi.Table>
+    {!isLoading && Belt.Array.length(rows) == 0
+      ? <caption className={Cn.make(["flex", "flex-col"])}>
+          <MaterialUi.Typography
+            variant=#Subtitle1
+            color=#TextSecondary
+            classes={MaterialUi.Typography.Classes.make(
+              ~subtitle1=Cn.make(["text-center", "mt-12", "whitespace-pre"]),
+              (),
+            )}>
+            {React.string("to get started, create an alert.")}
+          </MaterialUi.Typography>
+        </caption>
+      : React.null}
   </MaterialUi.TableContainer>
-  {!isLoading && Belt.Array.length(rows) == 0
-    ? <MaterialUi.Typography
-        variant=#Subtitle1
-        color=#TextSecondary
-        classes={MaterialUi.Typography.Classes.make(
-          ~subtitle1=Cn.make(["text-center", "mt-12", "whitespace-pre"]),
-          (),
-        )}>
-        {React.string("to get started, create an alert.")}
-      </MaterialUi.Typography>
-    : React.null}
-</>

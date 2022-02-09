@@ -125,3 +125,23 @@ module UseSignMessage = {
   @module("wagmi")
   external use: unit => (result, options => Js.Promise.t<result>) = "useSignMessage"
 }
+
+module UseTransaction = {
+  @deriving(accessors)
+  type result = {
+    data: option<Js.Json.t>,
+    error: option<Js.Exn.t>,
+  }
+
+  type request = {
+    @as("to") to_: string,
+    value: Externals_Ethers.BigNumber.t
+  }
+
+  type options = {
+    request: request
+  }
+
+  @module("wagmi")
+  external use: unit => (result, options => Js.Promise.t<result>) = "useTransaction"
+}
