@@ -37,6 +37,36 @@ let theme = MaterialUi.Theme.create({
 })
 Services.Logger.initialize()
 
+let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.connectorsOptions) => {
+  open Externals.Wagmi
+
+  let rpcUrl =
+    defaultChains
+    ->Belt.Array.getBy(chain => id(chain) === chainId)
+    ->Belt.Option.flatMap(chain => chain->rpcUrls->Belt.Array.get(0))
+    ->Belt.Option.getWithDefault(
+      chain
+      ->Js.Dict.get("mainnet")
+      ->Belt.Option.flatMap(chain => chain->rpcUrls->Belt.Array.get(0))
+      ->Belt.Option.getExn,
+    )
+
+  [
+    makeInjectedConnector({
+      chains: defaultChains,
+      options: {
+        shimDisconnect: true,
+      },
+    }),
+    makeWalletConectConnector({
+      options: {
+        qrcode: true,
+        infuraId: Config.infuraId,
+      },
+    }),
+  ]
+}
+
 let default = (props: props): React.element => {
   let {component, pageProps} = props
   let elem = React.createElement(component, pageProps)
@@ -53,11 +83,11 @@ let default = (props: props): React.element => {
       <link rel="icon" type_="image/png" sizes="16x16" href="/favicon-16x16.png" />
     </Externals.Next.Head>
     <MaterialUi.ThemeProvider theme={theme}>
-      <Contexts.Eth>
-        <Contexts.Auth>
-          <Contexts.Apollo> <Contexts.Snackbar> {elem} </Contexts.Snackbar> </Contexts.Apollo>
-        </Contexts.Auth>
-      </Contexts.Eth>
+      <Contexts.Snackbar>
+        <Externals.Wagmi.Provider connectors={wagmiConnector}>
+          <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
+        </Externals.Wagmi.Provider>
+      </Contexts.Snackbar>
     </MaterialUi.ThemeProvider>
   </>
 }
