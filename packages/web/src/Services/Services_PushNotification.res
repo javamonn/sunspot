@@ -1,4 +1,5 @@
 exception UnableToGetApplicationServerKey
+exception PushNotificationPermissionDenied
 
 module Query_WebPushApplicationServerKey = %graphql(`
   query WebPushApplicationServerKey {
@@ -59,16 +60,54 @@ let permissionState = () => {
   )
 }
 
-let subscribe = () => {
+let subscribe = (~onShowSnackbar: Contexts_Snackbar.openSnackbar) => {
   open Externals.ServiceWorkerGlobalScope
 
   Js.Promise.all2((
     getApplicationServerKey(),
     Externals.Webapi.Navigator.ServiceWorkerContainer.ready,
-  )) |> Js.Promise.then_(((applicationServerKey, registration)) =>
+  )) |> Js.Promise.then_(((applicationServerKey, registration)) => {
+    let timeoutId = Js.Global.setTimeout(() => {
+      let _ = Externals.Raw.isBrave() |> Js.Promise.then_(isBrave => {
+        if isBrave {
+          onShowSnackbar(
+            ~message=<span className={Cn.make(["whitespace-pre-wrap"])}>
+              {React.string(
+                "brave may require you to manually enable Google services for push messaging.\n\nTo enable:\n1. open the brave menu\n2. select \"Settings\"\n3. select \"Security and Privacy\"\n4. locate and enable the setting \"Use Google services for push messaging.\"\n5. relaunch the browser.",
+              )}
+            </span>,
+            ~type_=Contexts_Snackbar.TypeWarning,
+            (),
+          )
+        }
+        Js.Promise.resolve()
+      })
+    }, 4000)
+
     ServiceWorkerRegistration.subscribe(
       registration,
       ServiceWorkerRegistration.subscribeOptions(~userVisibleOnly=true, ~applicationServerKey),
-    )
-  )
+    ) |> Js.Promise.then_(result => {
+      let _ = Js.Global.clearTimeout(timeoutId)
+      Js.Promise.resolve(result)
+    })
+  })
 }
+
+let checkPermissionAndGetSubscription = (~onShowSnackbar: Contexts_Snackbar.openSnackbar) =>
+  permissionState() |> Js.Promise.then_(permissionState =>
+    switch permissionState {
+    | #denied => Js.Promise.resolve(Error(PushNotificationPermissionDenied))
+    | _ =>
+      getSubscription()
+      |> Js.Promise.then_(subscription => {
+        switch subscription {
+        | Some(subscription) => Js.Promise.resolve(subscription)
+        | None => subscribe(~onShowSnackbar)
+        }
+      })
+      |> Js.Promise.then_(subscription => {
+        Js.Promise.resolve(Ok(subscription))
+      })
+    }
+  )

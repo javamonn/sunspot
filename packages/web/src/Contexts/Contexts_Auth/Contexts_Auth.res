@@ -306,9 +306,12 @@ let make = (~children) => {
         )
         let _ = setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
         let _ = openSnackbar(
-          ~message="authentication challenge failed. try again, and contact support if the issue persists.",
+          ~message=React.string(
+            "authentication challenge failed. try again, and contact support if the issue persists.",
+          ),
           ~type_=Contexts_Snackbar.TypeError,
           ~duration=8000,
+          (),
         )
         Js.Promise.resolve()
       })
@@ -361,9 +364,12 @@ let make = (~children) => {
     if !connected {
       setAuthentication(_ => Unauthenticated_ConnectRequired)
       openSnackbar(
-        ~message="failed to connect wallet. try connecting again, and contact support if the issue persists.",
+        ~message=React.string(
+          "failed to connect wallet. try again, and contact support if the issue persists.",
+        ),
         ~type_=Contexts_Snackbar.TypeError,
         ~duration=8000,
+        (),
       )
     }
   }

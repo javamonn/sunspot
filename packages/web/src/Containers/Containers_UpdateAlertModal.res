@@ -1,6 +1,5 @@
 exception AlertDestinationRequired
 exception AlertCollectionRequired
-exception PushNotificationPermissionDenied
 
 module AlertRule = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRule
 module Mutation_UpdateAlertRule = %graphql(`
@@ -19,27 +18,14 @@ module Mutation_DeleteAlertRule = %graphql(`
   }
 `)
 
-let getUpdateAlertRuleDestination = (~value) => {
+let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
   open Mutation_UpdateAlertRule
 
   switch AlertModal.Value.destination(value) {
   | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination) =>
-    Services.PushNotification.permissionState()
-    |> Js.Promise.then_(permissionState =>
-      switch permissionState {
-      | #denied => Js.Promise.resolve(Error(PushNotificationPermissionDenied))
-      | _ =>
-        Services.PushNotification.getSubscription()
-        |> Js.Promise.then_(subscription => {
-          switch subscription {
-          | Some(subscription) => Js.Promise.resolve(subscription)
-          | None => Services.PushNotification.subscribe()
-          }
-        })
-        |> Js.Promise.then_(subscription => Js.Promise.resolve(Ok(subscription)))
-      }
-    )
-    |> Js.Promise.then_(pushSubscriptionResult => {
+    Services.PushNotification.checkPermissionAndGetSubscription(
+      ~onShowSnackbar,
+    ) |> Js.Promise.then_(pushSubscriptionResult => {
       switch pushSubscriptionResult {
       | Ok(pushSubscription) =>
         open Externals.ServiceWorkerGlobalScope.PushSubscription
@@ -361,7 +347,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
   let handleUpdate = () =>
     switch (value, newValue) {
     | (Some(oldValue), Some(newValue)) =>
-      getUpdateAlertRuleDestination(~value=newValue)
+      getUpdateAlertRuleDestination(~value=newValue, ~onShowSnackbar=openSnackbar)
       |> Js.Promise.then_(destinationResult =>
         switch destinationResult {
         | Ok(destination) =>
@@ -378,24 +364,31 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
           ) |> Js.Promise.then_(_result => {
             onClose()
             openSnackbar(
-              ~message="alert updated.",
+              ~message=React.string("alert updated."),
               ~type_=Contexts.Snackbar.TypeSuccess,
               ~duration=4000,
+              (),
             )
             Js.Promise.resolve()
           })
-        | Error(PushNotificationPermissionDenied) =>
+        | Error(Services.PushNotification.PushNotificationPermissionDenied) =>
           openSnackbar(
-            ~message="browser push notification permission has been denied. enable permission or select an alternate destination.",
+            ~message=React.string(
+              "browser push notification permission has been denied. enable permission or select an alternate destination.",
+            ),
             ~type_=Contexts.Snackbar.TypeError,
             ~duration=8000,
+            (),
           )
           Js.Promise.resolve()
         | Error(_) =>
           openSnackbar(
-            ~message="an unknown error occurred. try creating the alert again and contact support if the issue persists.",
+            ~message=React.string(
+              "an unknown error occurred. try creating the alert again and contact support if the issue persists.",
+            ),
             ~type_=Contexts.Snackbar.TypeError,
             ~duration=8000,
+            (),
           )
           Js.Promise.resolve()
         }
@@ -418,9 +411,10 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
         |> Js.Promise.then_(_ => {
           onClose()
           openSnackbar(
-            ~message="alert deleted.",
+            ~message=React.string("alert deleted."),
             ~type_=Contexts.Snackbar.TypeSuccess,
             ~duration=4000,
+            (),
           )
           Js.Promise.resolve()
         })

@@ -17,3 +17,4 @@ module Amplitude = Externals_Amplitude
 module ApolloLink = Externals_ApolloLink
 module Wagmi = Externals_Wagmi
 module PDefer = Externals_PDefer
+module Raw = Externals_Raw
