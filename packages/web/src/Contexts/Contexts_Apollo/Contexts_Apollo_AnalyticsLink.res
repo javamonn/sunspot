@@ -40,7 +40,7 @@ let link = makeApolloLink((operation, operationResponse) => {
   | Belt.Result.Ok(operationResponse) =>
     operationResponse.errors->Belt.Option.map(errors => {
       (
-        ErrorAnalyticsLinkGraphQL(operation->Externals.ApolloLink.operationName),
+        operation->Externals.ApolloLink.operationName,
         [
           (
             "appsyncErrors",
@@ -63,7 +63,7 @@ let link = makeApolloLink((operation, operationResponse) => {
     })
   | Belt.Result.Error(error) =>
     Some((
-      ErrorAnalyticsLinkDecode(error.message),
+      error.message,
       [
         ("operationName", operation->Externals.ApolloLink.operationName->Js.Json.string),
         ("operationVariables", operation->Externals.ApolloLink.variables),
@@ -72,12 +72,12 @@ let link = makeApolloLink((operation, operationResponse) => {
     ))
   }
 
-  let _ = error->Belt.Option.forEach(((error, extra)) => {
-    Services_Logger.exn_(
+  let _ = error->Belt.Option.forEach(((errorText, extra)) => {
+    Services_Logger.jsExn(
       ~tag="Contexts_Apollo_AnalyticsLink",
       ~message="operation error",
       ~extra,
-      error,
+      Externals.Raw.makeExn(errorText),
     )
   })
 })

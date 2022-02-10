@@ -9,7 +9,7 @@ let make = (~isOpen, ~onClose) => {
       let _ = switch result {
       | {data: Some(_)} => onClose(true)
       | {error: Some(err)} =>
-        Services.Logger.jsExn("ConnectWalletModal", "handleConnect error", err)
+        Services.Logger.jsExn(~tag="ConnectWalletModal", ~message="handleConnect error", err)
         onClose(false)
       | _ => onClose(false)
       }

@@ -112,13 +112,18 @@ let exn_ = (~tag, ~message, ~extra=?, e) =>
     Js.log3(tag, message, e)
   }
 
-let jsExn = (tag, message, e) =>
+let jsExn = (~tag, ~message, ~extra=?, e) =>
   if Config.isProduction && Config.isBrowser() {
     Externals.Sentry.captureExceptionWithContext(
       e,
       Externals.Sentry.exceptionContext(
         ~extra=Js.Json.object_(
-          Js.Dict.fromArray([("tag", Js.Json.string(tag)), ("message", Js.Json.string(message))]),
+          Js.Dict.fromArray(
+            Belt.Array.concat(
+              [("tag", Js.Json.string(tag)), ("message", Js.Json.string(message))],
+              extra->Belt.Option.getWithDefault([]),
+            ),
+          ),
         ),
         (),
       ),
