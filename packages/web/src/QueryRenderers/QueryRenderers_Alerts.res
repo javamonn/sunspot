@@ -61,19 +61,21 @@ let make = () => {
   let twitterIntegrationOptions = switch alertRulesQuery {
   | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
     twitterItems->Belt.Array.keepMap(item =>
-      item->Belt.Option.map(
-        item => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
-          userId: item.user.id,
-          username: item.user.username,
-          profileImageUrl: item.user.profileImageUrl,
-          accessToken: {
-            accessToken: item.accessToken.accessToken,
-            refreshToken: item.accessToken.refreshToken,
-            scope: item.accessToken.scope,
-            expiresAt: item.accessToken.expiresAt,
-            tokenType: item.accessToken.tokenType,
-          },
-        }),
+      item->Belt.Option.flatMap(item =>
+        item.user->Belt.Option.map(
+          user => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
+            userId: user.id,
+            username: user.username,
+            profileImageUrl: user.profileImageUrl,
+            accessToken: {
+              accessToken: item.accessToken.accessToken,
+              refreshToken: item.accessToken.refreshToken,
+              scope: item.accessToken.scope,
+              expiresAt: item.accessToken.expiresAt,
+              tokenType: item.accessToken.tokenType,
+            },
+          }),
+        )
       )
     )
   | _ => []

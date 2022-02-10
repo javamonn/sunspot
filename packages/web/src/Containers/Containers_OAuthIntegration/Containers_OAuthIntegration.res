@@ -111,20 +111,22 @@ let makeSteps = (
           value={alertRuleValue}
           onChange={setterFn => setAlertRuleValue(setterFn)}
           destinationOptions={createTwitterOAuthIntegrationMutationResultData
-          ->Belt.Option.map(data => [
-            AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
-              userId: data.twitterIntegration.user.id,
-              username: data.twitterIntegration.user.username,
-              profileImageUrl: data.twitterIntegration.user.profileImageUrl,
-              accessToken: {
-                accessToken: data.twitterIntegration.accessToken.accessToken,
-                refreshToken: data.twitterIntegration.accessToken.refreshToken,
-                scope: data.twitterIntegration.accessToken.scope,
-                expiresAt: data.twitterIntegration.accessToken.expiresAt,
-                tokenType: data.twitterIntegration.accessToken.tokenType,
-              },
-            }),
-          ])
+          ->Belt.Option.flatMap(data =>
+            data.twitterIntegration.user->Belt.Option.map(user => [
+              AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
+                userId: user.id,
+                username: user.username,
+                profileImageUrl: user.profileImageUrl,
+                accessToken: {
+                  accessToken: data.twitterIntegration.accessToken.accessToken,
+                  refreshToken: data.twitterIntegration.accessToken.refreshToken,
+                  scope: data.twitterIntegration.accessToken.scope,
+                  expiresAt: data.twitterIntegration.accessToken.expiresAt,
+                  tokenType: data.twitterIntegration.accessToken.tokenType,
+                },
+              }),
+            ])
+          )
           ->Belt.Option.getWithDefault([])}
           destinationDisabled={true}
         />,
@@ -382,22 +384,25 @@ let make = (~onCreated, ~params) => {
             result: ApolloClient__React_Types.FetchResult.t__ok<
               Mutation_CreateTwitterOAuthIntegration.Mutation_CreateTwitterOAuthIntegration_inner.t,
             >,
-          ) => {
-            let data = result.data.twitterIntegration
-            Some(
-              AlertRule_Destination.Types.Value.TwitterAlertDestination({
-                userId: data.user.id,
-                template: None,
-                accessToken: {
-                  accessToken: data.accessToken.accessToken,
-                  refreshToken: data.accessToken.refreshToken,
-                  expiresAt: data.accessToken.expiresAt,
-                  scope: data.accessToken.scope,
-                  tokenType: data.accessToken.tokenType,
-                },
-              }),
-            )
-          })
+          ) =>
+            switch result {
+            | {data: {twitterIntegration: {user: Some(user), accessToken}}} =>
+              Some(
+                AlertRule_Destination.Types.Value.TwitterAlertDestination({
+                  userId: user.id,
+                  template: None,
+                  accessToken: {
+                    accessToken: accessToken.accessToken,
+                    refreshToken: accessToken.refreshToken,
+                    expiresAt: accessToken.expiresAt,
+                    scope: accessToken.scope,
+                    tokenType: accessToken.tokenType,
+                  },
+                }),
+              )
+            | _ => None
+            }
+          )
           ->Js.Promise.resolve
         })
       | (Discord(_), None) => Js.Promise.reject(InvalidAccessToken)
@@ -540,7 +545,9 @@ let make = (~onCreated, ~params) => {
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,
-            displayProperties: template->AlertRule_Destination.Types.DiscordTemplate.displayProperties->Js.Option.some,
+            displayProperties: template
+            ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
+            ->Js.Option.some,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>
