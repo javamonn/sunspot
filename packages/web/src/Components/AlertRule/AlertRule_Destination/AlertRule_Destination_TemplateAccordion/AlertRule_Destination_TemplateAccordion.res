@@ -1,5 +1,6 @@
 module DiscordTemplate = AlertRule_Destination_TemplateAccordion_DiscordTemplate
 module TwitterTemplate = AlertRule_Destination_TemplateAccordion_TwitterTemplate
+module WebPushTemplate = AlertRule_Destination_TemplateAccordion_WebPushTemplate
 
 @react.component
 let make = (~value=?, ~onChange, ~eventType: AlertRule_EventType.t, ~accordionExpanded) =>
@@ -23,6 +24,17 @@ let make = (~value=?, ~onChange, ~eventType: AlertRule_EventType.t, ~accordionEx
         onChange(
           AlertRule_Destination.Types.Value.TwitterAlertDestination({
             ...destination,
+            template: newTemplate,
+          }),
+        )}
+      eventType={eventType}
+    />
+  | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template} as destination)) =>
+    <WebPushTemplate
+      value=?{template}
+      onChange={newTemplate =>
+        onChange(
+          AlertRule_Destination.Types.Value.WebPushAlertDestination({
             template: newTemplate,
           }),
         )}

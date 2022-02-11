@@ -63,7 +63,7 @@ module Value = {
     propertiesRule: None,
     eventType: #listing,
     destination: Config.isBrowser() && Services.PushNotification.isSupported()
-      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
+      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({ template: None }))
       : None,
     disabled: None,
   }

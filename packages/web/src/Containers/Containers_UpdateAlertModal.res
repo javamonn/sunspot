@@ -22,7 +22,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
   open Mutation_UpdateAlertRule
 
   switch AlertModal.Value.destination(value) {
-  | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination) =>
+  | Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template})) =>
     Services.PushNotification.checkPermissionAndGetSubscription(
       ~onShowSnackbar,
     ) |> Js.Promise.then_(pushSubscriptionResult => {
@@ -39,6 +39,11 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
                 p256dh: s->keys->p256dh,
                 auth: s->keys->auth,
               },
+              template: template->Belt.Option.map(template => {
+                title: template.title,
+                body: template.body,
+                isThumbnailImageSize: template.isThumbnailImageSize,
+              }),
             }),
             discordAlertDestination: None,
             slackAlertDestination: None,

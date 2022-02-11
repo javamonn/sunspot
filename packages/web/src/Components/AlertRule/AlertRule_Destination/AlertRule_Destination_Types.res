@@ -6,6 +6,23 @@ type destinationOAuthAccessToken = {
   tokenType: string,
 }
 
+module WebPushTemplate = {
+  @deriving(accessors)
+  type t = {title: string, body: string, isThumbnailImageSize: bool}
+
+  let defaultSaleTemplate = {
+    title: "{eventType}: {assetName} - {tokenPrice}",
+    body: "{collectionName}\n{alertRulesSatisfied}",
+    isThumbnailImageSize: true,
+  }
+
+  let defaultListingTemplate = {
+    title: "{eventType}: {assetName} - {tokenPrice}",
+    body: "{collectionName}\n{alertRulesSatisfied}",
+    isThumbnailImageSize: true,
+  }
+}
+
 module TwitterTemplate = {
   @deriving(accessors)
   type t = {text: string}
@@ -104,7 +121,7 @@ module DiscordTemplate = {
 
 module Value = {
   type t =
-    | WebPushAlertDestination
+    | WebPushAlertDestination({template: option<WebPushTemplate.t>})
     | DiscordAlertDestination({
         guildId: string,
         channelId: string,

@@ -363,8 +363,16 @@ let make = () => {
         )
 
       let destination = switch item.destination {
-      | #WebPushAlertDestination(_) =>
-        Some(AlertRule_Destination.Types.Value.WebPushAlertDestination)
+      | #WebPushAlertDestination({template}) =>
+        Some(
+          AlertRule_Destination.Types.Value.WebPushAlertDestination({
+            template: template->Belt.Option.map(template => {
+              AlertRule_Destination.Types.WebPushTemplate.title: template.title,
+              body: template.body,
+              isThumbnailImageSize: template.isThumbnailImageSize,
+            }),
+          }),
+        )
       | #DiscordAlertDestination({guildId, channelId, template, clientId}) =>
         Some(
           AlertRule_Destination.Types.Value.DiscordAlertDestination({

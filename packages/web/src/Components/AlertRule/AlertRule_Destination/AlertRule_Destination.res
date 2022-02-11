@@ -24,7 +24,7 @@ let make = (
     target["value"]
     ->Belt.Option.flatMap(newDestination =>
       if newDestination == pushNotificationDestinationId {
-        Some(Value.WebPushAlertDestination)
+        Some(Value.WebPushAlertDestination({template: None}))
       } else if newDestination == destinationIdAddDiscordIntegration {
         onConnectDiscord()
         None
@@ -73,7 +73,7 @@ let make = (
   }
 
   let unwrappedValue = switch value {
-  | Some(Value.WebPushAlertDestination) =>
+  | Some(Value.WebPushAlertDestination(_)) =>
     MaterialUi.Select.Value.string(pushNotificationDestinationId)
   | Some(DiscordAlertDestination({channelId})) => MaterialUi.Select.Value.string(channelId)
   | Some(SlackAlertDestination({channelId})) => MaterialUi.Select.Value.string(channelId)

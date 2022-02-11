@@ -18,6 +18,11 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     destination {
       ... on WebPushAlertDestination {
         endpoint
+        template {
+          title
+          body
+          isThumbnailImageSize
+        }
       }
       ... on DiscordAlertDestination {
         guildId
