@@ -223,7 +223,11 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
 
 @react.component
 let make = (~children) => {
-  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
+  let (
+    {data: account, loading: isAccountLoading}: Externals.Wagmi.UseAccount.result,
+    _,
+  ) = Externals.Wagmi.UseAccount.use()
+  let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let (authentication, setAuthentication) = React.useState(_ =>
     getInitialAuthenticationState(account)
   )
@@ -327,6 +331,11 @@ let make = (~children) => {
       setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
     | (InProgress_PromptConnectWallet, Some(account)) =>
       setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
+    | (Authenticated(_), None) if !connecting && !isAccountLoading =>
+      setAuthentication(_ => Unauthenticated_ConnectRequired)
+    | (Unauthenticated_AuthenticationChallengeRequired(_), None)
+      if !connecting && !isAccountLoading =>
+      setAuthentication(_ => Unauthenticated_ConnectRequired)
     | _ => ()
     }
 

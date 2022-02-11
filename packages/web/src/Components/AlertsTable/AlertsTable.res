@@ -161,7 +161,7 @@ let make = (~rows, ~onRowClick, ~isLoading) =>
       </MaterialUi.TableBody>
     </MaterialUi.Table>
     {!isLoading && Belt.Array.length(rows) == 0
-      ? <caption className={Cn.make(["flex", "flex-col"])}>
+      ? <div className={Cn.make(["flex", "flex-col"])}>
           <MaterialUi.Typography
             variant=#Subtitle1
             color=#TextSecondary
@@ -171,6 +171,6 @@ let make = (~rows, ~onRowClick, ~isLoading) =>
             )}>
             {React.string("to get started, create an alert.")}
           </MaterialUi.Typography>
-        </caption>
+        </div>
       : React.null}
   </MaterialUi.TableContainer>

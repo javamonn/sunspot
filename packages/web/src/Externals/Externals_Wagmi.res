@@ -135,13 +135,19 @@ module UseTransaction = {
 
   type request = {
     @as("to") to_: string,
-    value: Externals_Ethers.BigNumber.t
+    value: Externals_Ethers.BigNumber.t,
   }
 
-  type options = {
-    request: request
-  }
+  type options = {request: request}
 
   @module("wagmi")
   external use: unit => (result, options => Js.Promise.t<result>) = "useTransaction"
+}
+
+module UseContext = {
+  type state = {connecting: bool}
+  type t = {state: state}
+
+  @module("wagmi")
+  external use: unit => t = "useContext"
 }

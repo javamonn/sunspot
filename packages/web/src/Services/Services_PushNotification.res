@@ -1,40 +1,8 @@
 exception UnableToGetApplicationServerKey
 exception PushNotificationPermissionDenied
 
-module Query_WebPushApplicationServerKey = %graphql(`
-  query WebPushApplicationServerKey {
-    result: webPushApplicationServerKey {
-      applicationServerKey
-    }
-  }
-`)
-
 let isSupported = () => %raw(`"PushManager" in globalThis`)
-
-let applicationServerKeyRef = ref(None)
-
-let getApplicationServerKey = () =>
-  switch applicationServerKeyRef.contents {
-  | Some(applicationServerKey) => Js.Promise.resolve(applicationServerKey)
-  | None =>
-    Contexts_Apollo_Client.inst.contents.query(
-      ~query=module(Query_WebPushApplicationServerKey),
-      (),
-    ) |> Js.Promise.then_(result =>
-      switch result {
-      | Ok(
-          {
-            data: {result: {applicationServerKey}},
-          }: ApolloClient__Core_ApolloClient.ApolloQueryResult.t__ok<
-            Query_WebPushApplicationServerKey.t,
-          >,
-        ) =>
-        applicationServerKeyRef := Some(applicationServerKey)
-        Js.Promise.resolve(applicationServerKey)
-      | Error(_) => Js.Promise.reject(UnableToGetApplicationServerKey)
-      }
-    )
-  }
+let applicationServerKey = "e3iLEEcIv6FGG3OtZiXk-8kI-gXqbHwj-1yjWgH8ifU"
 
 let getSubscription = () =>
   Externals.Webapi.Navigator.ServiceWorkerContainer.ready
@@ -46,10 +14,7 @@ let getSubscription = () =>
 let permissionState = () => {
   open Externals.ServiceWorkerGlobalScope
 
-  Js.Promise.all2((
-    getApplicationServerKey(),
-    Externals.Webapi.Navigator.ServiceWorkerContainer.ready,
-  )) |> Js.Promise.then_(((applicationServerKey, registration)) =>
+  Externals.Webapi.Navigator.ServiceWorkerContainer.ready |> Js.Promise.then_(registration =>
     ServiceWorkerRegistration.PermissionState.execute(
       registration,
       ServiceWorkerRegistration.PermissionState.options(
@@ -63,10 +28,8 @@ let permissionState = () => {
 let subscribe = (~onShowSnackbar: Contexts_Snackbar.openSnackbar) => {
   open Externals.ServiceWorkerGlobalScope
 
-  Js.Promise.all2((
-    getApplicationServerKey(),
-    Externals.Webapi.Navigator.ServiceWorkerContainer.ready,
-  )) |> Js.Promise.then_(((applicationServerKey, registration)) => {
+  Externals.Webapi.Navigator.ServiceWorkerContainer.ready
+  |> Js.Promise.then_((registration) => {
     let timeoutId = Js.Global.setTimeout(() => {
       let _ = Externals.Raw.isBrave() |> Js.Promise.then_(isBrave => {
         if isBrave {
