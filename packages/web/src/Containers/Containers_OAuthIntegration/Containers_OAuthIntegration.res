@@ -422,7 +422,7 @@ let make = (~onCreated, ~params) => {
           Error(
             `an error occurred while connecting your account to your ${integrationDisplayName(
                 params,
-              )}. try again or contact us for support.`,
+              )}. try again and contact us for support.`,
           )
         }
         Js.Promise.resolve(mappedResult)
@@ -437,7 +437,7 @@ let make = (~onCreated, ~params) => {
           Error(
             `an error occurred while connecting your account to your ${integrationDisplayName(
                 params,
-              )}. try again or contact us for support.`,
+              )}. try again and contact us for support.`,
           ),
         )
       })
@@ -460,7 +460,7 @@ let make = (~onCreated, ~params) => {
         )
         Js.Promise.resolve(
           Error(
-            "an error occurred while connecting your wallet. try again or contact us for support.",
+            "an error occurred while connecting your wallet. try again and contact us for support.",
           ),
         )
       })
