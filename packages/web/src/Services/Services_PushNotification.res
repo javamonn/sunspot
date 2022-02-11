@@ -2,7 +2,7 @@ exception UnableToGetApplicationServerKey
 exception PushNotificationPermissionDenied
 
 let isSupported = () => %raw(`"PushManager" in globalThis`)
-let applicationServerKey = "e3iLEEcIv6FGG3OtZiXk-8kI-gXqbHwj-1yjWgH8ifU"
+let applicationServerKey = "BIjfRVSpCkHcZv7YFwDe7sCFilNHqdUl9fwI_NHAfFZbO9ZmQp4IlOEYhcqPgwAplvDCjOPKHSKn5dtZcl9z__M"
 
 let getSubscription = () =>
   Externals.Webapi.Navigator.ServiceWorkerContainer.ready
