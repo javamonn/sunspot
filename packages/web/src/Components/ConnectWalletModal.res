@@ -1,6 +1,9 @@
 @react.component
 let make = (~isOpen, ~onClose) => {
-  let ({data, _}: Externals.Wagmi.UseConnect.result, connect) = Externals.Wagmi.UseConnect.use()
+  let (
+    {data, loading: isConnecting}: Externals.Wagmi.UseConnect.result,
+    connect,
+  ) = Externals.Wagmi.UseConnect.use()
 
   let handleConnect = connector => {
     let _ = connect(
@@ -34,9 +37,10 @@ let make = (~isOpen, ~onClose) => {
             : "/walletconnect-icon.svg"
 
         <MaterialUi.Button
+          key={connector->Externals.Wagmi.Connector.id}
           variant=#Text
           onClick={_ => handleConnect(connector)}
-          disabled={!Externals.Wagmi.Connector.ready(connector)}
+          disabled={!Externals.Wagmi.Connector.ready(connector) || isConnecting->Belt.Option.getWithDefault(false)}
           classes={MaterialUi.Button.Classes.make(
             ~root=Cn.make(["w-64", "h-64"]),
             ~label=Cn.make(["flex", "flex-col", "items-center", "justify-between", "flex-1"]),

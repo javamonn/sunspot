@@ -21,7 +21,10 @@ let make = (~rows, ~onRowClick, ~isLoading) =>
         <MaterialUi.TableRow>
           {columns
           ->Belt.Array.map(column =>
-            <MaterialUi.TableCell key={column.label} align={#Left}>
+            <MaterialUi.TableCell
+              key={column.label}
+              align={#Left}
+              classes={MaterialUi.TableCell.Classes.make(~root=Cn.make(["bg-white"]), ())}>
               {React.string(column.label)}
             </MaterialUi.TableCell>
           )
