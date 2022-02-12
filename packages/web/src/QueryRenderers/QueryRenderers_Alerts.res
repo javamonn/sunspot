@@ -383,6 +383,9 @@ let make = () => {
               AlertRule_Destination.Types.DiscordTemplate.title: template.title,
               description: template.description,
               displayProperties: template.displayProperties->Belt.Option.getWithDefault(false),
+              isThumbnailImageSize: template.isThumbnailImageSize->Belt.Option.getWithDefault(
+                false,
+              ),
               fields: template.fields->Belt.Option.map(fields =>
                 fields->Belt.Array.map(field => {
                   AlertRule_Destination.Types.DiscordTemplate.name: field.name,

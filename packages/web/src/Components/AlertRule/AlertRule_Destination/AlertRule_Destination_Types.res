@@ -39,6 +39,7 @@ module DiscordTemplate = {
     title: string,
     displayProperties: bool,
     description: option<string>,
+    isThumbnailImageSize: bool,
     fields: option<array<field>>,
   }
 
@@ -46,6 +47,7 @@ module DiscordTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     description: None,
     displayProperties: false,
+    isThumbnailImageSize: true,
     fields: Some([
       {
         name: "event",
@@ -89,6 +91,7 @@ module DiscordTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     description: None,
     displayProperties: false,
+    isThumbnailImageSize: true,
     fields: Some([
       {
         name: "event",

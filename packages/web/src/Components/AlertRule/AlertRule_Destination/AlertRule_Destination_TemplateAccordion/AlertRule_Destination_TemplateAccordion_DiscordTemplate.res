@@ -121,7 +121,34 @@ let make = (~value=?, ~onChange, ~eventType) => {
             }),
           )
         }}
+        classes={MaterialUi.TextField.Classes.make(~root=Cn.make(["mb-4"]), ())}
       />
+      <MaterialUi.FormControl>
+        <MaterialUi.InputLabel shrink=true htmlFor="">
+          {React.string("image size")}
+        </MaterialUi.InputLabel>
+        <MaterialUi.Select
+          value={MaterialUi.Select.Value.string(
+            valueWithDefault->isThumbnailImageSize ? "thumbnail" : "full size",
+          )}
+          onChange={(ev, _) => {
+            let target = ev->ReactEvent.Form.target
+            let newValue = target["value"]
+            onChange(
+              Some({
+                ...valueWithDefault,
+                isThumbnailImageSize: newValue === "thumbnail",
+              }),
+            )
+          }}>
+          <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("full size")}>
+            {React.string("full size")}
+          </MaterialUi.MenuItem>
+          <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("thumbnail")}>
+            {React.string("thumbnail")}
+          </MaterialUi.MenuItem>
+        </MaterialUi.Select>
+      </MaterialUi.FormControl>
       <MaterialUi.FormControlLabel
         classes={MaterialUi.FormControlLabel.Classes.make(~root=Cn.make(["mt-6"]), ())}
         control={<MaterialUi.Checkbox

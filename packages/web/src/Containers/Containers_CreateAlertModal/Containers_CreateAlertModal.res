@@ -63,6 +63,9 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
             displayProperties: template
             ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
             ->Js.Option.some,
+            isThumbnailImageSize: template
+            ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
+            ->Js.Option.some,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>

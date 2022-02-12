@@ -32,6 +32,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
           title
           description
           displayProperties
+          isThumbnailImageSize
           fields {
             name
             value
