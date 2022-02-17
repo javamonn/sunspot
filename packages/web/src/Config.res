@@ -27,7 +27,7 @@ let discord8ClientId = "942444344978337802"
 let discord9ClientId = "943169433650737162"
 let discord10ClientId = "943874380444885082"
 
-let activeDiscordClientId = discord10ClientId
+let activeDiscordClientId = discord1ClientId
 let activeDiscordClient = if activeDiscordClientId == discord1ClientId {
   #DISCORD
 } else if activeDiscordClientId == discord2ClientId {
