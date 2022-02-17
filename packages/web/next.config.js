@@ -5,7 +5,7 @@ const webpack = require("webpack")
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
-const activeDiscordClientId = "943169433650737162"
+const activeDiscordClientId = "943874380444885082"
 
 const config = {
   target: "serverless",
