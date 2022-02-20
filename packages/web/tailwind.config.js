@@ -33,6 +33,9 @@ module.exports = {
         lightDisabled: "rgba(255, 255, 255, .38)",
       },
     },
+    screens: {
+      "sm": { max: "639px" }
+    },
     fontSize: {
       xs: ".75rem",
       sm: ".875rem",
