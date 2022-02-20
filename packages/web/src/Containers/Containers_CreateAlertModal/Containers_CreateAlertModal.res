@@ -60,6 +60,7 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+            content: template->AlertRule_Destination.Types.DiscordTemplate.content,
             displayProperties: template
             ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
             ->Js.Option.some,
@@ -129,6 +130,32 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
 let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
   open Mutation_CreateAlertRule
 
+  let quantityEventFilter =
+    value
+    ->AlertModal.Value.quantityRule
+    ->Belt.Option.flatMap(rule => {
+      let direction = switch AlertRule_Quantity.Value.modifier(rule) {
+      | ">" => Some(#ALERT_ABOVE)
+      | "<" => Some(#ALERT_BELOW)
+      | "=" => Some(#ALERT_EQUAL)
+      | _ => None
+      }
+      let value = rule->AlertRule_Quantity.Value.value->Belt.Option.flatMap(Belt.Int.fromString)
+
+      switch (direction, value) {
+      | (Some(direction), Some(value)) =>
+        Some({
+          alertQuantityEventFilter: Some({
+            direction: direction,
+            value: value,
+          }),
+          alertAttributesEventFilter: None,
+          alertPriceThresholdEventFilter: None,
+        })
+      | _ => None
+      }
+    })
+
   let priceEventFilter =
     value
     ->AlertModal.Value.priceRule
@@ -136,6 +163,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
       let direction = switch AlertRule_Price.modifier(rule) {
       | ">" => Some(#ALERT_ABOVE)
       | "<" => Some(#ALERT_BELOW)
+      | "=" => Some(#ALERT_EQUAL)
       | _ => None
       }
       let value =
@@ -159,6 +187,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
             },
           }),
           alertAttributesEventFilter: None,
+          alertQuantityEventFilter: None,
         })
       | _ => None
       }
@@ -191,6 +220,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
           attributes: attributeInputs,
         }),
         alertPriceThresholdEventFilter: None,
+        alertQuantityEventFilter: None,
       }
     })
 
@@ -213,7 +243,11 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
         accountAddress: accountAddress,
         collectionSlug: AlertModal.CollectionOption.slugGet(collection),
         contractAddress: AlertModal.CollectionOption.contractAddressGet(collection),
-        eventFilters: [priceEventFilter, propertiesRule]->Belt.Array.keepMap(i => i),
+        eventFilters: [
+          priceEventFilter,
+          propertiesRule,
+          quantityEventFilter,
+        ]->Belt.Array.keepMap(i => i),
         destination: destination,
         eventType: switch value->AlertModal.Value.eventType {
         | #listing => #LISTING

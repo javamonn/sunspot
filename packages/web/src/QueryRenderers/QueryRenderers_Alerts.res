@@ -102,10 +102,19 @@ let make = () => {
         item.eventFilters
         ->Belt.Array.keepMap(eventFilter =>
           switch eventFilter {
+          | #AlertQuantityEventFilter({direction, numberValue: value}) =>
+            let modifier = switch direction {
+            | #ALERT_ABOVE => ">"
+            | #ALERT_BELOW => "<"
+            | #ALERT_EQUAL => "="
+            | #FutureAddedValue(v) => v
+            }
+            Some([AlertsTable.QuantityRule({modifier: modifier, value: Belt.Int.toString(value)})])
           | #AlertPriceThresholdEventFilter(eventFilter) =>
             let modifier = switch eventFilter.direction {
             | #ALERT_ABOVE => ">"
             | #ALERT_BELOW => "<"
+            | #ALERT_EQUAL => "="
             | #FutureAddedValue(v) => v
             }
             let formattedPrice =
@@ -160,6 +169,7 @@ let make = () => {
               switch eventFilter.direction {
               | #ALERT_ABOVE => Some(Services.OpenSea.Min(price))
               | #ALERT_BELOW => Some(Services.OpenSea.Max(price))
+              | #ALERT_EQUAL => Some(Services.OpenSea.Eq(price))
               | #FutureAddedValue(_) => None
               }
             )
@@ -315,12 +325,37 @@ let make = () => {
               ~modifier=switch eventFilter.direction {
               | #ALERT_ABOVE => ">"
               | #ALERT_BELOW => "<"
+              | #ALERT_EQUAL => "="
               | #FutureAddedValue(v) => v
               },
               ~value=Services.PaymentToken.parsePrice(
                 eventFilter.value,
                 eventFilter.paymentToken.decimals,
               )->Belt.Option.map(Belt.Float.toString),
+            )->Js.Option.some
+          | _ => None
+          }
+        )
+
+      let quantityRule =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch eventFilter {
+          | #AlertQuantityEventFilter(_) => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(eventFilter =>
+          switch eventFilter {
+          | #AlertQuantityEventFilter({direction, numberValue: value}) =>
+            AlertRule_Quantity.Value.make(
+              ~modifier=switch direction {
+              | #ALERT_ABOVE => ">"
+              | #ALERT_BELOW => "<"
+              | #ALERT_EQUAL => "="
+              | #FutureAddedValue(v) => v
+              },
+              ~value=Some(Belt.Int.toString(value)),
             )->Js.Option.some
           | _ => None
           }
@@ -382,6 +417,7 @@ let make = () => {
             template: template->Belt.Option.map(template => {
               AlertRule_Destination.Types.DiscordTemplate.title: template.title,
               description: template.description,
+              content: template.content,
               displayProperties: template.displayProperties->Belt.Option.getWithDefault(false),
               isThumbnailImageSize: template.isThumbnailImageSize->Belt.Option.getWithDefault(
                 false,
@@ -447,6 +483,7 @@ let make = () => {
         ),
         ~priceRule,
         ~propertiesRule,
+        ~quantityRule,
         ~destination,
         ~id=item.id,
         ~eventType,

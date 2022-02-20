@@ -87,9 +87,28 @@ let make = (~value=?, ~onChange, ~eventType) => {
 
   <div className={Cn.make(["flex", "flex-col"])}>
     <AlertRule_Destination_TemplateAccordion_InfoAlert eventType={eventType} />
+    <MaterialUi.TextField
+      label={React.string("message text")}
+      value={valueWithDefault
+      ->content
+      ->Belt.Option.getWithDefault("")
+      ->MaterialUi.TextField.Value.string}
+      fullWidth={true}
+      onChange={ev => {
+        let target = ev->ReactEvent.Form.target
+        let newValue = target["value"]
+        onChange(
+          Some({
+            ...valueWithDefault,
+            content: newValue,
+          }),
+        )
+      }}
+      classes={MaterialUi.TextField.Classes.make(~root=Cn.make(["mb-4"]), ())}
+    />
     <MaterialUi.FormControl fullWidth={true}>
       <MaterialUi.TextField
-        label={React.string("title")}
+        label={React.string("embed title")}
         value={valueWithDefault->title->MaterialUi.TextField.Value.string}
         fullWidth={true}
         onChange={ev => {
@@ -105,7 +124,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
         classes={MaterialUi.TextField.Classes.make(~root=Cn.make(["mb-4"]), ())}
       />
       <MaterialUi.TextField
-        label={React.string("description")}
+        label={React.string("embed description")}
         value={valueWithDefault
         ->description
         ->Belt.Option.getWithDefault("")
@@ -125,7 +144,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
       />
       <MaterialUi.FormControl>
         <MaterialUi.InputLabel shrink=true htmlFor="">
-          {React.string("image size")}
+          {React.string("embed image size")}
         </MaterialUi.InputLabel>
         <MaterialUi.Select
           value={MaterialUi.Select.Value.string(
@@ -149,17 +168,6 @@ let make = (~value=?, ~onChange, ~eventType) => {
           </MaterialUi.MenuItem>
         </MaterialUi.Select>
       </MaterialUi.FormControl>
-      <MaterialUi.FormControlLabel
-        classes={MaterialUi.FormControlLabel.Classes.make(~root=Cn.make(["mt-6"]), ())}
-        control={<MaterialUi.Checkbox
-          color=#Primary
-          checked={valueWithDefault->displayProperties}
-          onChange={_ => onToggleDisplayProperties()}
-        />}
-        label={<MaterialUi.Typography variant=#Subtitle2>
-          {React.string("display asset properties")}
-        </MaterialUi.Typography>}
-      />
       <div
         className={Cn.make([
           "flex",
@@ -169,7 +177,11 @@ let make = (~value=?, ~onChange, ~eventType) => {
           "items-center",
           "mb-2",
         ])}>
-        <MaterialUi.Typography variant=#Subtitle2> {React.string("fields")} </MaterialUi.Typography>
+        <MaterialUi.Typography
+          variant=#Subtitle2
+          classes={MaterialUi.Typography.Classes.make(~subtitle2=Cn.make(["font-bold"]), ())}>
+          {React.string("embed fields")}
+        </MaterialUi.Typography>
         <MaterialUi.Button
           startIcon={<Externals.MaterialUi_Icons.Add />}
           size=#Small
@@ -179,6 +191,17 @@ let make = (~value=?, ~onChange, ~eventType) => {
           {React.string("add field")}
         </MaterialUi.Button>
       </div>
+      <MaterialUi.FormControlLabel
+        classes={MaterialUi.FormControlLabel.Classes.make(~root=Cn.make([]), ())}
+        control={<MaterialUi.Checkbox
+          color=#Primary
+          checked={valueWithDefault->displayProperties}
+          onChange={_ => onToggleDisplayProperties()}
+        />}
+        label={<MaterialUi.Typography variant=#Subtitle2>
+          {React.string("display asset properties")}
+        </MaterialUi.Typography>}
+      />
       <MaterialUi.List classes={MaterialUi.List.Classes.make(~root=Cn.make([]), ())}>
         {valueWithDefault
         ->fields

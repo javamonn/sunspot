@@ -30,6 +30,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         clientId
         template {
           title
+          content
           description
           displayProperties
           isThumbnailImageSize
@@ -59,6 +60,10 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
       }
     }
     eventFilters {
+      ... on AlertQuantityEventFilter {
+        numberValue: value
+        direction
+      }
       ... on AlertPriceThresholdEventFilter {
         value
         direction

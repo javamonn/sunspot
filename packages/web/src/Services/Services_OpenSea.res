@@ -5,6 +5,7 @@ type trait =
 type priceFilter =
   | Max(float)
   | Min(float)
+  | Eq(float)
 
 let makeAssetsUrl = (~collectionSlug, ~traitsFilter=?, ~priceFilter=?, ~eventType, ()) => {
   let stringTraitQuery =
@@ -85,6 +86,10 @@ let makeAssetsUrl = (~collectionSlug, ~traitsFilter=?, ~priceFilter=?, ~eventTyp
     `search[priceFilter][symbol]=ETH&search[priceFilter][max]=${Belt.Float.toString(n)}`
   | Some(Min(n)) =>
     `search[priceFilter][symbol]=ETH&search[priceFilter][min]=${Belt.Float.toString(n)}`
+  | Some(Eq(n)) =>
+    `search[priceFilter][symbol]=ETH&search[priceFilter][min]=${Belt.Float.toString(
+        n,
+      )}&search[priceFilter][max]=${Belt.Float.toString(n)}`
   | None => ""
   }
 
@@ -101,4 +106,3 @@ let makeAssetsUrl = (~collectionSlug, ~traitsFilter=?, ~priceFilter=?, ~eventTyp
 
   `https://opensea.io/assets/${collectionSlug}?${query}`
 }
-

@@ -34,6 +34,7 @@ module Value = {
     collection: option<CollectionOption.t>,
     priceRule: option<AlertRule_Price.t>,
     propertiesRule: option<AlertRule_Properties.Value.t>,
+    quantityRule: option<AlertRule_Quantity.Value.t>,
     destination: option<AlertRule_Destination.Types.Value.t>,
     disabled: option<disabledReason>,
   }
@@ -43,6 +44,7 @@ module Value = {
     ~collection,
     ~priceRule,
     ~propertiesRule,
+    ~quantityRule,
     ~destination,
     ~eventType,
     ~disabled,
@@ -52,6 +54,7 @@ module Value = {
     eventType: eventType,
     priceRule: priceRule,
     propertiesRule: propertiesRule,
+    quantityRule: quantityRule,
     destination: destination,
     disabled: disabled,
   }
@@ -61,9 +64,10 @@ module Value = {
     collection: None,
     priceRule: None,
     propertiesRule: None,
+    quantityRule: None,
     eventType: #listing,
     destination: Config.isBrowser() && Services.PushNotification.isSupported()
-      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({ template: None }))
+      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template: None}))
       : None,
     disabled: None,
   }
@@ -121,6 +125,13 @@ let make = (
       Value.collection: collection,
     })
   }
+  let handleQuantityRuleChange = quantityRule => {
+    onChange(value => {
+      ...value,
+      Value.quantityRule: quantityRule,
+    })
+  }
+
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
   let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
@@ -208,6 +219,20 @@ let make = (
               Config.openstoreContractAddress
           )
           ->Belt.Option.getWithDefault(false)}
+        />}
+    />
+    <AlertRule_Accordion
+      className={Cn.make(["mt-8"])}
+      summaryIcon={<Externals_MaterialUi_Icons.Filter1
+        style={ReactDOM.Style.make(~opacity="0.42", ())}
+      />}
+      summaryTitle={React.string("quantity rule")}
+      summaryDescription={React.string("filter events by quantity of assets")}
+      renderDetails={(~expanded) =>
+        <AlertRule_Quantity
+          value=?{value->Value.quantityRule}
+          onChange={handleQuantityRuleChange}
+          accordionExpanded={expanded}
         />}
     />
     <AlertRule_Accordion

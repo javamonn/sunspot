@@ -14,8 +14,8 @@ let validate = value => {
   | Some({value: None}) => Some("price rule value is required.")
   | Some({value: Some(value)}) =>
     switch Belt.Float.fromString(value) {
-    | Some(value) if value <= 0.00 => Some("price rule value must be a positive number")
-    | None => Some("price rule value must be a positive number")
+    | Some(value) if value <= 0.00 => Some("price rule value must be a positive number.")
+    | None => Some("price rule value must be a positive number.")
     | _ => None
     }
   | None => None
@@ -26,7 +26,7 @@ let validate = value => {
   | _ => None
   }
   let destinationValidation = switch value->Value.destination {
-  | None => Some("destination is required")
+  | None => Some("destination is required.")
   | Some(DiscordAlertDestination({template: Some({fields: Some(fields)})})) =>
     if (
       Belt.Array.some(fields, field =>
@@ -34,25 +34,39 @@ let validate = value => {
           field->AlertRule_Destination_Types.DiscordTemplate.value->Js.String2.length == 0
       )
     ) {
-      Some("discord template fields must not contain empty name or value")
+      Some("discord template fields must not contain empty name or value.")
     } else {
       None
     }
   | Some(_) => None
   }
 
-  switch (
+  let quantityRuleValidation = switch value->Value.quantityRule {
+  | Some({modifier}) if Js.String2.length(modifier) == 0 =>
+    Some("quantity rule modifier is required.")
+  | Some({value: None}) => Some("quantity rule value is required.")
+  | Some({value: Some(value)}) =>
+    switch value->Belt.Int.fromString {
+    | Some(value) if value <= 0 => Some("quantity rule value must be a positive whole number.")
+    | Some(parsedValue)
+      if parsedValue->Belt.Float.fromInt !==
+        value->Belt.Float.fromString->Belt.Option.getWithDefault(-1.) =>
+      Some("quantity rule value must be a positive whole number.")
+    | None => Some("quantity rule value must be a positive number.")
+    | _ => None
+    }
+  | None => None
+  }
+
+  [
     collectionValidation,
     priceRuleValidation,
     propertiesRuleValidation,
+    quantityRuleValidation,
     destinationValidation,
-  ) {
-  | (Some(_), _, _, _) => collectionValidation
-  | (_, Some(_), _, _) => priceRuleValidation
-  | (_, _, Some(_), _) => propertiesRuleValidation
-  | (_, _, _, Some(_)) => destinationValidation
-  | _ => None
-  }
+  ]
+  ->Belt.Array.keepMap(i => i)
+  ->Belt.Array.get(0)
 }
 
 @react.component

@@ -471,6 +471,31 @@ let make = (~onCreated, ~params) => {
     open Mutation_CreateAlertRule
     setIsActioning(_ => true)
 
+    let quantityEventFilter =
+      alertRuleValue
+      ->AlertModal.Value.quantityRule
+      ->Belt.Option.flatMap(rule => {
+        let direction = switch AlertRule_Quantity.Value.modifier(rule) {
+        | ">" => Some(#ALERT_ABOVE)
+        | "<" => Some(#ALERT_BELOW)
+        | "=" => Some(#ALERT_EQUAL)
+        | _ => None
+        }
+        let value = rule->AlertRule_Quantity.Value.value->Belt.Option.flatMap(Belt.Int.fromString)
+
+        switch (direction, value) {
+        | (Some(direction), Some(value)) =>
+          Some({
+            alertQuantityEventFilter: Some({
+              direction: direction,
+              value: value,
+            }),
+            alertAttributesEventFilter: None,
+            alertPriceThresholdEventFilter: None,
+          })
+        | _ => None
+        }
+      })
     let priceEventFilter =
       alertRuleValue
       ->AlertModal.Value.priceRule
@@ -501,6 +526,7 @@ let make = (~onCreated, ~params) => {
               },
             }),
             alertAttributesEventFilter: None,
+            alertQuantityEventFilter: None,
           })
         | _ => None
         }
@@ -533,6 +559,7 @@ let make = (~onCreated, ~params) => {
             attributes: attributeInputs,
           }),
           alertPriceThresholdEventFilter: None,
+          alertQuantityEventFilter: None,
         }
       })
 
@@ -545,6 +572,7 @@ let make = (~onCreated, ~params) => {
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,
+            content: template->AlertRule_Destination.Types.DiscordTemplate.content,
             displayProperties: template
             ->AlertRule_Destination.Types.DiscordTemplate.displayProperties
             ->Js.Option.some,
@@ -623,7 +651,11 @@ let make = (~onCreated, ~params) => {
         ->AlertModal.Value.collection
         ->Belt.Option.getExn
         ->AlertModal.CollectionOption.contractAddressGet,
-        eventFilters: [priceEventFilter, propertiesEventFilter]->Belt.Array.keepMap(i => i),
+        eventFilters: [
+          priceEventFilter,
+          propertiesEventFilter,
+          quantityEventFilter,
+        ]->Belt.Array.keepMap(i => i),
         destination: destination,
         eventType: switch alertRuleValue->AlertModal.Value.eventType {
         | #listing => #LISTING

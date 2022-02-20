@@ -37,6 +37,7 @@ module DiscordTemplate = {
   @deriving(accessors)
   type t = {
     title: string,
+    content: option<string>,
     displayProperties: bool,
     description: option<string>,
     isThumbnailImageSize: bool,
@@ -45,6 +46,7 @@ module DiscordTemplate = {
 
   let defaultSaleTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
+    content: None,
     description: None,
     displayProperties: false,
     isThumbnailImageSize: true,
@@ -89,6 +91,7 @@ module DiscordTemplate = {
 
   let defaultListingTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
+    content: None,
     description: None,
     displayProperties: false,
     isThumbnailImageSize: true,
