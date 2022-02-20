@@ -4,7 +4,7 @@ let make = (~renderItems, ~icon, ~anchorOrigin, ~menuClasses) => {
   let anchorRef = React.useRef(Js.Nullable.null)
 
   <>
-    <MaterialUi.IconButton ref={anchorRef->ReactDOM.Ref.domRef} onClick={_ => setIsOpen(_ => true)}>
+    <MaterialUi.IconButton ref={anchorRef->ReactDOM.Ref.domRef} onClick={_ => setIsOpen(_ => true)} size=#Small>
       {icon}
     </MaterialUi.IconButton>
     <MaterialUi.Menu

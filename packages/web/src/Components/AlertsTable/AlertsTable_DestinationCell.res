@@ -5,7 +5,9 @@ let make = (~row) =>
   row
   ->AlertsTable_Types.destination
   ->Belt.Option.map(destination =>
-    <MaterialUi.ListItem disableGutters={true}>
+    <MaterialUi.ListItem
+      disableGutters={true}
+      classes={MaterialUi.ListItem.Classes.make(~root=Cn.make(["sm:w-72"]), ())}>
       {destination
       ->AlertsTable_Types.iconUrl
       ->Belt.Option.map(iconUrl =>

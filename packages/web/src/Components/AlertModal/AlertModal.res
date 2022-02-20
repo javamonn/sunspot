@@ -123,19 +123,47 @@ let make = (
     _open={isOpen}
     onClose={(_, _) => onClose()}
     onExited={_ => handleExited()}
-    classes={MaterialUi.Dialog.Classes.make(~paper=styles["dialogPaper"], ())}>
+    classes={MaterialUi.Dialog.Classes.make(
+      ~paper=Cn.make([
+        styles["dialogPaper"],
+        "sm:w-full",
+        "sm:h-full",
+        "sm:max-w-full",
+        "sm:max-h-full",
+        "sm:m-0",
+        "sm:rounded-none",
+      ]),
+      (),
+    )}>
     <MaterialUi.DialogTitle
       disableTypography=true
       classes={MaterialUi.DialogTitle.Classes.make(
-        ~root=Cn.make(["flex", "justify-between", "items-center"]),
+        ~root=Cn.make([
+          "flex",
+          "justify-between",
+          "items-center",
+          "sm:px-4",
+          "sm:py-4",
+          "border-b",
+          "border-solid",
+          "border-darkBorder",
+        ]),
         (),
       )}>
-      <MaterialUi.Typography
-        color=#Primary
-        variant=#H6
-        classes={MaterialUi.Typography.Classes.make(~root=Cn.make(["leading-none"]), ())}>
-        {React.string(title)}
-      </MaterialUi.Typography>
+      <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+        <MaterialUi.IconButton
+          onClick={_ => onClose()}
+          size=#Small
+          classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["mr-4"]), ())}>
+          <Externals.MaterialUi_Icons.Close />
+        </MaterialUi.IconButton>
+        <MaterialUi.Typography
+          color=#Primary
+          variant=#H6
+          classes={MaterialUi.Typography.Classes.make(~root=Cn.make(["leading-none", "mt-1"]), ())}>
+          {React.string(title)}
+        </MaterialUi.Typography>
+      </div>
       <div className={Cn.make(["flex", "flex-row", "items-center"])}>
         {value
         ->Value.disabled
@@ -175,7 +203,10 @@ let make = (
       </div>
     </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
-      classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["flex", "flex-col"]), ())}>
+      classes={MaterialUi.DialogContent.Classes.make(
+        ~root=Cn.make(["flex", "flex-col", "sm:px-4", "sm:py-4", "mt-4", "sm:mt-0"]),
+        (),
+      )}>
       <AlertModal_DialogContent
         value={value}
         isExited={isExited}
@@ -185,7 +216,10 @@ let make = (
       />
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions
-      classes={MaterialUi.DialogActions.Classes.make(~root=Cn.make(["mt-8"]), ())}>
+      classes={MaterialUi.DialogActions.Classes.make(
+        ~root=Cn.make(["mt-8", "sm:mt-0", "border-t", "border-solid", "border-darkBorder", "sm:py-4", "sm:px-4"]),
+        (),
+      )}>
       <MaterialUi.Button
         variant=#Text
         color=#Primary

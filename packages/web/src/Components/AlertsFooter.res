@@ -74,7 +74,7 @@ let make = (~className=?) => {
         <img src="/github-icon.svg" className={Cn.make(["w-5", "h-5", "opacity-50"])} />
       </MaterialUi.IconButton>
     </div>
-    <div className={Cn.make(["sm:mt-2"])}>
+    <div className={Cn.make(["sm:mt-4"])}>
       <MaterialUi.Button
         onClick={_ => handleClickDonate()}
         variant=#Outlined

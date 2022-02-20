@@ -34,7 +34,7 @@ module.exports = {
       },
     },
     screens: {
-      "sm": { max: "639px" }
+      sm: { max: "639px" },
     },
     fontSize: {
       xs: ".75rem",
@@ -47,6 +47,9 @@ module.exports = {
       "4xl": "2.25rem",
       "5xl": "3rem",
       "6xl": "4rem",
+    },
+    minWidth: {
+      28: "7rem",
     },
     fontFamily: {
       sans: [
