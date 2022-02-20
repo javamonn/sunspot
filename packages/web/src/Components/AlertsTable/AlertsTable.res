@@ -1,3 +1,4 @@
+let styles = %raw("require('./AlertsTable.module.css')")
 include AlertsTable_Types
 open AlertsTable_Types
 
@@ -13,167 +14,183 @@ let loadingWidths = [
 ]
 
 @react.component
-let make = (~rows, ~onRowClick, ~isLoading) =>
+let make = (~rows, ~onRowClick, ~onCreateAlertClick, ~isLoading) => <>
   <MaterialUi.TableContainer
-    classes={MaterialUi.TableContainer.Classes.make(~root={Cn.make(["mt-4", "flex-1"])}, ())}>
-    <MaterialUi.Table stickyHeader={true}>
-      <MaterialUi.TableHead>
-        <MaterialUi.TableRow>
-          {columns
-          ->Belt.Array.map(column =>
-            <MaterialUi.TableCell
-              key={column.label}
-              align={#Left}
-              classes={MaterialUi.TableCell.Classes.make(~root=Cn.make(["bg-white"]), ())}>
-              {React.string(column.label)}
-            </MaterialUi.TableCell>
-          )
-          ->React.array}
-        </MaterialUi.TableRow>
-      </MaterialUi.TableHead>
-      <MaterialUi.TableBody>
-        {isLoading
-          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4, width5)) =>
-              <MaterialUi.TableRow key={Belt.Int.toString(idx)}>
-                <MaterialUi.TableCell
-                  classes={MaterialUi.TableCell.Classes.make(
-                    ~root=Cn.make(["flex", "flex-row", "items-center"]),
-                    (),
-                  )}>
-                  <MaterialUi_Lab.Skeleton
-                    classes={MaterialUi_Lab.Skeleton.Classes.make(~root=Cn.make(["mr-4"]), ())}
-                    variant=#Circle
-                    height={MaterialUi_Lab.Skeleton.Height.int(38)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(38)}
-                  />
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(56)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width1)}
-                  />
-                </MaterialUi.TableCell>
-                <MaterialUi.TableCell>
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width2)}
-                  />
-                </MaterialUi.TableCell>
-                <MaterialUi.TableCell>
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width3)}
-                  />
-                </MaterialUi.TableCell>
-                <MaterialUi.TableCell>
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width4)}
-                  />
-                </MaterialUi.TableCell>
-                <MaterialUi.TableCell>
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(48)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width5)}
-                  />
-                </MaterialUi.TableCell>
-              </MaterialUi.TableRow>
+    classes={MaterialUi.TableContainer.Classes.make(
+      ~root={Cn.make(["mt-4", "flex-1", "overflow-x-hidden"])},
+      (),
+    )}>
+    <div className={Cn.make(["overflow-x-auto"])}>
+      <MaterialUi.Table stickyHeader={true}>
+        <MaterialUi.TableHead>
+          <MaterialUi.TableRow>
+            {columns
+            ->Belt.Array.map(column =>
+              <MaterialUi.TableCell
+                key={column.label}
+                align={#Left}
+                classes={MaterialUi.TableCell.Classes.make(~root=Cn.make(["bg-white"]), ())}>
+                {React.string(column.label)}
+              </MaterialUi.TableCell>
             )
-          : rows->Belt.Array.map(row =>
-              React.cloneElement(
-                <MaterialUi.TableRow
-                  key={row.id}
-                  hover={true}
-                  classes={MaterialUi.TableRow.Classes.make(
-                    ~hover=Cn.make(["cursor-pointer"]),
-                    (),
-                  )}>
+            ->React.array}
+          </MaterialUi.TableRow>
+        </MaterialUi.TableHead>
+        <MaterialUi.TableBody>
+          {isLoading
+            ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4, width5)) =>
+                <MaterialUi.TableRow key={Belt.Int.toString(idx)}>
+                  <MaterialUi.TableCell
+                    classes={MaterialUi.TableCell.Classes.make(
+                      ~root=Cn.make(["flex", "flex-row", "items-center"]),
+                      (),
+                    )}>
+                    <MaterialUi_Lab.Skeleton
+                      classes={MaterialUi_Lab.Skeleton.Classes.make(~root=Cn.make(["mr-4"]), ())}
+                      variant=#Circle
+                      height={MaterialUi_Lab.Skeleton.Height.int(38)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(38)}
+                    />
+                    <MaterialUi_Lab.Skeleton
+                      variant=#Text
+                      height={MaterialUi_Lab.Skeleton.Height.int(56)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(width1)}
+                    />
+                  </MaterialUi.TableCell>
                   <MaterialUi.TableCell>
-                    <div className={Cn.make(["flex", "flex-row", "items-center"])}>
-                      <CollectionListItem
-                        primary={row.collectionName->Belt.Option.getWithDefault(
-                          "Unnamed Collection",
-                        )}
-                        secondary={<a
-                          href={row.externalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={ReactDOM.Style.make(
-                            ~textDecorationStyle="dotted",
-                            ~textDecorationLine="underline",
+                    <MaterialUi_Lab.Skeleton
+                      variant=#Text
+                      height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(width2)}
+                    />
+                  </MaterialUi.TableCell>
+                  <MaterialUi.TableCell>
+                    <MaterialUi_Lab.Skeleton
+                      variant=#Text
+                      height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(width3)}
+                    />
+                  </MaterialUi.TableCell>
+                  <MaterialUi.TableCell>
+                    <MaterialUi_Lab.Skeleton
+                      variant=#Text
+                      height={MaterialUi_Lab.Skeleton.Height.int(28)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(width4)}
+                    />
+                  </MaterialUi.TableCell>
+                  <MaterialUi.TableCell>
+                    <MaterialUi_Lab.Skeleton
+                      variant=#Text
+                      height={MaterialUi_Lab.Skeleton.Height.int(48)}
+                      width={MaterialUi_Lab.Skeleton.Width.int(width5)}
+                    />
+                  </MaterialUi.TableCell>
+                </MaterialUi.TableRow>
+              )
+            : rows->Belt.Array.map(row =>
+                React.cloneElement(
+                  <MaterialUi.TableRow
+                    key={row.id}
+                    hover={true}
+                    classes={MaterialUi.TableRow.Classes.make(
+                      ~hover=Cn.make(["cursor-pointer"]),
+                      (),
+                    )}>
+                    <MaterialUi.TableCell>
+                      <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+                        <CollectionListItem
+                          primary={row.collectionName->Belt.Option.getWithDefault(
+                            "Unnamed Collection",
+                          )}
+                          secondary={<a
+                            href={row.externalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={ReactDOM.Style.make(
+                              ~textDecorationStyle="dotted",
+                              ~textDecorationLine="underline",
+                              (),
+                            )}>
+                            {React.string(row.collectionSlug)}
+                          </a>}
+                          imageUrl={row.collectionImageUrl}
+                          disableGutters={true}
+                          listItemClasses={MaterialUi.ListItem.Classes.make(
+                            ~root=Cn.make(["p-0", "w-auto"]),
                             (),
-                          )}>
-                          {React.string(row.collectionSlug)}
-                        </a>}
-                        imageUrl={row.collectionImageUrl}
-                        disableGutters={true}
-                        listItemClasses={MaterialUi.ListItem.Classes.make(
-                          ~root=Cn.make(["p-0", "w-auto"]),
-                          (),
-                        )}
-                      />
-                      {row.disabledInfo
-                      ->Belt.Option.map(copy =>
-                        <MaterialUi.Tooltip title={React.string(copy)}>
-                          <Externals.MaterialUi_Icons.Error
-                            className={Cn.make(["w-5", "h-5", "ml-2", "text-red-400"])}
-                          />
-                        </MaterialUi.Tooltip>
+                          )}
+                        />
+                        {row.disabledInfo
+                        ->Belt.Option.map(copy =>
+                          <MaterialUi.Tooltip title={React.string(copy)}>
+                            <Externals.MaterialUi_Icons.Error
+                              className={Cn.make(["w-5", "h-5", "ml-2", "text-red-400"])}
+                            />
+                          </MaterialUi.Tooltip>
+                        )
+                        ->Belt.Option.getWithDefault(React.null)}
+                      </div>
+                    </MaterialUi.TableCell>
+                    <MaterialUi.TableCell> {React.string(row.eventType)} </MaterialUi.TableCell>
+                    <MaterialUi.TableCell>
+                      {row.rules
+                      ->Belt.Array.getBy(rule =>
+                        switch rule {
+                        | PriceRule(_) => true
+                        | _ => false
+                        }
+                      )
+                      ->Belt.Option.flatMap(rule =>
+                        switch rule {
+                        | PriceRule({modifier, price}) =>
+                          Some(
+                            <MaterialUi.Typography color=#TextPrimary variant=#Body2>
+                              {React.string("price ")}
+                              {React.string(modifier)}
+                              {React.string(` Ξ`)}
+                              {React.string(price)}
+                            </MaterialUi.Typography>,
+                          )
+                        | _ => None
+                        }
                       )
                       ->Belt.Option.getWithDefault(React.null)}
-                    </div>
-                  </MaterialUi.TableCell>
-                  <MaterialUi.TableCell> {React.string(row.eventType)} </MaterialUi.TableCell>
-                  <MaterialUi.TableCell>
-                    {row.rules
-                    ->Belt.Array.getBy(rule =>
-                      switch rule {
-                      | PriceRule(_) => true
-                      | _ => false
-                      }
-                    )
-                    ->Belt.Option.flatMap(rule =>
-                      switch rule {
-                      | PriceRule({modifier, price}) =>
-                        Some(
-                          <MaterialUi.Typography color=#TextPrimary variant=#Body2>
-                            {React.string("price ")}
-                            {React.string(modifier)}
-                            {React.string(` Ξ`)}
-                            {React.string(price)}
-                          </MaterialUi.Typography>,
-                        )
-                      | _ => None
-                      }
-                    )
-                    ->Belt.Option.getWithDefault(React.null)}
-                  </MaterialUi.TableCell>
-                  <MaterialUi.TableCell>
-                    <AlertsTable_PropertiesCell row={row} />
-                  </MaterialUi.TableCell>
-                  <MaterialUi.TableCell>
-                    <AlertsTable_DestinationCell row={row} />
-                  </MaterialUi.TableCell>
-                </MaterialUi.TableRow>,
-                {"onClick": _ => onRowClick(row)},
-              )
-            )}
-      </MaterialUi.TableBody>
-    </MaterialUi.Table>
+                    </MaterialUi.TableCell>
+                    <MaterialUi.TableCell>
+                      <AlertsTable_PropertiesCell row={row} />
+                    </MaterialUi.TableCell>
+                    <MaterialUi.TableCell>
+                      <AlertsTable_DestinationCell row={row} />
+                    </MaterialUi.TableCell>
+                  </MaterialUi.TableRow>,
+                  {"onClick": _ => onRowClick(row)},
+                )
+              )}
+        </MaterialUi.TableBody>
+      </MaterialUi.Table>
+    </div>
     {!isLoading && Belt.Array.length(rows) == 0
-      ? <div className={Cn.make(["flex", "flex-col"])}>
-          <MaterialUi.Typography
-            variant=#Subtitle1
-            color=#TextSecondary
-            classes={MaterialUi.Typography.Classes.make(
-              ~subtitle1=Cn.make(["text-center", "mt-12", "whitespace-pre"]),
+      ? <div
+          className={Cn.make([
+            "flex",
+            "flex-col",
+            "justify-center",
+            "items-center",
+            "mt-12",
+            "sm:mt-0",
+            styles["emptyPlaceholder"],
+          ])}>
+          <MaterialUi.Button
+            onClick={_ => onCreateAlertClick()}
+            variant=#Outlined
+            classes={MaterialUi.Button.Classes.make(
+              ~label=Cn.make(["lowercase", "py-2", "px-2", "text-darkSecondary"]),
               (),
             )}>
             {React.string("to get started, create an alert.")}
-          </MaterialUi.Typography>
+          </MaterialUi.Button>
         </div>
       : React.null}
+    <AlertsFooter className={Cn.make(["hidden", "sm:block"])} />
   </MaterialUi.TableContainer>
+</>

@@ -3,8 +3,10 @@ let default = () =>
   <main
     className={Cn.make([
       "px-8",
-      "font-mono",
       "pt-4",
+      "sm:px-0",
+      "sm:pt-2",
+      "font-mono",
       "flex",
       "flex-col",
       "flex-1",
@@ -14,5 +16,4 @@ let default = () =>
     ])}
     style={ReactDOM.Style.make(~maxWidth="100rem", ())}>
     <QueryRenderers_Alerts />
-    <AlertsFooter />
   </main>

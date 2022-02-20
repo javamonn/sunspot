@@ -508,7 +508,12 @@ let make = () => {
       onWalletButtonClicked={handleConnectWalletClicked}
       onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
     />
-    <AlertsTable isLoading={isLoading} rows={tableRows} onRowClick={handleRowClick} />
+    <AlertsTable
+      isLoading={isLoading}
+      rows={tableRows}
+      onRowClick={handleRowClick}
+      onCreateAlertClick={_ => setCreateAlertModalIsOpen(_ => true)}
+    />
     <Containers.CreateAlertModal
       isOpen={createAlertModalIsOpen}
       onClose={_ => setCreateAlertModalIsOpen(_ => false)}
@@ -539,5 +544,10 @@ let make = () => {
       </>
     | _ => React.null
     }}
+    <CreateAlertFAB
+      className={Cn.make(["hidden", "sm:block", "absolute", "bottom-0", "right-0", "mb-4", "mr-4"])}
+      onClick={_ => setCreateAlertModalIsOpen(_ => true)}
+    />
+    <AlertsFooter className={Cn.make(["sm:hidden"])} />
   </>
 }

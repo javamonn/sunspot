@@ -1,5 +1,5 @@
 @react.component
-let make = () => {
+let make = (~className=?) => {
   let (_, sendTransaction) = Externals.Wagmi.UseTransaction.use()
   let {authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
   let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
@@ -49,11 +49,15 @@ let make = () => {
     className={Cn.make([
       "flex",
       "flex-row",
+      "sm:flex-col",
+      "sm:pb-24",
       "justify-between",
+      "sm:px-4",
       "py-4",
       "border-t",
       "border-solid",
       "border-darkBorder",
+      className->Belt.Option.getWithDefault(""),
     ])}>
     <div className={Cn.make(["flex", "flex-row", "items-center", "justify-center"])}>
       <MaterialUi.IconButton onClick={_ => handleClickDiscord()}>
@@ -70,7 +74,7 @@ let make = () => {
         <img src="/github-icon.svg" className={Cn.make(["w-5", "h-5", "opacity-50"])} />
       </MaterialUi.IconButton>
     </div>
-    <div>
+    <div className={Cn.make(["sm:mt-2"])}>
       <MaterialUi.Button
         onClick={_ => handleClickDonate()}
         variant=#Outlined

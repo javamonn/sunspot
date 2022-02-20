@@ -1,11 +1,11 @@
 @react.component
-let make = () => {
+let make = (~iconButtonClassName=?) => {
   let (isOpen, setIsOpen) = React.useState(_ => false)
   let anchorRef = React.useRef(Js.Nullable.null)
 
   <>
     <MaterialUi.IconButton
-      classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["ml-4"]), ())}
+      classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["ml-4", iconButtonClassName->Belt.Option.getWithDefault("")]), ())}
       ref={anchorRef->ReactDOM.Ref.domRef}
       onClick={_ => setIsOpen(_ => true)}>
       <Externals.MaterialUi_Icons.HelpOutline />

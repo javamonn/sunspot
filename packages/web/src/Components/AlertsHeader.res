@@ -5,9 +5,10 @@ let make = (
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
 ) => {
+  let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
 
-  <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center"])}>
+  <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center", "sm:px-4"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
       <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
       {React.string(" / alerts")}
@@ -22,13 +23,14 @@ let make = (
         variant=#Contained
         color=#Primary
         classes={MaterialUi.Button.Classes.make(
-          ~root=Cn.make(["mr-8"]),
+          ~root=Cn.make(["mr-8", "sm:hidden"]),
           ~label=Cn.make(["normal-case"]),
           (),
         )}>
         {React.string("create alert")}
       </MaterialUi.Button>
       {switch account {
+      | _ if connecting => <LoadingButton />
       | Some({address, connector}) =>
         <WalletButton
           onClick={onWalletButtonClicked}
@@ -38,7 +40,7 @@ let make = (
         />
       | None => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}
-      <AboutPopover />
+      <AboutPopover iconButtonClassName={Cn.make(["sm:hidden"])} />
     </div>
   </header>
 }

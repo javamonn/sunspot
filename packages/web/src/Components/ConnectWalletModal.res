@@ -30,38 +30,43 @@ let make = (~isOpen, ~onClose) => {
       {data
       ->Belt.Option.map(Externals.Wagmi.UseConnect.connectors)
       ->Belt.Option.getWithDefault([])
-      ->Belt.Array.map(connector => {
+      ->Belt.Array.keepMap(connector => {
         let iconSrc =
           connector->Externals.Wagmi.Connector.name === "MetaMask"
             ? "/metamask-icon.svg"
             : "/walletconnect-icon.svg"
 
-        <MaterialUi.Button
-          key={connector->Externals.Wagmi.Connector.id}
-          variant=#Text
-          onClick={_ => handleConnect(connector)}
-          disabled={!Externals.Wagmi.Connector.ready(connector) || isConnecting->Belt.Option.getWithDefault(false)}
-          classes={MaterialUi.Button.Classes.make(
-            ~root=Cn.make(["w-64", "h-64"]),
-            ~label=Cn.make(["flex", "flex-col", "items-center", "justify-between", "flex-1"]),
-            (),
-          )}>
-          <MaterialUi.Avatar
-            classes={MaterialUi.Avatar.Classes.make(
-              ~root=Cn.make(["bg-gray-200", "w-28", "h-28", "p-4", "mb-6"]),
-              (),
-            )}>
-            <img src={iconSrc} />
-          </MaterialUi.Avatar>
-          <MaterialUi.Typography
-            variant=#H6
-            classes={MaterialUi.Typography.Classes.make(
-              ~h6=Cn.make(["leading-none", "lowercase"]),
-              (),
-            )}>
-            {connector->Externals.Wagmi.Connector.name->React.string}
-          </MaterialUi.Typography>
-        </MaterialUi.Button>
+        connector->Externals.Wagmi.Connector.ready
+          ? Some(
+              <MaterialUi.Button
+                key={connector->Externals.Wagmi.Connector.id}
+                variant=#Text
+                onClick={_ => handleConnect(connector)}
+                disabled={!Externals.Wagmi.Connector.ready(connector) ||
+                isConnecting->Belt.Option.getWithDefault(false)}
+                classes={MaterialUi.Button.Classes.make(
+                  ~root=Cn.make(["w-64", "h-64"]),
+                  ~label=Cn.make(["flex", "flex-col", "items-center", "justify-between", "flex-1"]),
+                  (),
+                )}>
+                <MaterialUi.Avatar
+                  classes={MaterialUi.Avatar.Classes.make(
+                    ~root=Cn.make(["bg-gray-200", "w-28", "h-28", "p-4", "mb-6"]),
+                    (),
+                  )}>
+                  <img src={iconSrc} />
+                </MaterialUi.Avatar>
+                <MaterialUi.Typography
+                  variant=#H6
+                  classes={MaterialUi.Typography.Classes.make(
+                    ~h6=Cn.make(["leading-none", "lowercase"]),
+                    (),
+                  )}>
+                  {connector->Externals.Wagmi.Connector.name->React.string}
+                </MaterialUi.Typography>
+              </MaterialUi.Button>,
+            )
+          : None
       })}
     </MaterialUi.DialogContent>
   </MaterialUi.Dialog>

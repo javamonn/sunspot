@@ -1,0 +1,5 @@
+@media (max-width: 639px) {
+  .emptyPlaceholder {
+    height: calc(100vh - 115px) !important;
+  }
+}
