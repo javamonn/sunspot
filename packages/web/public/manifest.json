@@ -1,0 +1,27 @@
+{
+  "short_name": "sunspot",
+  "name": "sunspot",
+  "icons": [
+    { 
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    { 
+      "src": "favicon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    { 
+      "src": "favicon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/alerts",
+  "background_color": "white",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "black",
+  "description": "sunspot alerts you in real-time when ethereum nfts are listed and sold on opensea."
+}
