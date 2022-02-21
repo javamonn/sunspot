@@ -107,8 +107,5 @@ let _ = self->addEventListener(#activate(handleActivateEvent))
 let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#notificationclick(handleNotificationClickEvent))
 let _ = self->addEventListener(#notificationclose(handleNotificationCloseEvent))
+let _ = Workbox.register()
 
-%%raw(`
-  import { register } from "./workbox.mjs"
-  register();
-`)
