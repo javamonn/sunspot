@@ -37,3 +37,4 @@ amplifytools.xcconfig
 **.sample
 #amplify-do-not-edit-end
 .graphql_ppx_cache
+service-worker.js.LICENSE.txt

@@ -39,10 +39,7 @@ let handlePushEvent = pushEvent => {
     )
 
     let isExpired = {
-      let sentAt =
-        pushEventData
-        ->PushEventData.sentAt
-        ->Belt.Option.getWithDefault(Js.Date.now())
+      let sentAt = pushEventData->PushEventData.sentAt->Belt.Option.getWithDefault(Js.Date.now())
 
       sentAt <= Js.Date.now() -. 1000.0 *. 60.0 *. 5.0
     }
@@ -110,3 +107,8 @@ let _ = self->addEventListener(#activate(handleActivateEvent))
 let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#notificationclick(handleNotificationClickEvent))
 let _ = self->addEventListener(#notificationclose(handleNotificationCloseEvent))
+
+%%raw(`
+  import { register } from "./workbox.mjs"
+  register();
+`)
