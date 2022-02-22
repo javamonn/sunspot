@@ -165,6 +165,10 @@ let makeSteps = (
                     Config.discord1ClientId,
                   ),
                   guildId: data.discordIntegration.guildId,
+                  roles: data.discordIntegration.roles->Belt.Array.map(r => {
+                    AlertRule_Destination.Types.DiscordAlertDestination.id: r.id,
+                    name: r.name,
+                  }),
                   channelId: newValue->DiscordIntegrationChannelRadioGroup.id,
                   template: None,
                 }),
@@ -213,6 +217,10 @@ let makeSteps = (
                 clientId: data.discordIntegration.clientId->Belt.Option.getWithDefault(
                   Config.discord1ClientId,
                 ),
+                roles: data.discordIntegration.roles->Belt.Array.map(r => {
+                  AlertRule_Destination.Types.DiscordAlertDestination.id: r.id,
+                  name: r.name,
+                }),
                 guildId: data.discordIntegration.guildId,
                 guildName: data.discordIntegration.name,
                 guildIconUrl: data.discordIntegration.iconUrl,
@@ -564,11 +572,12 @@ let make = (~onCreated, ~params) => {
       })
 
     let destination = switch alertRuleValue.destination {
-    | Some(DiscordAlertDestination({guildId, channelId, template, clientId})) => {
+    | Some(DiscordAlertDestination({guildId, channelId, template, clientId, roles})) => {
         discordAlertDestination: Some({
           guildId: guildId,
           channelId: channelId,
           clientId: Some(clientId),
+          roles: roles->Belt.Array.map(r => {id: r.id, name: r.name})->Js.Option.some,
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,

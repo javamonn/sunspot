@@ -19,6 +19,10 @@ module Mutation_CreateDiscordOAuthIntegration = %graphql(`
       clientId
       iconUrl
       name
+      roles {
+        id
+        name
+      }
       channels {
         id
         name

@@ -45,11 +45,12 @@ let make = (
         )
         ->Belt.Option.map(opt =>
           switch opt {
-          | DiscordAlertDestinationOption({guildId, channelId, clientId}) =>
+          | DiscordAlertDestinationOption({guildId, channelId, clientId, roles}) =>
             Value.DiscordAlertDestination({
               guildId: guildId,
               channelId: channelId,
               clientId: clientId,
+              roles: roles,
               template: None,
             })
           | SlackAlertDestinationOption({incomingWebhookUrl, channelId}) =>

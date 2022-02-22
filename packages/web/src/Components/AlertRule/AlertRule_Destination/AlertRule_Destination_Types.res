@@ -125,15 +125,27 @@ module DiscordTemplate = {
   }
 }
 
+module DiscordAlertDestination = {
+  @deriving(accessors)
+  type role = {
+    name: string,
+    id: string,
+  }
+
+  @deriving(accessors)
+  type t = {
+    guildId: string,
+    channelId: string,
+    clientId: string,
+    roles: array<role>,
+    template: option<DiscordTemplate.t>,
+  }
+}
+
 module Value = {
   type t =
     | WebPushAlertDestination({template: option<WebPushTemplate.t>})
-    | DiscordAlertDestination({
-        guildId: string,
-        channelId: string,
-        clientId: string,
-        template: option<DiscordTemplate.t>,
-      })
+    | DiscordAlertDestination(DiscordAlertDestination.t)
     | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
     | TwitterAlertDestination({
         userId: string,
@@ -150,6 +162,7 @@ module Option = {
     channelId: string,
     channelName: string,
     guildName: string,
+    roles: array<DiscordAlertDestination.role>,
   }
 
   type slackDestinationOption = {

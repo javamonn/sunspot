@@ -58,6 +58,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
       clientId,
       guildId,
       template,
+      roles,
     })) =>
     Js.Promise.resolve(
       Ok({
@@ -65,6 +66,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
           guildId: guildId,
           clientId: Some(clientId),
           channelId: channelId,
+          roles: roles->Belt.Array.map(r => {id: r.id, name: r.name})->Js.Option.some,
           template: template->Belt.Option.map(template => {
             title: template->AlertRule_Destination.Types.DiscordTemplate.title,
             description: template->AlertRule_Destination.Types.DiscordTemplate.description,

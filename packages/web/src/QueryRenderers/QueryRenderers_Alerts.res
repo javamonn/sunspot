@@ -39,6 +39,10 @@ let make = () => {
             guildId: item.guildId,
             guildName: item.name,
             guildIconUrl: item.iconUrl,
+            roles: item.roles->Belt.Array.map(r => {
+              AlertRule_Destination.Types.DiscordAlertDestination.name: r.name,
+              id: r.id,
+            }),
           })
         })
       )
@@ -408,12 +412,38 @@ let make = () => {
             }),
           }),
         )
-      | #DiscordAlertDestination({guildId, channelId, template, clientId}) =>
+      | #DiscordAlertDestination({guildId, channelId, template, clientId, roles}) =>
         Some(
           AlertRule_Destination.Types.Value.DiscordAlertDestination({
             clientId: clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
             guildId: guildId,
             channelId: channelId,
+            roles: roles
+            ->Belt.Option.map(roles =>
+              roles->Belt.Array.map(r => {
+                AlertRule_Destination.Types.DiscordAlertDestination.name: r.name,
+                id: r.id,
+              })
+            )
+            ->Belt.Option.getWithDefault(
+              discordIntegrationOptions
+              ->Belt.Array.getBy(opt =>
+                switch opt {
+                | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
+                    guildId: optGuildId,
+                  }) if optGuildId === guildId => true
+                | _ => false
+                }
+              )
+              ->Belt.Option.flatMap(opt =>
+                switch opt {
+                | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({roles}) =>
+                  Some(roles)
+                | _ => None
+                }
+              )
+              ->Belt.Option.getWithDefault([]),
+            ),
             template: template->Belt.Option.map(template => {
               AlertRule_Destination.Types.DiscordTemplate.title: template.title,
               description: template.description,

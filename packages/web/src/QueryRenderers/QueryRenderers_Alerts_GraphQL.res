@@ -28,6 +28,10 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         guildId
         channelId
         clientId
+        roles {
+          name
+          id
+        }
         template {
           title
           content
@@ -111,6 +115,10 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         clientId
         name
         iconUrl
+        roles {
+          name
+          id
+        }
         channels {
           name 
           id
