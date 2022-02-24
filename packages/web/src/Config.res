@@ -2,8 +2,10 @@
 external awsAmplifyConfig: Externals_AWSAmplify.Config.t = "default"
 
 @val external nodeEnv: string = "process.env.NODE_ENV"
+
 let isProduction = nodeEnv == "production"
 let isBrowser = () => %raw(`typeof window !== 'undefined'`)
+let isMobile = () => %raw(`window.matchMedia('only screen and (max-width: 639px)').matches`)
 
 let openstoreContractAddress = "0x495f947276749ce646f68ac8c248420045cb7b5e"
 let donationsAddress = "0x9Bf2A698A34b54D58d036277133d6a8205Bd5d5a"

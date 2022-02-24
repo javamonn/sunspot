@@ -11,6 +11,7 @@ type authentication =
   | Unauthenticated_AuthenticationChallengeRequired(Externals.Wagmi.UseAccount.data)
   | InProgress_PromptConnectWallet
   | InProgress_PromptAuthenticationChallenge(Externals.Wagmi.UseAccount.data)
+  | InProgress_AuthenticationChallenge(Externals.Wagmi.UseAccount.data)
   | InProgress_JWTRefresh(Contexts_Auth_Credentials.t)
   | Authenticated(Contexts_Auth_Credentials.t)
 
@@ -22,6 +23,7 @@ let authenticationToString = a =>
     ) => "Unauthenticated_AuthenticationChallengeRequired"
   | InProgress_PromptConnectWallet => "InProgress_PromptConnectWallet"
   | InProgress_PromptAuthenticationChallenge(_) => "InProgress_PromptAuthenticationChallenge"
+  | InProgress_AuthenticationChallenge(_) => "InProgress_AuthenticationChallenge"
   | InProgress_JWTRefresh(_) => "InProgress_JWTRefresh"
   | Authenticated(_) => "Authenticated"
   }
@@ -101,8 +103,9 @@ let getInitialAuthenticationState = account =>
       InProgress_JWTRefresh(credentials)
     } else if !isAwsCredentialValid && !isJwtValid {
       switch account {
-      | Some(account) => Unauthenticated_AuthenticationChallengeRequired(account)
-      | None => Unauthenticated_ConnectRequired
+      | Some(account) if !Config.isMobile() =>
+        Unauthenticated_AuthenticationChallengeRequired(account)
+      | _ => Unauthenticated_ConnectRequired
       }
     } else {
       Authenticated(credentials)
@@ -172,15 +175,17 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
         }
       })
       |> Js.Promise.then_(_ => signMessage({Externals.Wagmi.UseSignMessage.message: message}))
-      |> Js.Promise.then_(({data, error}: Externals.Wagmi.UseSignMessage.result) =>
+      |> Js.Promise.then_(({data, error}: Externals.Wagmi.UseSignMessage.result) => {
         switch (data, error) {
         | (Some(data), _) => Js.Promise.resolve(data)
         | (_, Some(error)) => Js.Promise.reject(AuthenticationChallengeFailed) // todo handle error
         | _ => Js.Promise.reject(AuthenticationChallengeFailed)
         }
-      )
+      })
       |> Js.Promise.catch(err => Js.Promise.reject(AuthenticationChallengeFailed))
-    | Error(_) => Js.Promise.reject(AuthenticationChallengeFailed)
+    | Error(e) =>
+      Js.log2("useSignMessage error", e)
+      Js.Promise.reject(AuthenticationChallengeFailed)
     }
   )
   |> Js.Promise.then_(signedMessage =>
@@ -225,7 +230,7 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
 let make = (~children) => {
   let (
     {data: account, loading: isAccountLoading}: Externals.Wagmi.UseAccount.result,
-    _,
+    disconnect,
   ) = Externals.Wagmi.UseAccount.use()
   let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let (authentication, setAuthentication) = React.useState(_ =>
@@ -234,6 +239,7 @@ let make = (~children) => {
   let (_, signMessage) = Externals.Wagmi.UseSignMessage.use()
   let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
   let previousAuthentication = React.useRef(authentication)
+  let previousConnecting = React.useRef(connecting)
   let authenticationDeferred = React.useRef(None)
 
   let handleRefreshCredentials = jwt =>
@@ -284,7 +290,7 @@ let make = (~children) => {
         Js.Promise.resolve()
       })
   }
-  let handleInProgressPromptAuthenticationChallengeEffect = account => {
+  let handleInProgressAuthenticationChallengeEffect = account => {
     let _ =
       handleAuthenticationChallenge(
         ~address=account->Externals.Wagmi.UseAccount.address,
@@ -302,7 +308,7 @@ let make = (~children) => {
       |> Js.Promise.catch(err => {
         Services.Logger.promiseError(
           "Contexts_Auth",
-          "handleInProgressPromptAuthenticationChallengeEffect error",
+          "handleInProgressAuthenticationChallengeEffect error",
           err,
         )
         let _ = setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
@@ -325,9 +331,27 @@ let make = (~children) => {
       })
   }
 
+  // FIXME: https://github.com/tmm/wagmi/issues/214
+  let _ = React.useEffect1(() => {
+    if previousConnecting.current && !connecting {
+      switch account {
+      | Some({connector: {id: "walletConnect"}}) =>
+        disconnect()
+        setAuthentication(_ => Unauthenticated_ConnectRequired)
+      | _ => ()
+      }
+    }
+    previousConnecting.current = connecting
+
+    None
+  }, [connecting])
+
   let _ = React.useEffect2(() => {
     let _ = switch (authentication, account) {
-    | (Unauthenticated_ConnectRequired, Some(account)) =>
+    | (Unauthenticated_ConnectRequired, _) if connecting && Config.isMobile() => // disconnect()
+      ()
+    | (Unauthenticated_ConnectRequired, Some({connector: {id: connectorId}} as account))
+      if connectorId !== "walletConnect" =>
       setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
     | (InProgress_PromptConnectWallet, Some(account)) =>
       setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
@@ -355,8 +379,8 @@ let make = (~children) => {
     | Authenticated(credentials) => handleAuthenticatedEffect(credentials)
     | Unauthenticated_ConnectRequired => handleUnauthenticatedConnectRequiredEffect()
     | InProgress_JWTRefresh({jwt}) => handleInProgressJWTRefreshEffect(jwt)
-    | InProgress_PromptAuthenticationChallenge(account) =>
-      handleInProgressPromptAuthenticationChallengeEffect(account)
+    | InProgress_AuthenticationChallenge(account) =>
+      handleInProgressAuthenticationChallengeEffect(account)
     | _ => ()
     }
 
@@ -379,6 +403,32 @@ let make = (~children) => {
       openSnackbar(
         ~message=<>
           {React.string("failed to connect wallet. try again, and ")}
+          <a href={Config.discordGuildInviteUrl} target="_blank" className={Cn.make(["underline"])}>
+            {React.string("contact support")}
+          </a>
+          {React.string(" if the issue persists.")}
+        </>,
+        ~type_=Contexts_Snackbar.TypeError,
+        ~duration=8000,
+        (),
+      )
+    }
+  }
+  let handlePromptAuthenticationChallengeModalClose = executeAuthenticationChallenge => {
+    setAuthentication(authentication =>
+      switch authentication {
+      | InProgress_PromptAuthenticationChallenge(account) =>
+        executeAuthenticationChallenge
+          ? InProgress_AuthenticationChallenge(account)
+          : Unauthenticated_AuthenticationChallengeRequired(account)
+      | s => s
+      }
+    )
+
+    if !executeAuthenticationChallenge {
+      openSnackbar(
+        ~message=<>
+          {React.string("authentication challenge failed. try again, and ")}
           <a href={Config.discordGuildInviteUrl} target="_blank" className={Cn.make(["underline"])}>
             {React.string("contact support")}
           </a>
@@ -419,6 +469,13 @@ let make = (~children) => {
       | _ => false
       }}
       onClose={connected => handleConnectWalletModalClose(connected)}
+    />
+    <PromptAuthenticationChallengeModal
+      isOpen={switch authentication {
+      | InProgress_PromptAuthenticationChallenge(_) => true
+      | _ => false
+      }}
+      onClose={handlePromptAuthenticationChallengeModalClose}
     />
   </ContextProvider>
 }

@@ -1,8 +1,13 @@
 @react.component
 let make = (~provider, ~address, ~onClick, ~authentication: Contexts.Auth.authentication) => {
+  let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let content = switch authentication {
-  | InProgress_PromptConnectWallet | InProgress_PromptAuthenticationChallenge(_) =>
+  | InProgress_PromptConnectWallet
+  | InProgress_PromptAuthenticationChallenge(_)
+  | InProgress_AuthenticationChallenge(_)
+  | InProgress_JWTRefresh(_) =>
     <LoadingButton />
+  | _ if connecting => <LoadingButton />
   | _ =>
     <MaterialUi.Button
       variant=#Outlined
