@@ -479,6 +479,39 @@ let make = (~onCreated, ~params) => {
     open Mutation_CreateAlertRule
     setIsActioning(_ => true)
 
+    let macroRelativeChangeEventFilter = switch (
+      alertRuleValue->AlertModal.Value.eventType,
+      alertRuleValue->AlertModal.Value.saleVolumeChangeRule,
+      alertRuleValue->AlertModal.Value.floorPriceChangeRule,
+    ) {
+    | (#SALE_VOLUME_CHANGE, Some(s), _) =>
+      Some({
+        alertMacroRelativeChangeEventFilter: Some({
+          timeWindow: s.timeWindow,
+          timeBucket: Some(s.timeBucket),
+          relativeValueChange: s.relativeValueChange,
+          absoluteValueChange: s.absoluteValueChange,
+          emptyRelativeDiffAbsoluteValueChange: s.emptyRelativeDiffAbsoluteValueChange,
+        }),
+        alertQuantityEventFilter: None,
+        alertPriceThresholdEventFilter: None,
+        alertAttributesEventFilter: None,
+      })
+    | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
+      Some({
+        alertMacroRelativeChangeEventFilter: Some({
+          timeWindow: s.timeWindow,
+          relativeValueChange: s.relativeValueChange,
+          absoluteValueChange: s.absoluteValueChange,
+          emptyRelativeDiffAbsoluteValueChange: None,
+          timeBucket: None,
+        }),
+        alertQuantityEventFilter: None,
+        alertPriceThresholdEventFilter: None,
+        alertAttributesEventFilter: None,
+      })
+    | _ => None
+    }
     let quantityEventFilter =
       alertRuleValue
       ->AlertModal.Value.quantityRule
@@ -500,6 +533,7 @@ let make = (~onCreated, ~params) => {
             }),
             alertAttributesEventFilter: None,
             alertPriceThresholdEventFilter: None,
+            alertMacroRelativeChangeEventFilter: None,
           })
         | _ => None
         }
@@ -535,6 +569,7 @@ let make = (~onCreated, ~params) => {
             }),
             alertAttributesEventFilter: None,
             alertQuantityEventFilter: None,
+            alertMacroRelativeChangeEventFilter: None,
           })
         | _ => None
         }
@@ -568,6 +603,7 @@ let make = (~onCreated, ~params) => {
           }),
           alertPriceThresholdEventFilter: None,
           alertQuantityEventFilter: None,
+          alertMacroRelativeChangeEventFilter: None,
         }
       })
 
@@ -664,12 +700,10 @@ let make = (~onCreated, ~params) => {
           priceEventFilter,
           propertiesEventFilter,
           quantityEventFilter,
+          macroRelativeChangeEventFilter,
         ]->Belt.Array.keepMap(i => i),
         destination: destination,
-        eventType: switch alertRuleValue->AlertModal.Value.eventType {
-        | #listing => #LISTING
-        | #sale => #SALE
-        },
+        eventType: alertRuleValue->AlertModal.Value.eventType,
         disabled: disabled,
         disabledExpiresAt: disabledExpiresAt,
         disabledReason: disabledReason,

@@ -1,4 +1,5 @@
 let styles = %raw("require('./AlertsTable.module.css')")
+
 include AlertsTable_Types
 open AlertsTable_Types
 

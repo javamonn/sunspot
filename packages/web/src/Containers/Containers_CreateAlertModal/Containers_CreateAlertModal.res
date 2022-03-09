@@ -132,6 +132,40 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
 let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
   open Mutation_CreateAlertRule
 
+  let macroRelativeChangeEventFilter = switch (
+    value->AlertModal.Value.eventType,
+    value->AlertModal.Value.saleVolumeChangeRule,
+    value->AlertModal.Value.floorPriceChangeRule,
+  ) {
+  | (#SALE_VOLUME_CHANGE, Some(s), _) =>
+    Some({
+      alertMacroRelativeChangeEventFilter: Some({
+        timeWindow: s.timeWindow,
+        timeBucket: Some(s.timeBucket),
+        relativeValueChange: s.relativeValueChange,
+        absoluteValueChange: s.absoluteValueChange,
+        emptyRelativeDiffAbsoluteValueChange: s.emptyRelativeDiffAbsoluteValueChange,
+      }),
+      alertQuantityEventFilter: None,
+      alertPriceThresholdEventFilter: None,
+      alertAttributesEventFilter: None,
+    })
+  | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
+    Some({
+      alertMacroRelativeChangeEventFilter: Some({
+        timeWindow: s.timeWindow,
+        relativeValueChange: s.relativeValueChange,
+        absoluteValueChange: s.absoluteValueChange,
+        emptyRelativeDiffAbsoluteValueChange: None,
+        timeBucket: None,
+      }),
+      alertQuantityEventFilter: None,
+      alertPriceThresholdEventFilter: None,
+      alertAttributesEventFilter: None,
+    })
+  | _ => None
+  }
+
   let quantityEventFilter =
     value
     ->AlertModal.Value.quantityRule
@@ -153,6 +187,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
           }),
           alertAttributesEventFilter: None,
           alertPriceThresholdEventFilter: None,
+          alertMacroRelativeChangeEventFilter: None,
         })
       | _ => None
       }
@@ -190,6 +225,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
           }),
           alertAttributesEventFilter: None,
           alertQuantityEventFilter: None,
+          alertMacroRelativeChangeEventFilter: None,
         })
       | _ => None
       }
@@ -223,6 +259,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
         }),
         alertPriceThresholdEventFilter: None,
         alertQuantityEventFilter: None,
+        alertMacroRelativeChangeEventFilter: None,
       }
     })
 
@@ -249,12 +286,10 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
           priceEventFilter,
           propertiesRule,
           quantityEventFilter,
+          macroRelativeChangeEventFilter,
         ]->Belt.Array.keepMap(i => i),
         destination: destination,
-        eventType: switch value->AlertModal.Value.eventType {
-        | #listing => #LISTING
-        | #sale => #SALE
-        },
+        eventType: value->AlertModal.Value.eventType,
         disabled: disabled,
         disabledReason: disabledReason,
         disabledExpiresAt: disabledExpiresAt,
