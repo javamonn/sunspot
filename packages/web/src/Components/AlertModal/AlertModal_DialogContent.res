@@ -21,58 +21,6 @@ module Query_OpenSeaCollectionAggregateAttributes = %graphql(`
   }
 `)
 
-module Value = {
-  type disabledReason =
-    | DestinationRateLimitExceeded(option<Js.Json.t>)
-    | DestinationMissingAccess
-    | Snoozed
-
-  @deriving(accessors)
-  type t = {
-    id: string,
-    eventType: AlertRule_EventType.t,
-    collection: option<CollectionOption.t>,
-    priceRule: option<AlertRule_Price.t>,
-    propertiesRule: option<AlertRule_Properties.Value.t>,
-    quantityRule: option<AlertRule_Quantity.Value.t>,
-    destination: option<AlertRule_Destination.Types.Value.t>,
-    disabled: option<disabledReason>,
-  }
-
-  let make = (
-    ~id,
-    ~collection,
-    ~priceRule,
-    ~propertiesRule,
-    ~quantityRule,
-    ~destination,
-    ~eventType,
-    ~disabled,
-  ) => {
-    id: id,
-    collection: collection,
-    eventType: eventType,
-    priceRule: priceRule,
-    propertiesRule: propertiesRule,
-    quantityRule: quantityRule,
-    destination: destination,
-    disabled: disabled,
-  }
-
-  let empty = () => {
-    id: Externals.UUID.make(),
-    collection: None,
-    priceRule: None,
-    propertiesRule: None,
-    quantityRule: None,
-    eventType: #listing,
-    destination: Config.isBrowser() && Services.PushNotification.isSupported()
-      ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template: None}))
-      : None,
-    disabled: None,
-  }
-}
-
 @react.component
 let make = (
   ~value,
@@ -89,46 +37,29 @@ let make = (
 
   let _ = React.useEffect1(() => {
     value
-    ->Value.collection
+    ->AlertModal_Value.collection
     ->Belt.Option.forEach(collection => {
       let _ = executeCollectionAggregateAttributesQuery({
         slug: collection->CollectionOption.slugGet,
       })
     })
     None
-  }, [value->Value.collection])
+  }, [value->AlertModal_Value.collection])
 
-  let handlePriceRuleChange = priceRule => {
-    onChange(value => {
-      ...value,
-      Value.priceRule: priceRule,
-    })
-  }
-  let handlePropertiesRuleChange = propertiesRule =>
-    onChange(value => {
-      ...value,
-      Value.propertiesRule: propertiesRule,
-    })
   let handleDestinationChange = destination =>
     onChange(value => {
       ...value,
-      Value.destination: Some(destination),
+      AlertModal_Value.destination: Some(destination),
     })
   let handleEventTypeChange = eventType =>
     onChange(value => {
       ...value,
-      Value.eventType: eventType,
+      AlertModal_Value.eventType: eventType,
     })
   let handleCollectionChange = collection => {
     onChange(value => {
       ...value,
-      Value.collection: collection,
-    })
-  }
-  let handleQuantityRuleChange = quantityRule => {
-    onChange(value => {
-      ...value,
-      Value.quantityRule: quantityRule,
+      AlertModal_Value.collection: collection,
     })
   }
 
@@ -168,72 +99,17 @@ let make = (
     )
     ->Belt.Option.getWithDefault(React.null)}
     <AlertRule_CollectionAutocomplete onChange={handleCollectionChange} value={value.collection} />
-    <AlertRule_EventType value={value->Value.eventType} onChange={handleEventTypeChange} />
+    <AlertRule_EventType
+      value={value->AlertModal_Value.eventType} onChange={handleEventTypeChange}
+    />
     <AlertRule_Destination
-      value={value->Value.destination}
+      value={value->AlertModal_Value.destination}
       onChange={handleDestinationChange}
       destinationOptions={destinationOptions}
       disabled=?{destinationDisabled}
       onConnectDiscord={handleConnectDiscord}
       onConnectSlack={handleConnectSlack}
       onConnectTwitter={handleConnectTwitter}
-    />
-    <AlertRule_Accordion
-      className={Cn.make(["mt-8"])}
-      summaryIcon={<MaterialUi.Typography
-        variant=#H5
-        classes={MaterialUi.Typography.Classes.make(
-          ~h5=Cn.make(["leading-none", "text-darkSecondary"]),
-          (),
-        )}>
-        {React.string(`Ξ`)}
-      </MaterialUi.Typography>}
-      summaryTitle={React.string("price rule")}
-      summaryDescription={React.string("filter events by price threshold")}
-      renderDetails={(~expanded) =>
-        <AlertRule_Price
-          value=?{value->Value.priceRule}
-          onChange={handlePriceRuleChange}
-          accordionExpanded={expanded}
-        />}
-    />
-    <AlertRule_Accordion
-      className={Cn.make(["mt-8"])}
-      summaryIcon={<Externals_MaterialUi_Icons.LabelOutlined
-        style={ReactDOM.Style.make(~opacity="0.42", ())}
-      />}
-      summaryTitle={React.string("properties rule")}
-      summaryDescription={React.string("filter events by asset properties")}
-      renderDetails={(~expanded) =>
-        <AlertRule_Properties
-          accordionExpanded={expanded}
-          value=?{value->Value.propertiesRule}
-          onChange={handlePropertiesRuleChange}
-          options=collectionAggregateAttributes
-          isOptionsLoading={isLoadingCollectionAggregateAttributes}
-          isCollectionSelected={value->Value.collection->Js.Option.isSome}
-          isOpenstore={value
-          ->Value.collection
-          ->Belt.Option.map(collection =>
-            collection->CollectionOption.contractAddressGet->Js.String2.toLowerCase ==
-              Config.openstoreContractAddress
-          )
-          ->Belt.Option.getWithDefault(false)}
-        />}
-    />
-    <AlertRule_Accordion
-      className={Cn.make(["mt-8"])}
-      summaryIcon={<Externals_MaterialUi_Icons.Filter1
-        style={ReactDOM.Style.make(~opacity="0.42", ())}
-      />}
-      summaryTitle={React.string("quantity rule")}
-      summaryDescription={React.string("filter events by quantity of assets")}
-      renderDetails={(~expanded) =>
-        <AlertRule_Quantity
-          value=?{value->Value.quantityRule}
-          onChange={handleQuantityRuleChange}
-          accordionExpanded={expanded}
-        />}
     />
     <AlertRule_Accordion
       className={Cn.make(["mt-8"])}
@@ -245,10 +121,47 @@ let make = (
       renderDetails={(~expanded) =>
         <AlertRule_Destination_TemplateAccordion
           onChange={handleDestinationChange}
-          value=?{value->Value.destination}
-          eventType={value->Value.eventType}
+          value=?{value->AlertModal_Value.destination}
+          eventType={value->AlertModal_Value.eventType}
           accordionExpanded={expanded}
         />}
     />
+    <MaterialUi.Divider
+      classes={MaterialUi.Divider.Classes.make(~root=Cn.make(["mb-8", "mt-8"]), ())}
+    />
+    <MaterialUi.Typography
+      variant=#Subtitle2
+      color=#TextSecondary
+      classes={MaterialUi.Typography.Classes.make(~subtitle2=Cn.make(["mb-4"]), ())}>
+      {React.string("alert rules (optional)")}
+    </MaterialUi.Typography>
+    {switch value.eventType {
+    | #LISTING
+    | #SALE =>
+      <AlertModal_AlertRules_Event
+        value={value}
+        onChange={onChange}
+        collectionAggregateAttributes
+        isLoadingCollectionAggregateAttributes
+      />
+    | #SALE_VOLUME_CHANGE =>
+      <AlertModal_AlertRules_SaleVolumeChange
+        value={AlertModal_Value.saleVolumeChangeRule(value)}
+        onChange={newSaleVolumeChangeRule =>
+          onChange(value => {
+            ...value,
+            AlertModal_Value.saleVolumeChangeRule: Some(newSaleVolumeChangeRule),
+          })}
+      />
+    | #FLOOR_PRICE_CHANGE =>
+      <AlertModal_AlertRules_FloorPriceChange
+        value={AlertModal_Value.floorPriceChangeRule(value)}
+        onChange={newFloorPriceChangeRule =>
+          onChange(value => {
+            ...value,
+            AlertModal_Value.floorPriceChangeRule: Some(newFloorPriceChangeRule),
+          })}
+      />
+    }}
   </>
 }

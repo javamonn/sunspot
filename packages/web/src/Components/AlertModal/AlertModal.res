@@ -1,7 +1,7 @@
 let styles = %raw("require('./AlertModal.module.css')")
 
-module Value = AlertModal_DialogContent.Value
 module CollectionOption = AlertModal_Types.CollectionOption
+module Value = AlertModal_Value
 module Utils = AlertModal_Utils
 
 let validate = value => {
@@ -217,7 +217,15 @@ let make = (
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions
       classes={MaterialUi.DialogActions.Classes.make(
-        ~root=Cn.make(["mt-8", "sm:mt-0", "border-t", "border-solid", "border-darkBorder", "sm:py-4", "sm:px-4"]),
+        ~root=Cn.make([
+          "mt-8",
+          "sm:mt-0",
+          "border-t",
+          "border-solid",
+          "border-darkBorder",
+          "sm:py-4",
+          "sm:px-4",
+        ]),
         (),
       )}>
       <MaterialUi.Button

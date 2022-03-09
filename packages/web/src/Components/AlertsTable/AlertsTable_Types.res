@@ -29,10 +29,12 @@ let columns = [
 type quantityRule = {modifier: string, value: string}
 type priceRule = {modifier: string, price: string}
 type propertyRule = {traitType: string, displayValue: string}
+
 type rule =
   | PriceRule(priceRule)
   | PropertyRule(propertyRule)
   | QuantityRule(quantityRule)
+  | RelativeChangeRule(string)
 
 @deriving(accessors)
 type destination = {

@@ -1,10 +1,10 @@
 let makeOpenSeaAssetsUrlForValue = value =>
   value
-  ->AlertModal_DialogContent.Value.collection
+  ->AlertModal_Value.collection
   ->Belt.Option.map(collection => {
     let traitsFilter =
       value
-      ->AlertModal_DialogContent.Value.propertiesRule
+      ->AlertModal_Value.propertiesRule
       ->Belt.Option.getWithDefault([])
       ->Belt.Array.map(propertyRule =>
         switch propertyRule->AlertRule_Properties.Value.value {
@@ -22,7 +22,7 @@ let makeOpenSeaAssetsUrlForValue = value =>
       )
     let priceFilter =
       value
-      ->AlertModal_DialogContent.Value.priceRule
+      ->AlertModal_Value.priceRule
       ->Belt.Option.flatMap(priceRule =>
         switch priceRule->AlertRule_Price.value->Belt.Option.flatMap(Belt.Float.fromString) {
         | Some(value) if priceRule->AlertRule_Price.modifier == ">" =>
@@ -32,10 +32,7 @@ let makeOpenSeaAssetsUrlForValue = value =>
         | _ => None
         }
       )
-    let eventType = switch value->AlertModal_DialogContent.Value.eventType {
-    | #listing => #LISTING
-    | #sale => #SALE
-    }
+    let eventType = value->AlertModal_Value.eventType
 
     Services.OpenSea.makeAssetsUrl(
       ~collectionSlug=collection->AlertModal_Types.CollectionOption.slugGet,

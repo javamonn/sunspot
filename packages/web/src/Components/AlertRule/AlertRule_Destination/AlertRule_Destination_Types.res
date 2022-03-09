@@ -21,6 +21,18 @@ module WebPushTemplate = {
     body: "{collectionName}\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
   }
+
+  let defaultFloorPriceChangeTemplate = {
+    title: "floor {changeVerb}: {collectionName}",
+    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    isThumbnailImageSize: false,
+  }
+
+  let defaultSaleVolumeChangeTemplate = {
+    title: "sales {changeVerb}: {collectionName}",
+    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    isThumbnailImageSize: false,
+  }
 }
 
 module TwitterTemplate = {
@@ -29,6 +41,12 @@ module TwitterTemplate = {
 
   let defaultListingTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
   let defaultSaleTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
+  let defaultSaleVolumeChangeTemplate = {
+    text: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\n\n{eventsScatterPlotImageUrl}",
+  }
+  let defaultFloorPriceChangeTemplate = {
+    text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\n\n{eventsScatterPlotImageUrl}",
+  }
 }
 
 module DiscordTemplate = {
@@ -42,6 +60,61 @@ module DiscordTemplate = {
     description: option<string>,
     isThumbnailImageSize: bool,
     fields: option<array<field>>,
+  }
+
+  let defaultFloorPriceChangeTemplate = {
+    content: None,
+    title: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    description: None,
+    displayProperties: false,
+    isThumbnailImageSize: false,
+    fields: Some([
+      {
+        name: "current floor price",
+        value: "{floorPrice}",
+        inline: false,
+      },
+      {
+        name: "floor price change",
+        value: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+        inline: false,
+      },
+      {
+        name: "15m sales",
+        value: "{target15mSaleCount} ({target15mSaleChange})",
+        inline: true,
+      },
+      {
+        name: "15m listings",
+        value: "{target15mListingCount} ({target15mListingChange})",
+        inline: true,
+      },
+    ]),
+  }
+
+  let defaultSaleVolumeChangeTemplate = {
+    content: None,
+    title: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    description: None,
+    displayProperties: false,
+    isThumbnailImageSize: false,
+    fields: Some([
+      {
+        name: "{targetBucket} sales",
+        value: "{targetCount}",
+        inline: false,
+      },
+      {
+        name: "sales change",
+        value: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+        inline: false,
+      },
+      {
+        name: "current floor price",
+        value: "{floorPrice}",
+        inline: false,
+      },
+    ]),
   }
 
   let defaultSaleTemplate = {

@@ -1,7 +1,23 @@
 type t = [
-  | #listing
-  | #sale
+  | #LISTING
+  | #SALE
+  | #FLOOR_PRICE_CHANGE
+  | #SALE_VOLUME_CHANGE
 ]
+
+let toDisplay = v =>
+  switch v {
+  | #LISTING => ("listing", "a token is listed for sale")
+  | #SALE => ("sale", "a token is sold")
+  | #FLOOR_PRICE_CHANGE => (
+      "collection floor price change",
+      "the collection floor price (most recent 15 events) changes",
+    )
+  | #SALE_VOLUME_CHANGE => (
+      "collection sales volume change",
+      "the count of token sale events to occur within a time interval changes",
+    )
+  }
 
 @react.component
 let make = (~onChange, ~value: t) => {
@@ -11,20 +27,18 @@ let make = (~onChange, ~value: t) => {
   }
 
   <MaterialUi.FormControl
-    classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-1/2"]), ())}>
-    <MaterialUi.InputLabel shrink=true id="alert_rule_event" htmlFor="">
-      {React.string("event")}
-    </MaterialUi.InputLabel>
+    classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["mt-8", "w-full"]), ())}>
+    <MaterialUi.InputLabel shrink=true htmlFor=""> {React.string("event")} </MaterialUi.InputLabel>
     <MaterialUi.Select
-      labelId="AlertModal_action"
       value={(value :> string)->MaterialUi.Select.Value.string}
       fullWidth=true
       onChange={handleChange}>
-      {[#listing, #sale]->Belt.Array.map((option_: t) => {
-        let displayOption = (option_ :> string)
-
-        <MaterialUi.MenuItem value={displayOption->MaterialUi.MenuItem.Value.string}>
-          {displayOption->React.string}
+      {[#LISTING, #SALE, #FLOOR_PRICE_CHANGE, #SALE_VOLUME_CHANGE]->Belt.Array.map((option_: t) => {
+        let (primary, secondary) = toDisplay(option_)
+        <MaterialUi.MenuItem value={option_->Obj.magic->MaterialUi.MenuItem.Value.string}>
+          <MaterialUi.ListItemText
+            primary={React.string(primary)} secondary={React.string(secondary)}
+          />
         </MaterialUi.MenuItem>
       })}
     </MaterialUi.Select>

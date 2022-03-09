@@ -144,14 +144,41 @@ let make = () => {
               }
             )
             ->Js.Option.some
+          | #AlertMacroRelativeChangeEventFilter({
+              relativeValueChange,
+              absoluteValueChange,
+              timeBucket,
+              timeWindow,
+            }) =>
+            let displayTarget = switch item.eventType {
+            | #SALE_VOLUME_CHANGE => Some("sale volume")
+            | #FLOOR_PRICE_CHANGE => Some("floor price")
+            | _ => None
+            }
+            let displayPercent = Services.Format.percent(relativeValueChange)
+            let displayTime = switch timeWindow {
+            | #MACRO_TIME_WINDOW_10M => "in 10m"
+            | #MACRO_TIME_WINDOW_30M => "in 30m"
+            | #MACRO_TIME_WINDOW_1H => "in 1h"
+            | #FutureAddedValue(_) => ""
+            }
+
+            displayTarget->Belt.Option.map(displayTarget => [
+              AlertsTable.RelativeChangeRule(
+                `${displayTarget} change ${displayPercent}${displayTime}`,
+              ),
+            ])
+
           | #FutureAddedValue(_) => None
           }
         )
         ->Belt.Array.concatMany
       let eventType = switch item.eventType {
+      | #FutureAddedValue(v) => Js.String2.toLowerCase(v)
       | #LISTING => "listing"
       | #SALE => "sale"
-      | #FutureAddedValue(v) => Js.String2.toLowerCase(v)
+      | #FLOOR_PRICE_CHANGE => "floor price change"
+      | #SALE_VOLUME_CHANGE => "sale volume change"
       }
       let externalUrl = Services.OpenSea.makeAssetsUrl(
         ~collectionSlug=item.collection.slug,
@@ -341,6 +368,75 @@ let make = () => {
           }
         )
 
+      let floorPriceChangeRule =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch (eventFilter, item.eventType) {
+          | (#AlertMacroRelativeChangeEventFilter(_), #FLOOR_PRICE_CHANGE) => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(eventFilter =>
+          switch (eventFilter, item.eventType) {
+          | (#AlertMacroRelativeChangeEventFilter(e), #FLOOR_PRICE_CHANGE) =>
+            let timeWindow = switch e.timeWindow {
+            | #FutureAddedValue(_) => None
+            | #MACRO_TIME_WINDOW_10M as e
+            | #MACRO_TIME_WINDOW_30M as e
+            | #MACRO_TIME_WINDOW_1H as e =>
+              Some(e)
+            }
+
+            timeWindow->Belt.Option.map(timeWindow => {
+              AlertModal_AlertRules_FloorPriceChange.timeWindow: timeWindow,
+              relativeValueChange: e.relativeValueChange,
+              absoluteValueChange: e.absoluteValueChange,
+            })
+          | _ => None
+          }
+        )
+
+      let saleVolumeChangeRule =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch (eventFilter, item.eventType) {
+          | (#AlertMacroRelativeChangeEventFilter(_), #SALE_VOLUME_CHANGE) => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(eventFilter =>
+          switch (eventFilter, item.eventType) {
+          | (#AlertMacroRelativeChangeEventFilter(e), #SALE_VOLUME_CHANGE) =>
+            let timeBucket = switch e.timeBucket {
+            | Some(#MACRO_TIME_BUCKET_5M as e)
+            | Some(#MACRO_TIME_BUCKET_15M as e)
+            | Some(#MACRO_TIME_BUCKET_30M as e) =>
+              Some(e)
+            | _ => None
+            }
+            let timeWindow = switch e.timeWindow {
+            | #FutureAddedValue(_) => None
+            | #MACRO_TIME_WINDOW_10M as e
+            | #MACRO_TIME_WINDOW_30M as e
+            | #MACRO_TIME_WINDOW_1H as e =>
+              Some(e)
+            }
+
+            switch (timeBucket, timeWindow) {
+            | (Some(timeBucket), Some(timeWindow)) =>
+              Some({
+                AlertModal_AlertRules_SaleVolumeChange.timeBucket: timeBucket,
+                timeWindow: timeWindow,
+                relativeValueChange: e.relativeValueChange,
+                absoluteValueChange: e.absoluteValueChange,
+                emptyRelativeDiffAbsoluteValueChange: e.emptyRelativeDiffAbsoluteValueChange,
+              })
+            | _ => None
+            }
+          | _ => None
+          }
+        )
+
       let quantityRule =
         item.eventFilters
         ->Belt.Array.getBy(eventFilter =>
@@ -488,9 +584,11 @@ let make = () => {
       | #FutureAddedValue(_) => None
       }
       let eventType = switch item.eventType {
-      | #LISTING => #listing
-      | #SALE => #sale
-      | _ => #listing
+      | #LISTING => #LISTING
+      | #SALE => #SALE
+      | #SALE_VOLUME_CHANGE => #SALE_VOLUME_CHANGE
+      | #FLOOR_PRICE_CHANGE => #FLOOR_PRICE_CHANGE
+      | #FutureAddedValue(_) => #LISTING
       }
 
       let disabled = switch (item.disabled, item.disabledReason) {
@@ -513,6 +611,8 @@ let make = () => {
         ),
         ~priceRule,
         ~propertiesRule,
+        ~saleVolumeChangeRule,
+        ~floorPriceChangeRule,
         ~quantityRule,
         ~destination,
         ~id=item.id,

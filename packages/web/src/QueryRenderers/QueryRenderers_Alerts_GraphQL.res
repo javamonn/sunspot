@@ -64,6 +64,13 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
       }
     }
     eventFilters {
+      ... on AlertMacroRelativeChangeEventFilter {
+        timeBucket
+        timeWindow
+        relativeValueChange
+        absoluteValueChange
+        emptyRelativeDiffAbsoluteValueChange
+      }
       ... on AlertQuantityEventFilter {
         numberValue: value
         direction

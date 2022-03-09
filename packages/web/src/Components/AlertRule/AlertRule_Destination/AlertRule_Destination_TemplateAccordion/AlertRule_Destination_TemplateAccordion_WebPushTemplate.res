@@ -4,8 +4,10 @@ open AlertRule_Destination_Types.WebPushTemplate
 let make = (~value=?, ~onChange, ~eventType) => {
   let valueWithDefault = value->Belt.Option.getWithDefault(
     switch eventType {
-    | #listing => defaultListingTemplate
-    | #sale => defaultSaleTemplate
+    | #LISTING => defaultListingTemplate
+    | #SALE => defaultSaleTemplate
+    | #FLOOR_PRICE_CHANGE => defaultFloorPriceChangeTemplate
+    | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
     },
   )
 

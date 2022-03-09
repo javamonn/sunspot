@@ -28,17 +28,51 @@ let saleVariables = [
   ("transactionHash", "formatted hash of the transaction"),
   ("transactionUrl", "etherscan url of the transaction"),
   ("eventCreatedDateTime", "formatted listing creation time"),
-  ("collectionImageUrl", "collection image url set on opensea"),
+  ("collectionImageUrl", "opensea collection image url"),
   ("assetImageUrl", "asset image url"),
   ("satisfiedAlertRules", "formatted satisfied alert property and price rules (optional)"),
   ("quantity", "number of assets transacted (optional, null if 1)"),
 ]
 
+let floorPriceChangeVariables = [
+  ("changeValue", "formatted change value"),
+  ("timeElapsed", "formatted change time window"),
+  ("changeVerb", "one of (\"increase\", \"decrease\") describing change direction"),
+  ("collectionName", "collection name"),
+  ("collectionUrl", "opensea collection image url"),
+  ("changeIndicatorArrow", "one of (\"↗\", \"↘\") indicating change direction"),
+  ("eventCreatedDateTime", "formatted event creation time"),
+  ("eventsScatterPlotImageUrl", "image url of most recent 1h events scatterplot"),
+  ("target15mSaleCount", "count of sale events to occur in the last 15m"),
+  ("target15mSaleChange", "formatted change of 15m sale events relative to previous 15m"),
+  ("target15mListingCount", "count of listing events to occur in the last 15m"),
+  ("target15mListingChange", "formatted change of 15m listing events relative to previous 15m"),
+  ("collectionImageUrl", "opensea collecti  n image url"),
+  ("floorPrice", "floor price of collection derived from previous 15 events"),
+]
+
+let saleVolumeChangeVariables = [
+  ("timeElapsed", "formatted change time window"),
+  ("targetCount", "count of sale events within the most recent time interval"),
+  ("targetBucket", "formatted time interval used to bucket sale events"),
+  ("changeValue", "formatted change value"),
+  ("changeVerb", "one of (\"increase\", \"decrease\") describing change direction"),
+  ("collectionName", "collection name"),
+  ("collectionUrl", "opensea collection image url"),
+  ("collectionImageUrl", "opensea collection image url"),
+  ("changeIndicatorArrow", "one of (\"↗\", \"↘\") indicating change direction"),
+  ("eventCreatedDateTime", "formatted event creation time"),
+  ("eventsScatterPlotImageUrl", "url of most recent 1h events scatterplot image"),
+  ("floorPrice", "floor price of collection derived from previous 15 events"),
+]
+
 @react.component
 let make = (~eventType) => {
   let variables = switch eventType {
-  | #listing => listingVariables
-  | #sale => saleVariables
+  | #LISTING => listingVariables
+  | #SALE => saleVariables
+  | #FLOOR_PRICE_CHANGE => floorPriceChangeVariables
+  | #SALE_VOLUME_CHANGE => saleVolumeChangeVariables
   }
 
   <InfoAlert
