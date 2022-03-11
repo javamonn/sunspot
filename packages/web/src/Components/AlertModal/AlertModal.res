@@ -62,9 +62,9 @@ let validate = value => {
     value->Value.floorPriceChangeRule,
     value->Value.saleVolumeChangeRule,
   ) {
-  | (#SALE_VOLUME_CHANGE, _, Some({relativeValueChange: None}))
-  | (#FLOOR_PRICE_CHANGE, Some({relativeValueChange: None}), _) =>
-    Some("threshold percent change is required")
+  | (#SALE_VOLUME_CHANGE, _, Some({relativeValueChange: None, absoluteValueChange: None}))
+  | (#FLOOR_PRICE_CHANGE, Some({relativeValueChange: None, absoluteValueChange: None}), _) =>
+    Some("at least one of (threshold percent change, threshold absolute change) is required")
   | (_, Some({absoluteValueChange: Some(absoluteValueChange)}), _)
     if absoluteValueChange->Belt.Float.fromString->Js.Option.isNone =>
     Some("absolute value change must be a number")

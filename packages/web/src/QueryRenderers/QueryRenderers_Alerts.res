@@ -144,8 +144,33 @@ let make = () => {
               }
             )
             ->Js.Option.some
-          | #AlertMacroRelativeChangeEventFilter({relativeValueChange, timeWindow}) =>
-            let displayPercent = Services.Format.percent(relativeValueChange)
+          | #AlertMacroRelativeChangeEventFilter({
+              relativeValueChange,
+              absoluteValueChange,
+              timeWindow,
+              direction,
+            }) =>
+            let absoluteValueChangePrefix = switch item.eventType {
+            | #FLOOR_PRICE_CHANGE => `Ξ`
+            | _ => ""
+            }
+            let displayValue = switch (
+              relativeValueChange->Belt.Option.map(Services.Format.percent),
+              absoluteValueChange->Belt.Option.map(Belt.Float.toString),
+            ) {
+            | (Some(relativeValueChange), Some(absoluteValueChange)) =>
+              `${relativeValueChange} (${absoluteValueChangePrefix}${absoluteValueChange})`
+            | (Some(relativeValueChange), None) => relativeValueChange
+            | (None, Some(absoluteValueChange)) =>
+              `${absoluteValueChangePrefix}${absoluteValueChange}`
+            | _ => ""
+            }
+            let displayType = switch direction {
+            | #ALERT_ABOVE => "increase"
+            | #ALERT_BELOW => "decrease"
+            | #ALERT_EQUAL
+            | #FutureAddedValue(_) => "change"
+            }
             let displayTime = switch timeWindow {
             | #MACRO_TIME_WINDOW_10M => " in 10m"
             | #MACRO_TIME_WINDOW_30M => " in 30m"
@@ -153,7 +178,7 @@ let make = () => {
             | #FutureAddedValue(_) => ""
             }
 
-            Some([AlertsTable.RelativeChangeRule(`change ${displayPercent}${displayTime}`)])
+            Some([AlertsTable.RelativeChangeRule(`${displayType} ${displayValue}${displayTime}`)])
 
           | #FutureAddedValue(_) => None
           }
@@ -375,10 +400,15 @@ let make = () => {
 
             timeWindow->Belt.Option.map(timeWindow => {
               AlertModal_AlertRules_FloorPriceChange.timeWindow: timeWindow,
-              relativeValueChange: Some(e.relativeValueChange),
+              relativeValueChange: e.relativeValueChange,
               absoluteValueChange: e.absoluteValueChange
               ->Belt.Option.map(v => v->Belt.Float.toString->Js.Option.some)
               ->Belt.Option.getWithDefault(None),
+              changeDirection: switch e.direction {
+              | #ALERT_ABOVE => #CHANGE_INCREASE
+              | #ALERT_BELOW => #CHANGE_DECREASE
+              | #ALERT_EQUAL | #FutureAddedValue(_) => #CHANGE_ALL
+              },
             })
           | _ => None
           }
@@ -415,11 +445,16 @@ let make = () => {
               Some({
                 AlertModal_AlertRules_SaleVolumeChange.timeBucket: timeBucket,
                 timeWindow: timeWindow,
-                relativeValueChange: Some(e.relativeValueChange),
+                relativeValueChange: e.relativeValueChange,
                 absoluteValueChange: e.absoluteValueChange->Belt.Option.map(Belt.Float.toInt),
                 emptyRelativeDiffAbsoluteValueChange: e.emptyRelativeDiffAbsoluteValueChange->Belt.Option.map(
                   Belt.Float.toInt,
                 ),
+                changeDirection: switch e.direction {
+                | #ALERT_EQUAL => #CHANGE_ALL
+                | #ALERT_ABOVE => #CHANGE_INCREASE
+                | #ALERT_BELOW | #FutureAddedValue(_) => #CHANGE_DECREASE
+                },
               })
             | _ => None
             }

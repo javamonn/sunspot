@@ -5,6 +5,11 @@ type t = {
   relativeValueChange: option<float>,
   absoluteValueChange: option<int>,
   emptyRelativeDiffAbsoluteValueChange: option<int>,
+  changeDirection: [
+    | #CHANGE_ALL
+    | #CHANGE_INCREASE
+    | #CHANGE_DECREASE
+  ],
 }
 
 let getValueWithDefault = v =>
@@ -14,20 +19,21 @@ let getValueWithDefault = v =>
     relativeValueChange: Some(0.25),
     absoluteValueChange: Some(15),
     emptyRelativeDiffAbsoluteValueChange: Some(20),
+    changeDirection: #CHANGE_ALL,
   })
 
 @react.component
 let make = (~value, ~onChange) => {
   <>
     <InfoAlert
-      text="a collection sales volume change alert triggers when a change in the count of sale events bucketed by a time interval exceeds a relative percent threshold and an optional absolute count threshold."
+      text="a collection sales volume change alert triggers when a change in the count of sale events bucketed by a time interval exceeds a relative percent threshold and/or an absolute count threshold."
     />
     <div className={Cn.make(["flex", "flex-row", "mb-6", "mt-6", "space-x-6"])}>
       <MaterialUi.FormControl
         classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["flex-1"]), ())}>
         <MaterialUi.TextField
-          label={React.string("threshold percent change *")}
-          placeholder="15"
+          label={React.string("threshold percent change")}
+          placeholder=""
           _type="number"
           _InputLabelProps={{"shrink": true}}
           _InputProps={{
@@ -96,7 +102,7 @@ let make = (~value, ~onChange) => {
           }}
         />
         <MaterialUi.FormHelperText>
-          {React.string("optional minimum absolute event count change")}
+          {React.string("minimum absolute event count change")}
         </MaterialUi.FormHelperText>
       </MaterialUi.FormControl>
     </div>
@@ -167,5 +173,38 @@ let make = (~value, ~onChange) => {
         </MaterialUi.FormHelperText>
       </MaterialUi.FormControl>
     </div>
+    <MaterialUi.FormControl
+      classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["w-1/2", "mr-6", "mt-6"]), ())}>
+      <MaterialUi.InputLabel shrink=true htmlFor="">
+        {React.string("change type *")}
+      </MaterialUi.InputLabel>
+      <MaterialUi.Select
+        value={value
+        ->getValueWithDefault
+        ->changeDirection
+        ->Obj.magic
+        ->MaterialUi.Select.Value.string}
+        onChange={(ev, _) => {
+          let target = ev->ReactEvent.Form.target
+          let newChangeDirection = target["value"]
+          onChange({
+            ...getValueWithDefault(value),
+            changeDirection: newChangeDirection,
+          })
+        }}>
+        {[#CHANGE_ALL, #CHANGE_INCREASE, #CHANGE_DECREASE]->Belt.Array.map(changeType => {
+          <MaterialUi.MenuItem value={changeType->Obj.magic->MaterialUi.MenuItem.Value.string}>
+            {switch changeType {
+            | #CHANGE_ALL => "all"
+            | #CHANGE_INCREASE => "increase"
+            | #CHANGE_DECREASE => "decrease"
+            }}
+          </MaterialUi.MenuItem>
+        })}
+      </MaterialUi.Select>
+      <MaterialUi.FormHelperText>
+        {React.string("the direction of change to consider")}
+      </MaterialUi.FormHelperText>
+    </MaterialUi.FormControl>
   </>
 }

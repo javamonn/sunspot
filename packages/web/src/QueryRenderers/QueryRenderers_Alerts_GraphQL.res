@@ -70,6 +70,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         relativeValueChange
         absoluteValueChange
         emptyRelativeDiffAbsoluteValueChange
+        direction
       }
       ... on AlertQuantityEventFilter {
         numberValue: value
