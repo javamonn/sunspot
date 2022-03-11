@@ -5,13 +5,13 @@ open AlertsTable_Types
 
 // static widths to support ssr rehydration
 let loadingWidths = [
-  (0, 139, 131, 140, 160, 130),
-  (1, 217, 147, 140, 120, 130),
-  (2, 147, 141, 117, 0, 200),
-  (3, 190, 109, 113, 140, 100),
-  (4, 187, 154, 102, 130, 80),
-  (5, 126, 96, 108, 100, 140),
-  (6, 192, 127, 118, 0, 160),
+  (0, 139, 131, 140, 130),
+  (1, 217, 147, 140, 130),
+  (2, 147, 141, 117, 200),
+  (3, 190, 109, 113, 100),
+  (4, 187, 154, 102, 80),
+  (5, 126, 96, 108, 140),
+  (6, 192, 127, 118, 160),
 ]
 
 @react.component
@@ -38,7 +38,7 @@ let make = (~rows, ~onRowClick, ~onCreateAlertClick, ~isLoading) => <>
       </MaterialUi.TableHead>
       <MaterialUi.TableBody>
         {isLoading
-          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4, width5)) =>
+          ? loadingWidths->Belt.Array.map(((idx, width1, width2, width3, width4)) =>
               <MaterialUi.TableRow key={Belt.Int.toString(idx)}>
                 <MaterialUi.TableCell
                   classes={MaterialUi.TableCell.Classes.make(
@@ -74,15 +74,8 @@ let make = (~rows, ~onRowClick, ~onCreateAlertClick, ~isLoading) => <>
                 <MaterialUi.TableCell>
                   <MaterialUi_Lab.Skeleton
                     variant=#Text
-                    height={MaterialUi_Lab.Skeleton.Height.int(28)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width4)}
-                  />
-                </MaterialUi.TableCell>
-                <MaterialUi.TableCell>
-                  <MaterialUi_Lab.Skeleton
-                    variant=#Text
                     height={MaterialUi_Lab.Skeleton.Height.int(48)}
-                    width={MaterialUi_Lab.Skeleton.Width.int(width5)}
+                    width={MaterialUi_Lab.Skeleton.Width.int(width4)}
                   />
                 </MaterialUi.TableCell>
               </MaterialUi.TableRow>
@@ -147,41 +140,7 @@ let make = (~rows, ~onRowClick, ~onCreateAlertClick, ~isLoading) => <>
                       ~root=Cn.make(["sm:py-2", "sm:px-2"]),
                       (),
                     )}>
-                    {row.rules
-                    ->Belt.Array.getBy(rule =>
-                      switch rule {
-                      | PriceRule(_) => true
-                      | _ => false
-                      }
-                    )
-                    ->Belt.Option.flatMap(rule =>
-                      switch rule {
-                      | PriceRule({modifier, price}) =>
-                        Some(
-                          <MaterialUi.Typography
-                            color=#TextPrimary
-                            variant=#Body2
-                            classes={MaterialUi.Typography.Classes.make(
-                              ~body2=Cn.make(["sm:min-w-28"]),
-                              (),
-                            )}>
-                            {React.string("price ")}
-                            {React.string(modifier)}
-                            {React.string(` Ξ`)}
-                            {React.string(price)}
-                          </MaterialUi.Typography>,
-                        )
-                      | _ => None
-                      }
-                    )
-                    ->Belt.Option.getWithDefault(React.null)}
-                  </MaterialUi.TableCell>
-                  <MaterialUi.TableCell
-                    classes={MaterialUi.TableCell.Classes.make(
-                      ~root=Cn.make(["sm:py-2", "sm:px-2"]),
-                      (),
-                    )}>
-                    <AlertsTable_PropertiesCell row={row} />
+                    <AlertsTable_RulesCell rules={row.rules} />
                   </MaterialUi.TableCell>
                   <MaterialUi.TableCell
                     classes={MaterialUi.TableCell.Classes.make(

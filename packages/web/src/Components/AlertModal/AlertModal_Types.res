@@ -21,7 +21,7 @@ module MacroTimeBucket = {
     switch t {
     | #MACRO_TIME_BUCKET_5M => "5m"
     | #MACRO_TIME_BUCKET_15M => "15m"
-    | #MACRO_TIME_WINDOW_30M => "30m"
+    | #MACRO_TIME_BUCKET_30M => "30m"
     }
 }
 
@@ -34,7 +34,8 @@ module MacroTimeWindow = {
 
   let toDisplay = t =>
     switch t {
-    | #MACRO_TIME_WINDOW_5M => "5m"
     | #MACRO_TIME_WINDOW_10M => "10m"
+    | #MACRO_TIME_WINDOW_30M => "30m"
+    | #MACRO_TIME_WINDOW_1H => "1h"
     }
 }

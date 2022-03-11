@@ -1,24 +1,109 @@
+@deriving(accessors)
 type t = {
   timeWindow: AlertModal_Types.MacroTimeWindow.t,
-  relativeValueChange: float,
-  absoluteValueChange: option<float>,
+  relativeValueChange: option<float>,
+  absoluteValueChange: option<string>,
 }
 
 let getValueWithDefault = v =>
   v->Belt.Option.getWithDefault({
     timeWindow: #MACRO_TIME_WINDOW_1H,
-    relativeValueChange: 0.15,
-    absoluteValueChange: Some(0.01)
+    relativeValueChange: Some(0.15),
+    absoluteValueChange: Some("0.01"),
   })
 
 @react.component
 let make = (~value, ~onChange) => {
   <>
-    <MaterialUi.FormControl>
+    <InfoAlert
+      text="a collection floor price change alert triggers when the floor price of the trailing 15 events exceeds a relative percent threshold and an optional absolute price threshold."
+    />
+    <div className={Cn.make(["flex", "flex-row", "mb-6", "mt-6", "space-x-6"])}>
+      <MaterialUi.FormControl
+        classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["flex-1"]), ())}>
+        <MaterialUi.TextField
+          label={React.string("threshold percent change *")}
+          placeholder="15"
+          _type="number"
+          _InputLabelProps={{"shrink": true}}
+          _InputProps={{
+            "inputMode": "numeric",
+            "endAdornment": <MaterialUi.InputAdornment position=#End>
+              {React.string(`%`)}
+            </MaterialUi.InputAdornment>,
+          }}
+          value={value
+          ->getValueWithDefault
+          ->relativeValueChange
+          ->Belt.Option.map(Services.Format.percent(~includeSymbol=false))
+          ->Belt.Option.getWithDefault("")
+          ->MaterialUi.TextField.Value.string}
+          onChange={ev => {
+            let target = ev->ReactEvent.Form.target
+            let newValue = target["value"]
+
+            switch Belt.Float.fromString(newValue) {
+            | Some(newValue) =>
+              onChange({
+                ...getValueWithDefault(value),
+                relativeValueChange: Some(newValue /. 100.0),
+              })
+            | None if Js.String2.length(newValue) === 0 =>
+              onChange({
+                ...getValueWithDefault(value),
+                relativeValueChange: None,
+              })
+            | _ => ()
+            }
+          }}
+        />
+        <MaterialUi.FormHelperText>
+          {React.string("minimum floor price percent change")}
+        </MaterialUi.FormHelperText>
+      </MaterialUi.FormControl>
+      <MaterialUi.FormControl
+        classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["flex-1"]), ())}>
+        <MaterialUi.TextField
+          label={React.string("threshold absolute change")}
+          _type="number"
+          _InputLabelProps={{"shrink": true}}
+          _InputProps={{
+            "inputMode": "numeric",
+            "startAdornment": <MaterialUi.InputAdornment position=#Start>
+              {React.string(`Ξ`)}
+            </MaterialUi.InputAdornment>,
+          }}
+          value={value
+          ->getValueWithDefault
+          ->absoluteValueChange
+          ->Belt.Option.getWithDefault("")
+          ->MaterialUi.TextField.Value.string}
+          onChange={ev => {
+            let target = ev->ReactEvent.Form.target
+            let newAbsoluteValueChange = target["value"]
+
+            onChange({
+              ...getValueWithDefault(value),
+              absoluteValueChange: if Belt.Array.length(newAbsoluteValueChange) > 0 {
+                Some(newAbsoluteValueChange)
+              } else {
+                None
+              },
+            })
+          }}
+        />
+        <MaterialUi.FormHelperText>
+          {React.string("optional minimum absolute floor price change")}
+        </MaterialUi.FormHelperText>
+      </MaterialUi.FormControl>
+    </div>
+    <MaterialUi.FormControl
+      classes={MaterialUi.FormControl.Classes.make(~root=Cn.make(["w-1/2"]), ())}>
       <MaterialUi.InputLabel shrink=true htmlFor="">
-        {React.string("time window")}
+        {React.string("time window *")}
       </MaterialUi.InputLabel>
       <MaterialUi.Select
+        value={value->getValueWithDefault->timeWindow->Obj.magic->MaterialUi.Select.Value.string}
         onChange={(ev, _) => {
           let target = ev->ReactEvent.Form.target
           let newTimeWindow = target["value"]
@@ -27,12 +112,19 @@ let make = (~value, ~onChange) => {
             timeWindow: newTimeWindow,
           })
         }}>
-        {[#MACRO_TIME_WINDOW_5M]->Belt.Array.map(timeBucket =>
-          <MaterialUi.MenuItem value={timeBucket->Obj.magic->MaterialUi.MenuItem.Value.string}>
-            {AlertModal_Types.MacroTimeWindow.toDisplay(timeBucket)}
+        {[
+          #MACRO_TIME_WINDOW_10M,
+          #MACRO_TIME_WINDOW_30M,
+          #MACRO_TIME_WINDOW_1H,
+        ]->Belt.Array.map(timeWindow => {
+          <MaterialUi.MenuItem value={timeWindow->Obj.magic->MaterialUi.MenuItem.Value.string}>
+            {AlertModal_Types.MacroTimeWindow.toDisplay(timeWindow)}
           </MaterialUi.MenuItem>
-        )}
+        })}
       </MaterialUi.Select>
+      <MaterialUi.FormHelperText>
+        {React.string("the sliding window of time to evaluate")}
+      </MaterialUi.FormHelperText>
     </MaterialUi.FormControl>
   </>
 }

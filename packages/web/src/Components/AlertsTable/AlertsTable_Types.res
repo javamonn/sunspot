@@ -13,11 +13,7 @@ let columns = [
     minWidth: 120,
   },
   {
-    label: "price",
-    minWidth: 120,
-  },
-  {
-    label: "properties",
+    label: "rules",
     minWidth: 120,
   },
   {
