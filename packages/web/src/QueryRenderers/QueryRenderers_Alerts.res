@@ -144,36 +144,22 @@ let make = () => {
               }
             )
             ->Js.Option.some
-          | #AlertMacroRelativeChangeEventFilter({
-              relativeValueChange,
-              absoluteValueChange,
-              timeBucket,
-              timeWindow,
-            }) =>
-            let displayTarget = switch item.eventType {
-            | #SALE_VOLUME_CHANGE => Some("sale volume")
-            | #FLOOR_PRICE_CHANGE => Some("floor price")
-            | _ => None
-            }
+          | #AlertMacroRelativeChangeEventFilter({relativeValueChange, timeWindow}) =>
             let displayPercent = Services.Format.percent(relativeValueChange)
             let displayTime = switch timeWindow {
-            | #MACRO_TIME_WINDOW_10M => "in 10m"
-            | #MACRO_TIME_WINDOW_30M => "in 30m"
-            | #MACRO_TIME_WINDOW_1H => "in 1h"
+            | #MACRO_TIME_WINDOW_10M => " in 10m"
+            | #MACRO_TIME_WINDOW_30M => " in 30m"
+            | #MACRO_TIME_WINDOW_1H => " in 1h"
             | #FutureAddedValue(_) => ""
             }
 
-            displayTarget->Belt.Option.map(displayTarget => [
-              AlertsTable.RelativeChangeRule(
-                `${displayTarget} change ${displayPercent}${displayTime}`,
-              ),
-            ])
+            Some([AlertsTable.RelativeChangeRule(`change ${displayPercent}${displayTime}`)])
 
           | #FutureAddedValue(_) => None
           }
         )
         ->Belt.Array.concatMany
-      let eventType = switch item.eventType {
+      let displayEventType = switch item.eventType {
       | #FutureAddedValue(v) => Js.String2.toLowerCase(v)
       | #LISTING => "listing"
       | #SALE => "sale"
@@ -326,7 +312,7 @@ let make = () => {
         collectionName: item.collection.name,
         collectionSlug: item.collection.slug,
         collectionImageUrl: item.collection.imageUrl,
-        eventType: eventType,
+        eventType: displayEventType,
         externalUrl: externalUrl,
         rules: rules,
         disabledInfo: disabledInfo,
@@ -389,8 +375,10 @@ let make = () => {
 
             timeWindow->Belt.Option.map(timeWindow => {
               AlertModal_AlertRules_FloorPriceChange.timeWindow: timeWindow,
-              relativeValueChange: e.relativeValueChange,
-              absoluteValueChange: e.absoluteValueChange,
+              relativeValueChange: Some(e.relativeValueChange),
+              absoluteValueChange: e.absoluteValueChange
+              ->Belt.Option.map(v => v->Belt.Float.toString->Js.Option.some)
+              ->Belt.Option.getWithDefault(None),
             })
           | _ => None
           }
@@ -427,9 +415,11 @@ let make = () => {
               Some({
                 AlertModal_AlertRules_SaleVolumeChange.timeBucket: timeBucket,
                 timeWindow: timeWindow,
-                relativeValueChange: e.relativeValueChange,
-                absoluteValueChange: e.absoluteValueChange,
-                emptyRelativeDiffAbsoluteValueChange: e.emptyRelativeDiffAbsoluteValueChange,
+                relativeValueChange: Some(e.relativeValueChange),
+                absoluteValueChange: e.absoluteValueChange->Belt.Option.map(Belt.Float.toInt),
+                emptyRelativeDiffAbsoluteValueChange: e.emptyRelativeDiffAbsoluteValueChange->Belt.Option.map(
+                  Belt.Float.toInt,
+                ),
               })
             | _ => None
             }

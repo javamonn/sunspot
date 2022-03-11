@@ -129,12 +129,6 @@ let make = (
     <MaterialUi.Divider
       classes={MaterialUi.Divider.Classes.make(~root=Cn.make(["mb-8", "mt-8"]), ())}
     />
-    <MaterialUi.Typography
-      variant=#Subtitle2
-      color=#TextSecondary
-      classes={MaterialUi.Typography.Classes.make(~subtitle2=Cn.make(["mb-4"]), ())}>
-      {React.string("alert rules (optional)")}
-    </MaterialUi.Typography>
     {switch value.eventType {
     | #LISTING
     | #SALE =>

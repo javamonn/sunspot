@@ -57,6 +57,19 @@ let validate = value => {
     }
   | None => None
   }
+  let macroRelativeChangeEventFilterValidation = switch (
+    value->Value.eventType,
+    value->Value.floorPriceChangeRule,
+    value->Value.saleVolumeChangeRule,
+  ) {
+  | (#SALE_VOLUME_CHANGE, _, Some({relativeValueChange: None}))
+  | (#FLOOR_PRICE_CHANGE, Some({relativeValueChange: None}), _) =>
+    Some("threshold percent change is required")
+  | (_, Some({absoluteValueChange: Some(absoluteValueChange)}), _)
+    if absoluteValueChange->Belt.Float.fromString->Js.Option.isNone =>
+    Some("absolute value change must be a number")
+  | _ => None
+  }
 
   [
     collectionValidation,
@@ -64,6 +77,7 @@ let validate = value => {
     propertiesRuleValidation,
     quantityRuleValidation,
     destinationValidation,
+    macroRelativeChangeEventFilterValidation,
   ]
   ->Belt.Array.keepMap(i => i)
   ->Belt.Array.get(0)

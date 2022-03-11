@@ -137,25 +137,29 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
     value->AlertModal.Value.saleVolumeChangeRule,
     value->AlertModal.Value.floorPriceChangeRule,
   ) {
-  | (#SALE_VOLUME_CHANGE, Some(s), _) =>
+  | (#SALE_VOLUME_CHANGE, Some({relativeValueChange: Some(relativeValueChange)} as s), _) =>
     Some({
       alertMacroRelativeChangeEventFilter: Some({
         timeWindow: s.timeWindow,
         timeBucket: Some(s.timeBucket),
-        relativeValueChange: s.relativeValueChange,
-        absoluteValueChange: s.absoluteValueChange,
-        emptyRelativeDiffAbsoluteValueChange: s.emptyRelativeDiffAbsoluteValueChange,
+        relativeValueChange: relativeValueChange,
+        absoluteValueChange: s.absoluteValueChange->Belt.Option.map(Belt.Float.fromInt),
+        emptyRelativeDiffAbsoluteValueChange: s.emptyRelativeDiffAbsoluteValueChange->Belt.Option.map(
+          Belt.Float.fromInt,
+        ),
       }),
       alertQuantityEventFilter: None,
       alertPriceThresholdEventFilter: None,
       alertAttributesEventFilter: None,
     })
-  | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
+  | (#FLOOR_PRICE_CHANGE, _, Some({relativeValueChange: Some(relativeValueChange)} as s)) =>
     Some({
       alertMacroRelativeChangeEventFilter: Some({
         timeWindow: s.timeWindow,
-        relativeValueChange: s.relativeValueChange,
-        absoluteValueChange: s.absoluteValueChange,
+        relativeValueChange: relativeValueChange,
+        absoluteValueChange: s.absoluteValueChange
+        ->Belt.Option.map(Belt.Float.fromString)
+        ->Belt.Option.getWithDefault(None),
         emptyRelativeDiffAbsoluteValueChange: None,
         timeBucket: None,
       }),

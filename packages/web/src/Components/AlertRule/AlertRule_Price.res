@@ -63,7 +63,9 @@ let make = (~value=?, ~onChange, ~accordionExpanded) => {
         _InputLabelProps={{"shrink": true}}
         _InputProps={{
           "inputMode": "numeric",
-          "startAdornment": <span className={Cn.make(["mr-2"])}> {React.string(`Ξ`)} </span>,
+          "startAdornment": <MaterialUi.InputAdornment position=#Start>
+            {React.string(`Ξ`)}
+          </MaterialUi.InputAdornment>,
         }}
         value=?{value
         ->Belt.Option.flatMap(v => v.value)

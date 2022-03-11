@@ -27,6 +27,12 @@ let make = (
   }
 
   <>
+    <MaterialUi.Typography
+      variant=#Subtitle2
+      color=#TextSecondary
+      classes={MaterialUi.Typography.Classes.make(~subtitle2=Cn.make(["mb-4"]), ())}>
+      {React.string("alert rules (optional)")}
+    </MaterialUi.Typography>
     <AlertRule_Accordion
       summaryIcon={<MaterialUi.Typography
         variant=#H5
