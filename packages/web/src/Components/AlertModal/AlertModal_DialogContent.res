@@ -34,6 +34,10 @@ let make = (
     executeCollectionAggregateAttributesQuery,
     collectionAggregateAttributesResult,
   ) = Query_OpenSeaCollectionAggregateAttributes.useLazy()
+  let (
+    isCreateTwitterIntegrationDialogOpen,
+    setIsCreateTwitterIntegrationDialogOpen,
+  ) = React.useState(_ => false)
 
   let _ = React.useEffect1(() => {
     value
@@ -65,7 +69,33 @@ let make = (
 
   let handleConnectDiscord = () => Externals.Webapi.Window.open_(Config.discordOAuthUrl)
   let handleConnectSlack = () => Externals.Webapi.Window.open_(Config.slackOAuthUrl)
-  let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
+  // let handleConnectTwitter = () => Externals.Webapi.Window.open_(Config.twitterOAuthUrl)
+  let handleConnectTwitter = () => setIsCreateTwitterIntegrationDialogOpen(_ => true)
+  let handleOnCloseCreateTwitterIntegrationDialog = (
+    twitterIntegration: option<CreateTwitterIntegrationDialog.TwitterIntegration.t>,
+  ) => {
+    let _ = switch twitterIntegration {
+    | Some({user: Some(user), userAuthenticationToken: Some(userAuthenticationToken)}) =>
+      onChange(value => {
+        ...value,
+        destination: Some(
+          AlertRule_Destination.Types.Value.TwitterAlertDestination({
+            userId: user.id,
+            userAuthenticationToken: Some({
+              apiKey: userAuthenticationToken.apiKey,
+              apiSecret: userAuthenticationToken.apiSecret,
+              userAccessToken: userAuthenticationToken.userAccessToken,
+              userAccessSecret: userAuthenticationToken.userAccessSecret,
+            }),
+            accessToken: None,
+            template: None,
+          }),
+        ),
+      })
+    | _ => ()
+    }
+    setIsCreateTwitterIntegrationDialogOpen(_ => false)
+  }
 
   let (isLoadingCollectionAggregateAttributes, collectionAggregateAttributes) = React.useMemo1(() =>
     switch collectionAggregateAttributesResult {
@@ -157,5 +187,9 @@ let make = (
           })}
       />
     }}
+    <CreateTwitterIntegrationDialog
+      isOpen={isCreateTwitterIntegrationDialogOpen}
+      onClose={handleOnCloseCreateTwitterIntegrationDialog}
+    />
   </>
 }

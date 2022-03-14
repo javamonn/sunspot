@@ -26,7 +26,9 @@ let getValueWithDefault = v =>
 let make = (~value, ~onChange) => {
   <>
     <InfoAlert
-      text="a collection sales volume change alert triggers when a change in the count of sale events bucketed by a time interval exceeds a relative percent threshold and/or an absolute count threshold."
+      text={React.string(
+        "a collection sales volume change alert triggers when a change in the count of sale events bucketed by a time interval exceeds a relative percent threshold and/or an absolute count threshold.",
+      )}
     />
     <div className={Cn.make(["flex", "flex-row", "mb-6", "mt-6", "space-x-6"])}>
       <MaterialUi.FormControl

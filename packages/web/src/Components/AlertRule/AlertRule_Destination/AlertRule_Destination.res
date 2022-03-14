@@ -58,10 +58,11 @@ let make = (
               incomingWebhookUrl: incomingWebhookUrl,
               channelId: channelId,
             })
-          | TwitterAlertDestinationOption({userId, accessToken}) =>
+          | TwitterAlertDestinationOption({userId, accessToken, userAuthenticationToken}) =>
             Value.TwitterAlertDestination({
               userId: userId,
               accessToken: accessToken,
+              userAuthenticationToken: userAuthenticationToken,
               template: None,
             })
           }

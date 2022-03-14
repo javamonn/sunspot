@@ -252,7 +252,7 @@ module OptionsEmpty = {
       "properties for this collection are not indexed. if this seems incorrect, reach out to us for support."
     }
 
-    <InfoAlert text={copy} />
+    <InfoAlert text={React.string(copy)} />
   }
 }
 

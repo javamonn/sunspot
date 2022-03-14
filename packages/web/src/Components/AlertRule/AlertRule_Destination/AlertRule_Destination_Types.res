@@ -6,6 +6,13 @@ type destinationOAuthAccessToken = {
   tokenType: string,
 }
 
+type twitterUserAuthenticationToken = {
+  apiKey: string,
+  apiSecret: string,
+  userAccessToken: string,
+  userAccessSecret: string,
+}
+
 module WebPushTemplate = {
   @deriving(accessors)
   type t = {title: string, body: string, isThumbnailImageSize: bool}
@@ -222,7 +229,8 @@ module Value = {
     | SlackAlertDestination({channelId: string, incomingWebhookUrl: string})
     | TwitterAlertDestination({
         userId: string,
-        accessToken: destinationOAuthAccessToken,
+        accessToken: option<destinationOAuthAccessToken>,
+        userAuthenticationToken: option<twitterUserAuthenticationToken>,
         template: option<TwitterTemplate.t>,
       })
 }
@@ -249,7 +257,8 @@ module Option = {
     userId: string,
     username: string,
     profileImageUrl: string,
-    accessToken: destinationOAuthAccessToken,
+    accessToken: option<destinationOAuthAccessToken>,
+    userAuthenticationToken: option<twitterUserAuthenticationToken>,
   }
 
   type t =

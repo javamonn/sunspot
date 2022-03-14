@@ -71,13 +71,21 @@ let make = () => {
             userId: user.id,
             username: user.username,
             profileImageUrl: user.profileImageUrl,
-            accessToken: {
-              accessToken: item.accessToken.accessToken,
-              refreshToken: item.accessToken.refreshToken,
-              scope: item.accessToken.scope,
-              expiresAt: item.accessToken.expiresAt,
-              tokenType: item.accessToken.tokenType,
-            },
+            accessToken: item.accessToken->Belt.Option.map(accessToken => {
+              AlertRule_Destination.Types.accessToken: accessToken.accessToken,
+              refreshToken: accessToken.refreshToken,
+              scope: accessToken.scope,
+              expiresAt: accessToken.expiresAt,
+              tokenType: accessToken.tokenType,
+            }),
+            userAuthenticationToken: item.userAuthenticationToken->Belt.Option.map(
+              userAuthenticationToken => {
+                AlertRule_Destination.Types.apiKey: userAuthenticationToken.apiKey,
+                apiSecret: userAuthenticationToken.apiSecret,
+                userAccessToken: userAuthenticationToken.userAccessToken,
+                userAccessSecret: userAuthenticationToken.userAccessSecret,
+              },
+            ),
           }),
         )
       )
@@ -590,20 +598,28 @@ let make = () => {
             incomingWebhookUrl: incomingWebhookUrl,
           }),
         )
-      | #TwitterAlertDestination({userId, accessToken, template}) =>
+      | #TwitterAlertDestination({userId, accessToken, userAuthenticationToken, template}) =>
         Some(
           AlertRule_Destination.Types.Value.TwitterAlertDestination({
             userId: userId,
             template: template->Belt.Option.map(template => {
               AlertRule_Destination.Types.TwitterTemplate.text: template.text,
             }),
-            accessToken: {
-              accessToken: accessToken.accessToken,
+            accessToken: accessToken->Belt.Option.map(accessToken => {
+              AlertRule_Destination.Types.accessToken: accessToken.accessToken,
               refreshToken: accessToken.refreshToken,
               tokenType: accessToken.tokenType,
               scope: accessToken.scope,
               expiresAt: accessToken.expiresAt,
-            },
+            }),
+            userAuthenticationToken: userAuthenticationToken->Belt.Option.map(
+              userAuthenticationToken => {
+                AlertRule_Destination.Types.apiKey: userAuthenticationToken.apiKey,
+                apiSecret: userAuthenticationToken.apiSecret,
+                userAccessToken: userAuthenticationToken.userAccessToken,
+                userAccessSecret: userAuthenticationToken.userAccessSecret,
+              },
+            ),
           }),
         )
       | #FutureAddedValue(_) => None

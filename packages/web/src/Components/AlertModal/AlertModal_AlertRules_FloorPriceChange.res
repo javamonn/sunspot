@@ -22,7 +22,9 @@ let getValueWithDefault = v =>
 let make = (~value, ~onChange) => {
   <>
     <InfoAlert
-      text="a collection floor price change alert triggers when the floor price of the trailing 15 events exceeds a relative percent threshold and/or an absolute price threshold."
+      text={React.string(
+        "a collection floor price change alert triggers when the floor price of the trailing 15 events exceeds a relative percent threshold and/or an absolute price threshold.",
+      )}
     />
     <div className={Cn.make(["flex", "flex-row", "mb-6", "mt-6", "space-x-6"])}>
       <MaterialUi.FormControl
@@ -161,7 +163,9 @@ let make = (~value, ~onChange) => {
           </MaterialUi.MenuItem>
         })}
       </MaterialUi.Select>
-      <MaterialUi.FormHelperText> {React.string("the direction of change to consider")} </MaterialUi.FormHelperText>
+      <MaterialUi.FormHelperText>
+        {React.string("the direction of change to consider")}
+      </MaterialUi.FormHelperText>
     </MaterialUi.FormControl>
   </>
 }

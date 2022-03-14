@@ -111,6 +111,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
   | Some(AlertRule_Destination.Types.Value.TwitterAlertDestination({
       userId,
       accessToken,
+      userAuthenticationToken,
       template,
     })) =>
     Js.Promise.resolve(
@@ -123,13 +124,21 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
           template: template->Belt.Option.map(template => {
             text: template->AlertRule_Destination.Types.TwitterTemplate.text,
           }),
-          accessToken: {
+          accessToken: accessToken->Belt.Option.map(accessToken => {
             accessToken: accessToken.accessToken,
             refreshToken: accessToken.refreshToken,
             tokenType: accessToken.tokenType,
             scope: accessToken.scope,
             expiresAt: accessToken.expiresAt,
-          },
+          }),
+          userAuthenticationToken: userAuthenticationToken->Belt.Option.map(
+            userAuthenticationToken => {
+              apiKey: userAuthenticationToken.apiKey,
+              apiSecret: userAuthenticationToken.apiSecret,
+              userAccessToken: userAuthenticationToken.userAccessToken,
+              userAccessSecret: userAuthenticationToken.userAccessSecret,
+            },
+          ),
         }),
       }),
     )

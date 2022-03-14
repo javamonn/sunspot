@@ -76,7 +76,7 @@ let make = (~eventType) => {
   }
 
   <InfoAlert
-    text="Use {variable name} to interpolate contextual values into your template."
+    text={React.string("Use {variable name} to interpolate contextual values into your template.")}
     className={Cn.make(["mb-4"])}>
     <div className={Cn.make(["max-h-48", "overflow-y-scroll"])}>
       <MaterialUi.Table size=#Small stickyHeader={true}>

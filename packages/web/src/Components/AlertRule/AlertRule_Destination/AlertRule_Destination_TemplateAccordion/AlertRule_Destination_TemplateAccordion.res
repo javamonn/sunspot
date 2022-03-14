@@ -40,8 +40,11 @@ let make = (~value=?, ~onChange, ~eventType: AlertRule_EventType.t, ~accordionEx
         )}
       eventType={eventType}
     />
-  | None => <InfoAlert text={"select a destination to customize alert template."} />
-  | _ => <InfoAlert text={"custom templates are not yet supported for this destination."} />
+  | None => <InfoAlert text={React.string("select a destination to customize alert template.")} />
+  | _ =>
+    <InfoAlert
+      text={React.string("custom templates are not yet supported for this destination.")}
+    />
   }
 
 let make = React.memoCustomCompareProps(make, (prevProps, nextProps) =>

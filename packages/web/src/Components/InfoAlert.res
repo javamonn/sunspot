@@ -17,7 +17,7 @@ let make = (~text, ~className="", ~children=?) =>
     ])}>
     <div className={Cn.make(["flex", "flex-row", "items-center", "p-6"])}>
       <Externals.MaterialUi_Icons.Error className={Cn.make(["w-5", "h-5", "mr-4", "opacity-50"])} />
-      {React.string(text)}
+      {text}
     </div>
     {switch children {
     | Some(children) => <> <MaterialUi.Divider /> {children} </>

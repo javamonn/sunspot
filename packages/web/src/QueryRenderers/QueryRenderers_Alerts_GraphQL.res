@@ -54,6 +54,12 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         template {
           text
         }
+        userAuthenticationToken {
+          apiKey
+          apiSecret
+          userAccessSecret
+          userAccessToken
+        }
         accessToken {
           accessToken 
           tokenType
@@ -103,6 +109,29 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     }
   }
 
+  fragment TwitterIntegration on TwitterIntegration {
+    accountAddress
+    userId  
+    user {
+      id
+      username
+      profileImageUrl
+    }
+    accessToken {
+      accessToken 
+      tokenType
+      refreshToken
+      expiresAt
+      scope
+    }
+    userAuthenticationToken {
+      apiKey
+      apiSecret
+      userAccessSecret
+      userAccessToken
+    }
+  }
+
   query AlertRulesAndOAuthIntegrationsByAccountAddress(
     $accountAddress: String!, 
     $limit: Int,
@@ -143,19 +172,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     }
     twitterIntegrations: twitterIntegrationsByAccountAddress(input: $twitterIntegrationsInput) {
       items {
-        userId  
-        user {
-          id
-          username
-          profileImageUrl
-        }
-        accessToken {
-          accessToken 
-          tokenType
-          refreshToken
-          expiresAt
-          scope
-        }
+        ...TwitterIntegration
       }
     }
   }

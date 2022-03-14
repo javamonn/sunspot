@@ -112,20 +112,25 @@ let makeSteps = (
           onChange={setterFn => setAlertRuleValue(setterFn)}
           destinationOptions={createTwitterOAuthIntegrationMutationResultData
           ->Belt.Option.flatMap(data =>
-            data.twitterIntegration.user->Belt.Option.map(user => [
-              AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
-                userId: user.id,
-                username: user.username,
-                profileImageUrl: user.profileImageUrl,
-                accessToken: {
-                  accessToken: data.twitterIntegration.accessToken.accessToken,
-                  refreshToken: data.twitterIntegration.accessToken.refreshToken,
-                  scope: data.twitterIntegration.accessToken.scope,
-                  expiresAt: data.twitterIntegration.accessToken.expiresAt,
-                  tokenType: data.twitterIntegration.accessToken.tokenType,
-                },
-              }),
-            ])
+            switch (data.twitterIntegration.user, data.twitterIntegration.accessToken) {
+            | (Some(user), Some(accessToken)) =>
+              Some([
+                AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
+                  userId: user.id,
+                  username: user.username,
+                  profileImageUrl: user.profileImageUrl,
+                  accessToken: Some({
+                    accessToken: accessToken.accessToken,
+                    refreshToken: accessToken.refreshToken,
+                    scope: accessToken.scope,
+                    expiresAt: accessToken.expiresAt,
+                    tokenType: accessToken.tokenType,
+                  }),
+                  userAuthenticationToken: None,
+                }),
+              ])
+            | _ => None
+            }
           )
           ->Belt.Option.getWithDefault([])}
           destinationDisabled={true}
@@ -383,6 +388,7 @@ let make = (~onCreated, ~params) => {
                 tokenType: accessToken.tokenType,
                 expiresAt: accessToken.expiresAt,
               }),
+              userAuthenticationToken: None,
             },
           })
         )
@@ -394,18 +400,19 @@ let make = (~onCreated, ~params) => {
             >,
           ) =>
             switch result {
-            | {data: {twitterIntegration: {user: Some(user), accessToken}}} =>
+            | {data: {twitterIntegration: {user: Some(user), accessToken: Some(accessToken)}}} =>
               Some(
                 AlertRule_Destination.Types.Value.TwitterAlertDestination({
                   userId: user.id,
                   template: None,
-                  accessToken: {
+                  accessToken: Some({
                     accessToken: accessToken.accessToken,
                     refreshToken: accessToken.refreshToken,
                     expiresAt: accessToken.expiresAt,
                     scope: accessToken.scope,
                     tokenType: accessToken.tokenType,
-                  },
+                  }),
+                  userAuthenticationToken: None,
                 }),
               )
             | _ => None
@@ -659,7 +666,7 @@ let make = (~onCreated, ~params) => {
         discordAlertDestination: None,
         twitterAlertDestination: None,
       }
-    | Some(TwitterAlertDestination({userId, accessToken, template})) => {
+    | Some(TwitterAlertDestination({userId, accessToken, template, userAuthenticationToken})) => {
         discordAlertDestination: None,
         webPushAlertDestination: None,
         slackAlertDestination: None,
@@ -668,13 +675,21 @@ let make = (~onCreated, ~params) => {
           template: template->Belt.Option.map(template => {
             text: template->AlertRule_Destination.Types.TwitterTemplate.text,
           }),
-          accessToken: {
+          accessToken: accessToken->Belt.Option.map(accessToken => {
             accessToken: accessToken.accessToken,
             refreshToken: accessToken.refreshToken,
             tokenType: accessToken.tokenType,
             scope: accessToken.scope,
             expiresAt: accessToken.expiresAt,
-          },
+          }),
+          userAuthenticationToken: userAuthenticationToken->Belt.Option.map(
+            userAuthenticationToken => {
+              apiKey: userAuthenticationToken.apiKey,
+              apiSecret: userAuthenticationToken.apiSecret,
+              userAccessToken: userAuthenticationToken.userAccessToken,
+              userAccessSecret: userAuthenticationToken.userAccessSecret,
+            },
+          ),
         }),
       }
     | _ => raise(AlertDestinationRequired)
