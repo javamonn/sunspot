@@ -130,7 +130,7 @@ module UseTransaction = {
   @deriving(accessors)
   type result = {
     data: option<Js.Json.t>,
-    error: option<Js.Exn.t>,
+    error: option<string>,
   }
 
   type request = {

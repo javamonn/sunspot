@@ -26,15 +26,17 @@ let make = (~className=?) => {
           },
         })
         |> Js.Promise.then_(result => {
-          let _ = switch result.data {
-          | Some(_) =>
+          let _ = switch result {
+          | {data: Some(_)} =>
             openSnackbar(
               ~type_=Contexts.Snackbar.TypeSuccess,
               ~message=React.string("thank you for your support."),
               ~duration=4000,
               (),
             )
-          | None => ()
+          | {error: Some(error)} if Js.String2.startsWith(error, "err: insufficient funds") =>
+            Externals.Webapi.Window.open_(`https://etherscan.io/address/${Config.donationsAddress}`)
+          | _ => ()
           }
           Js.Promise.resolve()
         })

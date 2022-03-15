@@ -103,8 +103,7 @@ let getInitialAuthenticationState = account =>
       InProgress_JWTRefresh(credentials)
     } else if !isAwsCredentialValid && !isJwtValid {
       switch account {
-      | Some(account) if !Config.isMobile() =>
-        Unauthenticated_AuthenticationChallengeRequired(account)
+      | Some(account) => Unauthenticated_AuthenticationChallengeRequired(account)
       | _ => Unauthenticated_ConnectRequired
       }
     } else {
@@ -331,27 +330,9 @@ let make = (~children) => {
       })
   }
 
-  // FIXME: https://github.com/tmm/wagmi/issues/214
-  let _ = React.useEffect1(() => {
-    if previousConnecting.current && !connecting {
-      switch account {
-      | Some({connector: {id: "walletConnect"}}) =>
-        disconnect()
-        setAuthentication(_ => Unauthenticated_ConnectRequired)
-      | _ => ()
-      }
-    }
-    previousConnecting.current = connecting
-
-    None
-  }, [connecting])
-
   let _ = React.useEffect2(() => {
     let _ = switch (authentication, account) {
-    | (Unauthenticated_ConnectRequired, _) if connecting && Config.isMobile() => // disconnect()
-      ()
-    | (Unauthenticated_ConnectRequired, Some({connector: {id: connectorId}} as account))
-      if connectorId !== "walletConnect" =>
+    | (Unauthenticated_ConnectRequired, Some(account)) =>
       setAuthentication(_ => Unauthenticated_AuthenticationChallengeRequired(account))
     | (InProgress_PromptConnectWallet, Some(account)) =>
       setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
