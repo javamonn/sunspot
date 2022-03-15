@@ -116,7 +116,7 @@ let make = (~isOpen, ~onClose) => {
       <InfoAlert
         text={<p className={Cn.make(["whitespace-pre-wrap"])}>
           {React.string(
-            "sunspot will tweet alerts as connected account. connecting a twitter account requires a twitter developer account and API project. \n\njoin the sunspot ",
+            "sunspot will tweet alerts as connected account. connecting a twitter account requires a twitter developer account and api project. \n\njoin the sunspot ",
           )}
           <a
             href={Config.discordGuildInviteUrl}
@@ -124,7 +124,7 @@ let make = (~isOpen, ~onClose) => {
             className={Cn.make(["underline", "inline"])}>
             {React.string("discord")}
           </a>
-          {React.string(" if you require assistence.")}
+          {React.string(" if you require assistance.")}
         </p>}>
         <ol className={Cn.make(["list-decimal", "list-inside", "p-6", "space-y-4"])}>
           <li>
