@@ -19,25 +19,25 @@ module WebPushTemplate = {
 
   let defaultSaleTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
-    body: "{collectionName}\n{alertRulesSatisfied}",
+    body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
   }
 
   let defaultListingTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
-    body: "{collectionName}\n{alertRulesSatisfied}",
+    body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
   }
 
   let defaultFloorPriceChangeTemplate = {
     title: "floor {changeVerb}: {collectionName}",
-    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}",
     isThumbnailImageSize: false,
   }
 
   let defaultSaleVolumeChangeTemplate = {
     title: "sales {changeVerb}: {collectionName}",
-    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}",
+    body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}",
     isThumbnailImageSize: false,
   }
 }
@@ -49,10 +49,10 @@ module TwitterTemplate = {
   let defaultListingTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
   let defaultSaleTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
   let defaultSaleVolumeChangeTemplate = {
-    text: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\n\n{eventsScatterPlotImageUrl}",
+    text: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}\n\n{eventsScatterPlotImageUrl}",
   }
   let defaultFloorPriceChangeTemplate = {
-    text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\n\n{eventsScatterPlotImageUrl}",
+    text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}\n\n{eventsScatterPlotImageUrl}",
   }
 }
 
@@ -134,7 +134,7 @@ module DiscordTemplate = {
       {
         name: "event",
         value: "{eventType}",
-        inline: true,
+        inline: false,
       },
       {
         name: "price",
@@ -144,6 +144,11 @@ module DiscordTemplate = {
       {
         name: "quantity",
         value: "{quantity}",
+        inline: true,
+      },
+      {
+        name: "floor price",
+        value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
         inline: true,
       },
       {
@@ -179,7 +184,7 @@ module DiscordTemplate = {
       {
         name: "event",
         value: "{eventType}",
-        inline: true,
+        inline: false,
       },
       {
         name: "price",
@@ -189,6 +194,11 @@ module DiscordTemplate = {
       {
         name: "quantity",
         value: "{quantity}",
+        inline: true,
+      },
+      {
+        name: "floor price",
+        value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
         inline: true,
       },
       {
