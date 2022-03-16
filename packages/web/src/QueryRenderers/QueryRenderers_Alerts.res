@@ -356,6 +356,7 @@ let make = () => {
   let handleConnectWalletClicked = _ => {
     let _ = signIn()
   }
+
   let handleRowClick = row =>
     alertRuleItems
     ->Belt.Array.getBy(item => AlertsTable.id(row) == item.id)

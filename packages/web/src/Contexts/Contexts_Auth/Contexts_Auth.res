@@ -341,6 +341,10 @@ let make = (~children) => {
     | (Unauthenticated_AuthenticationChallengeRequired(_), None)
       if !connecting && !isAccountLoading =>
       setAuthentication(_ => Unauthenticated_ConnectRequired)
+    | (Authenticated({jwt: {accountAddress}}), Some({address} as account))
+      if address !== accountAddress =>
+      Contexts_Auth_Credentials.LocalStorage.clear()
+      setAuthentication(_ => InProgress_PromptAuthenticationChallenge(account))
     | _ => ()
     }
 
