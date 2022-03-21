@@ -548,29 +548,30 @@ let make = () => {
             clientId: clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
             guildId: guildId,
             channelId: channelId,
-            roles: roles
-            ->Belt.Option.map(roles =>
-              roles->Belt.Array.map(r => {
-                AlertRule_Destination.Types.DiscordAlertDestination.name: r.name,
-                id: r.id,
-              })
+            // use roles from the integration as they will be most up to date
+            roles: discordIntegrationOptions
+            ->Belt.Array.getBy(opt =>
+              switch opt {
+              | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
+                  guildId: optGuildId,
+                }) if optGuildId === guildId => true
+              | _ => false
+              }
+            )
+            ->Belt.Option.flatMap(opt =>
+              switch opt {
+              | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({roles}) =>
+                Some(roles)
+              | _ => None
+              }
             )
             ->Belt.Option.getWithDefault(
-              discordIntegrationOptions
-              ->Belt.Array.getBy(opt =>
-                switch opt {
-                | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
-                    guildId: optGuildId,
-                  }) if optGuildId === guildId => true
-                | _ => false
-                }
-              )
-              ->Belt.Option.flatMap(opt =>
-                switch opt {
-                | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({roles}) =>
-                  Some(roles)
-                | _ => None
-                }
+              roles
+              ->Belt.Option.map(roles =>
+                roles->Belt.Array.map(r => {
+                  AlertRule_Destination.Types.DiscordAlertDestination.name: r.name,
+                  id: r.id,
+                })
               )
               ->Belt.Option.getWithDefault([]),
             ),
