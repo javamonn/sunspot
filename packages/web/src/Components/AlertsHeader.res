@@ -10,8 +10,7 @@ let make = (
 
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center", "sm:px-4"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
-      <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
-      {React.string(" / alerts")}
+      {React.string("alerts")}
     </h1>
     <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center"])}>
       <MaterialUi.Button
@@ -36,7 +35,7 @@ let make = (
           onClick={onWalletButtonClicked}
           authentication={authentication}
           address={address}
-          provider={connector->Externals_Wagmi.Connector.provider}
+          provider={connector->Externals_Wagmi.Connector.getProvider}
         />
       | None => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}

@@ -1,11 +1,12 @@
 const bsconfig = require("./bsconfig.json");
 const fs = require("fs");
+const path = require("path");
 const RemarkHTML = require("remark-html");
-const webpack = require("webpack")
+const webpack = require("webpack");
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
-const activeDiscordClientId = "909830001363394593"
+const activeDiscordClientId = "909830001363394593";
 
 const config = {
   target: "serverless",
@@ -28,9 +29,12 @@ const config = {
         https: require.resolve("https-browserify"),
         os: require.resolve("os-browserify"),
         assert: require.resolve("assert"),
-        process: require.resolve("process/browser")
+        process: require.resolve("process/browser"),
       };
     }
+
+    // opensea-js includes a duplicate instance of ethers
+    // config.resolve.alias["ethers"] = path.resolve("./node_modules/ethers");
 
     // We need this additional rule to make sure that mjs files are
     // correctly detected within our src/ folder

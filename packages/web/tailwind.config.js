@@ -16,6 +16,9 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
+      flex: {
+        '2': '2 2 0%'
+      },
       listStyleType: {
         circle: "circle",
       },

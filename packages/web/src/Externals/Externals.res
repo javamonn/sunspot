@@ -19,3 +19,5 @@ module Wagmi = Externals_Wagmi
 module PDefer = Externals_PDefer
 module Raw = Externals_Raw
 module Ethers = Externals_Ethers
+module OpenSea = Externals_OpenSea
+module DateFns = Externals_DateFns
