@@ -3,6 +3,7 @@ let make = (~children) => {
   let {authentication, refreshCredentials}: Contexts_Auth.t = React.useContext(
     Contexts_Auth.context,
   )
+  let previousAuthentication = React.useRef(authentication)
 
   let makeClient = () =>
     switch authentication {
@@ -16,7 +17,14 @@ let make = (~children) => {
     }
   let (innerClient, setClient) = React.useState(() => makeClient())
   let _ = React.useEffect1(() => {
-    let _ = setClient(_ => makeClient())
+    switch (previousAuthentication.current, authentication) {
+    | (_, Contexts_Auth.Authenticated(_))
+    | (Authenticated(_), Unauthenticated_ConnectRequired(_))
+    | (Authenticated(_), Unauthenticated_AuthenticationChallengeRequired(_)) =>
+      let _ = setClient(_ => makeClient())
+    | _ => ()
+    }
+    previousAuthentication.current = authentication
     None
   }, [authentication])
   let _ = React.useEffect1(() => {

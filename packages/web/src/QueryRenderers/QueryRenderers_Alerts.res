@@ -130,7 +130,7 @@ let make = () => {
             | #FutureAddedValue(v) => v
             }
             let formattedPrice =
-              Services.PaymentToken.parsePrice(eventFilter.value, eventFilter.paymentToken.decimals)
+              Services.PaymentToken.parseTokenPrice(eventFilter.value, eventFilter.paymentToken.decimals)
               ->Belt.Option.map(Belt.Float.toString)
               ->Belt.Option.getExn
 
@@ -212,7 +212,7 @@ let make = () => {
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
           | #AlertPriceThresholdEventFilter(eventFilter) =>
-            Services.PaymentToken.parsePrice(
+            Services.PaymentToken.parseTokenPrice(
               eventFilter.value,
               eventFilter.paymentToken.decimals,
             )->Belt.Option.flatMap(price =>
@@ -379,7 +379,7 @@ let make = () => {
               | #ALERT_EQUAL => "="
               | #FutureAddedValue(v) => v
               },
-              ~value=Services.PaymentToken.parsePrice(
+              ~value=Services.PaymentToken.parseTokenPrice(
                 eventFilter.value,
                 eventFilter.paymentToken.decimals,
               )->Belt.Option.map(Belt.Float.toString),

@@ -7,7 +7,21 @@ type priceFilter =
   | Min(float)
   | Eq(float)
 
-let makeAssetsUrl = (~collectionSlug, ~traitsFilter=?, ~priceFilter=?, ~eventType, ()) => {
+type sortBy = [
+  | #LISTING_DATE
+  | #LAST_SALE_DATE
+  | #PRICE
+]
+
+let makeAssetsUrl = (
+  ~collectionSlug,
+  ~traitsFilter=?,
+  ~priceFilter=?,
+  ~sortBy=?,
+  ~sortAscending=false,
+  ~eventType,
+  (),
+) => {
   let stringTraitQuery =
     traitsFilter
     ->Belt.Option.getWithDefault([])
@@ -94,8 +108,14 @@ let makeAssetsUrl = (~collectionSlug, ~traitsFilter=?, ~priceFilter=?, ~eventTyp
   }
 
   let sortQuery = switch eventType {
-  | #LISTING => "search[sortAscending]=false&search[sortBy]=LISTING_DATE"
-  | #SALE => "search[sortAscending]=false&search[sortBy]=LAST_SALE_DATE"
+  | #LISTING =>
+    `search[sortAscending]=${sortAscending ? "true" : "false"}&search[sortBy]=${sortBy
+      ->Belt.Option.getWithDefault(#LISTING_DATE)
+      ->Obj.magic}`
+  | #SALE =>
+    `search[sortAscending]=${sortAscending ? "true" : "false"}&search[sortBy]=${sortBy
+      ->Belt.Option.getWithDefault(#LAST_SALE_DATE)
+      ->Obj.magic}`
   | _ => ""
   }
 

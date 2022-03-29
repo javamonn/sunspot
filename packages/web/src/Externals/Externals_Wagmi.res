@@ -4,8 +4,9 @@ module Connector = {
     id: string,
     name: string,
     ready: bool,
-    provider: Externals_Ethereum.t,
   }
+
+  @send external getProvider: t => Externals_Ethereum.t = "getProvider"
 }
 
 module Provider = {
@@ -142,6 +143,11 @@ module UseTransaction = {
 
   @module("wagmi")
   external use: unit => (result, options => Js.Promise.t<result>) = "useTransaction"
+}
+
+module UseProvider = {
+  @module("wagmi")
+  external use: unit => Externals_Ethereum.t = "useProvider"
 }
 
 module UseContext = {

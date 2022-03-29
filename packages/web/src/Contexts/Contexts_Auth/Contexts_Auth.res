@@ -229,7 +229,7 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
 let make = (~children) => {
   let (
     {data: account, loading: isAccountLoading}: Externals.Wagmi.UseAccount.result,
-    disconnect,
+    _,
   ) = Externals.Wagmi.UseAccount.use()
   let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let (authentication, setAuthentication) = React.useState(_ =>

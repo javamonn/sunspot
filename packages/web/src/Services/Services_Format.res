@@ -4,3 +4,10 @@ let percent = (~includeSymbol=true, p) => {
 
   `${display}${includeSymbol ? "%" : ""}`
 }
+
+let address = address => {
+  let head = Js.String2.slice(address, ~from=0, ~to_=6)
+  let tail = Js.String2.sliceToEnd(address, ~from=Js.String2.length(address) - 4)
+
+  `${head}...${tail}`
+}

@@ -18,3 +18,13 @@ module Location = {
 module Window = {
   @val @scope("window") external open_: string => unit = "open"
 }
+
+module URL = {
+  type t
+
+  @new external make: string => t = "URL"
+
+  @get external protocol: t => string = "protocol"
+  @get external pathname: t => string = "pathname"
+  @get external hostname: t => string = "hostname"
+}

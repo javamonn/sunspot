@@ -104,6 +104,7 @@ module Router = {
     events: Events.t,
     pathname: string,
     query: Js.Dict.t<string>,
+    isReady: bool,
   }
 
   type pathObj = {
@@ -111,12 +112,15 @@ module Router = {
     query: Js.Dict.t<string>,
   }
 
+  type params = {shallow: bool}
+
   @send external push: (router, string) => unit = "push"
   @send external pushObj: (router, pathObj) => unit = "push"
 
   @module("next/router") external useRouter: unit => router = "useRouter"
 
   @send external replace: (router, string) => unit = "replace"
+  @send external replaceWithParams: (router, string, option<string>, params) => unit = "replace"
   @send external replaceObj: (router, pathObj) => unit = "replace"
 }
 
