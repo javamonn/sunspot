@@ -87,15 +87,28 @@ let handleNotificationClickEvent = event => {
   )
   let _ = event->NotificationClickEvent.notification->Notification.close
 
-  let openP =
-    event
-    ->NotificationClickEvent.notification
-    ->Notification.data
-    ->Js.Json.decodeObject
+  let notificationData =
+    event->NotificationClickEvent.notification->Notification.data->Js.Json.decodeObject
+
+  let destinationUrl = switch (
+    event->NotificationClickEvent.action,
+    notificationData
     ->Belt.Option.flatMap(o => o->Js.Dict.get("href"))
-    ->Belt.Option.flatMap(Js.Json.decodeString)
-    ->Belt.Option.map(href =>
-      Clients.openWindow(self->clients, href) |> Js.Promise.then_(_ => Js.Promise.resolve())
+    ->Belt.Option.flatMap(Js.Json.decodeString),
+    notificationData
+    ->Belt.Option.flatMap(o => o->Js.Dict.get("quickbuyUrl"))
+    ->Belt.Option.flatMap(Js.Json.decodeString),
+  ) {
+  | ("buy", _, quickbuyUrl) => quickbuyUrl
+  | (_, href, _) => href
+  }
+
+  let openP =
+    destinationUrl
+    ->Belt.Option.map(destinationUrl =>
+      Clients.openWindow(self->clients, destinationUrl) |> Js.Promise.then_(_ =>
+        Js.Promise.resolve()
+      )
     )
     ->Belt.Option.getWithDefault(Js.Promise.resolve())
 
@@ -108,4 +121,3 @@ let _ = self->addEventListener(#push(handlePushEvent))
 let _ = self->addEventListener(#notificationclick(handleNotificationClickEvent))
 let _ = self->addEventListener(#notificationclose(handleNotificationCloseEvent))
 let _ = Workbox.register()
-

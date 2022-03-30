@@ -12,7 +12,9 @@ let make = (~value=?, ~onChange, ~eventType) => {
   )
 
   <div className={Cn.make(["flex", "flex-col"])}>
-    <AlertRule_Destination_TemplateAccordion_InfoAlert eventType={eventType} />
+    <AlertRule_Destination_TemplateAccordion_InfoAlert
+      eventType={eventType} className={Cn.make(["mb-4"])}
+    />
     <MaterialUi.TextField
       label={React.string("text")}
       value={valueWithDefault->text->MaterialUi.TextField.Value.string}

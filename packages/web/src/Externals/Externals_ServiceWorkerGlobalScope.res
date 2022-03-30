@@ -46,7 +46,7 @@ module NotificationCloseEvent = {
 
 module NotificationClickEvent = {
   @deriving(accessors)
-  type t = {notification: Notification.t}
+  type t = {notification: Notification.t, action: string}
   @send external waitUntil: (t, Js.Promise.t<unit>) => unit = "waitUntil"
 }
 
