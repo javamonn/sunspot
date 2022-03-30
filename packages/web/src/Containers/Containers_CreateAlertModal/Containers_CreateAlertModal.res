@@ -35,6 +35,7 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
                 title: template.title,
                 body: template.body,
                 isThumbnailImageSize: template.isThumbnailImageSize,
+                quickbuy: Some(template.quickbuy),
               }),
             }),
             discordAlertDestination: None,
@@ -68,6 +69,9 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
             ->Js.Option.some,
             isThumbnailImageSize: template
             ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
+            ->Js.Option.some,
+            quickbuy: template
+            ->AlertRule_Destination.Types.DiscordTemplate.quickbuy
             ->Js.Option.some,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields

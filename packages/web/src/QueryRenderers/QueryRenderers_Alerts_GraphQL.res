@@ -22,6 +22,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
           title
           body
           isThumbnailImageSize
+          quickbuy
         }
       }
       ... on DiscordAlertDestination {
@@ -38,6 +39,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
           description
           displayProperties
           isThumbnailImageSize
+          quickbuy
           fields {
             name
             value

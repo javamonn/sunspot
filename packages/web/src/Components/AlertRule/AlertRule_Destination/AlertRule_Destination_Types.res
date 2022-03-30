@@ -15,30 +15,34 @@ type twitterUserAuthenticationToken = {
 
 module WebPushTemplate = {
   @deriving(accessors)
-  type t = {title: string, body: string, isThumbnailImageSize: bool}
+  type t = {title: string, body: string, isThumbnailImageSize: bool, quickbuy: bool}
 
   let defaultSaleTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
+    quickbuy: false,
   }
 
   let defaultListingTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
+    quickbuy: true,
   }
 
   let defaultFloorPriceChangeTemplate = {
     title: "floor {changeVerb}: {collectionName}",
     body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}",
     isThumbnailImageSize: false,
+    quickbuy: false,
   }
 
   let defaultSaleVolumeChangeTemplate = {
     title: "sales {changeVerb}: {collectionName}",
     body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}",
     isThumbnailImageSize: false,
+    quickbuy: false,
   }
 }
 
@@ -66,6 +70,7 @@ module DiscordTemplate = {
     displayProperties: bool,
     description: option<string>,
     isThumbnailImageSize: bool,
+    quickbuy: bool,
     fields: option<array<field>>,
   }
 
@@ -75,6 +80,7 @@ module DiscordTemplate = {
     description: None,
     displayProperties: false,
     isThumbnailImageSize: false,
+    quickbuy: false,
     fields: Some([
       {
         name: "current floor price",
@@ -105,6 +111,7 @@ module DiscordTemplate = {
     description: None,
     displayProperties: false,
     isThumbnailImageSize: false,
+    quickbuy: false,
     fields: Some([
       {
         name: "{targetBucket} sales",
@@ -130,6 +137,7 @@ module DiscordTemplate = {
     description: None,
     displayProperties: false,
     isThumbnailImageSize: true,
+    quickbuy: false,
     fields: Some([
       {
         name: "event",
@@ -178,8 +186,9 @@ module DiscordTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
     content: None,
     description: None,
-    displayProperties: false,
+    displayProperties: true,
     isThumbnailImageSize: true,
+    quickbuy: true,
     fields: Some([
       {
         name: "event",

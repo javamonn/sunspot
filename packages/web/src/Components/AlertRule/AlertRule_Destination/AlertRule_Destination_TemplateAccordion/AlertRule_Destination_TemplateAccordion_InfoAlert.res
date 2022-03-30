@@ -71,7 +71,7 @@ let saleVolumeChangeVariables = [
 ]
 
 @react.component
-let make = (~eventType) => {
+let make = (~eventType, ~className=?) => {
   let variables = switch eventType {
   | #LISTING => listingVariables
   | #SALE => saleVariables
@@ -81,7 +81,7 @@ let make = (~eventType) => {
 
   <InfoAlert
     text={React.string("Use {variable name} to interpolate contextual values into your template.")}
-    className={Cn.make(["mb-4"])}>
+    ?className>
     <div className={Cn.make(["max-h-48", "overflow-y-scroll"])}>
       <MaterialUi.Table size=#Small stickyHeader={true}>
         <MaterialUi.TableHead>

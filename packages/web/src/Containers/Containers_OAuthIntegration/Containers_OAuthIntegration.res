@@ -645,6 +645,9 @@ let make = (~onCreated, ~params) => {
             isThumbnailImageSize: template
             ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
             ->Js.Option.some,
+            quickbuy: template
+            ->AlertRule_Destination.Types.DiscordTemplate.quickbuy
+            ->Js.Option.some,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>
