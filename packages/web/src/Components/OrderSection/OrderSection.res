@@ -5,7 +5,7 @@ type executionState =
   | TransactionCreated({transactionHash: string})
   | TransactionConfirmed({transactionHash: string})
   | TransactionFailed({transactionHash: string})
-  | InvalidOrder
+  | InvalidOrder(option<string>)
 
 module AssetMetadata = {
   @react.component
@@ -25,6 +25,13 @@ module AssetMetadata = {
         },
       )
     })
+    let handleClick = label => {
+      Services.Logger.logWithData(
+        "buy",
+        "metadata click",
+        [("label", Js.Json.string(label))]->Js.Dict.fromArray->Js.Json.object_,
+      )
+    }
 
     let items = [
       openSeaOrderFragment.listingTime
@@ -81,7 +88,7 @@ module AssetMetadata = {
             {text}
           </MaterialUi.ListItem>
         | Some(href) =>
-          <a href={href} target="_blank">
+          <a onClick={_ => handleClick(label)} href={href} target="_blank">
             <MaterialUi.ListItem
               button={true}
               classes={MaterialUi.ListItem.Classes.make(
@@ -185,7 +192,7 @@ module HeaderButton = {
           </span>
         </MaterialUi.Button>
       </a>
-    | InvalidOrder =>
+    | InvalidOrder(reason) =>
       <MaterialUi.Button
         fullWidth={true}
         variant=#Contained
@@ -196,7 +203,7 @@ module HeaderButton = {
           (),
         )}>
         <span style={ReactDOM.Style.make(~position="relative", ~top="2px", ())}>
-          {React.string("invalid order")}
+          {reason->Belt.Option.getWithDefault("invalid order")->React.string}
         </span>
       </MaterialUi.Button>
     }
@@ -273,6 +280,14 @@ module AssetDetail = {
   let make = (
     ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
   ) => {
+    let handleClick = destination => {
+      Services.Logger.logWithData(
+        "buy",
+        "asset click",
+        [("destination", Js.Json.string(destination))]->Js.Dict.fromArray->Js.Json.object_,
+      )
+    }
+
     let ({asset: {collection} as asset, metadata}, _setActive) = React.useState(() => {
       let result = switch openSeaOrderFragment {
       | {asset: Some(asset), metadata: {asset: Some(assetMetadata)}} =>
@@ -324,7 +339,7 @@ module AssetDetail = {
         <div className={Cn.make(["flex", "flex-row", "space-x-4", "mb-8"])}>
           <div className={Cn.make(["flex-1"])}> {media} </div>
           <div className={Cn.make(["flex-1", "justify-end", "flex", "flex-col"])}>
-            <a href={asset.permalink} target="_blank">
+            <a href={asset.permalink} onClick={_ => handleClick("asset")} target="_blank">
               <MaterialUi.Button
                 variant=#Text
                 size=#Small
@@ -343,7 +358,10 @@ module AssetDetail = {
             </a>
             {collection
             ->Belt.Option.map(collection =>
-              <a href={Services.URL.collectionUrl(collection.slug)} target="_blank">
+              <a
+                href={Services.URL.collectionUrl(collection.slug)}
+                onClick={_ => handleClick("collection")}
+                target="_blank">
                 <MaterialUi.Button
                   variant=#Text
                   size=#Small

@@ -6,6 +6,7 @@ module Loading = {
 
     let _ = React.useEffect1(() => {
       if invalidRedirect {
+        Services.Logger.log("buy", "invalid order redirect")
         Externals.Next.Router.replace(router, "/alerts")
         openSnackbar(
           ~type_=Contexts.Snackbar.TypeError,
@@ -54,6 +55,7 @@ module Data = {
 
     let handleExecuteOrder = (~provider, ~accountAddress) => {
       setExecutionState(_ => WalletConfirmPending)
+      Services.Logger.log("buy", "handleExecuteOrder")
       let client = Externals.OpenSea.makeClient(
         provider,
         Externals.OpenSea.clientParams(~networkName=Externals.OpenSea.mainNetwork, ()),
@@ -63,14 +65,23 @@ module Data = {
       let _ = Externals.OpenSea.addListener(
         client,
         #TransactionCreated(
-          ({transactionHash}) =>
-            setExecutionState(_ => TransactionCreated({transactionHash: transactionHash})),
+          ({transactionHash}) => {
+            Services.Logger.log("buy", "transaction created")
+            setExecutionState(_ => TransactionCreated({transactionHash: transactionHash}))
+          },
         ),
       )
       let _ = Externals.OpenSea.addListener(
         client,
         #TransactionConfirmed(
           ({transactionHash}) => {
+            let _ = Services.Logger.logWithData(
+              "buy",
+              "transaction confirmed",
+              [("transactionHash", Js.Json.string(transactionHash))]
+              ->Js.Dict.fromArray
+              ->Js.Json.object_,
+            )
             setExecutionState(_ => TransactionConfirmed({transactionHash: transactionHash}))
             let _ = Externals.OpenSea.removeAllListeners(client)
           },
@@ -80,6 +91,13 @@ module Data = {
         client,
         #TransactionFailed(
           ({transactionHash}) => {
+            let _ = Services.Logger.logWithData(
+              "buy",
+              "transaction failed",
+              [("transactionHash", Js.Json.string(transactionHash))]
+              ->Js.Dict.fromArray
+              ->Js.Json.object_,
+            )
             setExecutionState(_ => TransactionFailed({transactionHash: transactionHash}))
             let _ = Externals.OpenSea.removeAllListeners(client)
           },
@@ -100,19 +118,32 @@ module Data = {
           Js.Promise.resolve()
         })
         |> Js.Promise.catch(error => {
+          Js.log(error)
           let message = Js.Nullable.toOption(Obj.magic(error)["message"])
-          Js.log2("message", message)
+          let _ = Services.Logger.logWithData(
+            "buy",
+            "invalid order",
+            [("message", message->Belt.Option.getWithDefault("")->Js.Json.string)]
+            ->Js.Dict.fromArray
+            ->Js.Json.object_,
+          )
           switch message {
-          | Some(message)
-            if Js.String2.startsWith(message, "Failed to authorize transaction") =>
+          | Some(message) if Js.String2.startsWith(message, "Failed to authorize transaction") =>
+            let _ = Services.Logger.log("buy", "failed to authorize transaction")
             openSnackbar(
               ~type_=Contexts.Snackbar.TypeError,
               ~message=React.string("order authorization cancelled."),
-              ~duration=5000,
               (),
             )
             setExecutionState(_ => OrderSection.Buy)
-          | _ => setExecutionState(_ => InvalidOrder)
+          | Some(message) =>
+            openSnackbar(
+              ~type_=Contexts.Snackbar.TypeError,
+              ~message=React.string(message),
+              (),
+            )
+            setExecutionState(_ => InvalidOrder(None))
+          | _ => setExecutionState(_ => InvalidOrder(None))
           }
           Js.Promise.resolve()
         })
