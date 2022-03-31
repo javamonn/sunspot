@@ -2,6 +2,7 @@ open AlertRule_Destination_Types.WebPushTemplate
 
 @react.component
 let make = (~value=?, ~onChange, ~eventType) => {
+  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
   let valueWithDefault = value->Belt.Option.getWithDefault(
     switch eventType {
     | #LISTING => defaultListingTemplate
@@ -10,6 +11,10 @@ let make = (~value=?, ~onChange, ~eventType) => {
     | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
     },
   )
+  let isQuickbuyEnabled = switch account {
+    | Some({ address }) if address === Config.adminAddress => true
+    | _ => false
+  }
 
   let onToggleQuickbuy = () =>
     onChange(
@@ -21,7 +26,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
 
   <div className={Cn.make(["flex", "flex-col"])}>
     {switch eventType {
-    | #LISTING =>
+    | #LISTING if isQuickbuyEnabled =>
       <MaterialUi.FormControl
         classes={MaterialUi.FormControl.Classes.make(
           ~root=Cn.make([
@@ -106,10 +111,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
           }),
         )
       }}
-      classes={MaterialUi.TextField.Classes.make(
-        ~root=Cn.make(["mb-4"]),
-        (),
-      )}
+      classes={MaterialUi.TextField.Classes.make(~root=Cn.make(["mb-4"]), ())}
     />
     <MaterialUi.FormControl>
       <MaterialUi.InputLabel
