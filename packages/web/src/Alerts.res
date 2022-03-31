@@ -12,19 +12,22 @@ let default = () => {
 
   let _ = React.useEffect1(() => {
     let _ = setIsBuyDrawerOpen(_ => Js.Option.isSome(buyParams))
+    Services.Logger.logWithData(
+      "buy",
+      "setIsBuyDrawerOpen",
+      [("isOpen", buyParams->Js.Option.isSome->Js.Json.boolean)]
+      ->Js.Dict.fromArray
+      ->Js.Json.object_,
+    )
     None
   }, [Js.Option.isSome(buyParams)])
 
   let handleBuyDrawerClose = ev => {
-    Js.log2("handleBuyDrawerClose", ev)
     setIsBuyDrawerOpen(_ => false)
   }
   let handleBuyDrawerClosed = _ => {
-    Js.log("handleBuyDrawerClosed")
     Externals.Next.Router.replaceWithParams(router, "/alerts", None, {shallow: true}) // clear query params
   }
-
-  Js.log2("isBuyDrawerOpen", isBuyDrawerOpen)
 
   <>
     <MaterialUi.Drawer
