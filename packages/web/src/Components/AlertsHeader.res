@@ -10,7 +10,8 @@ let make = (
 
   <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center", "sm:px-4"])}>
     <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
-      {React.string("alerts")}
+      <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
+      {React.string(" / alerts")}
     </h1>
     <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center"])}>
       <MaterialUi.Button
