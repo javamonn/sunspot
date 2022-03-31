@@ -2,6 +2,7 @@ open AlertRule_Destination.Types.DiscordTemplate
 
 @react.component
 let make = (~value=?, ~onChange, ~eventType) => {
+  let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
   let valueWithDefault = value->Belt.Option.getWithDefault(
     switch eventType {
     | #LISTING => defaultListingTemplate
@@ -10,6 +11,10 @@ let make = (~value=?, ~onChange, ~eventType) => {
     | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
     },
   )
+  let isQuickbuyEnabled = switch account {
+  | Some({address}) if address === Config.adminAddress => true
+  | _ => false
+  }
 
   let onFieldChange = (fieldIdx, newField) => {
     valueWithDefault
@@ -96,7 +101,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
 
   <div className={Cn.make(["flex", "flex-col"])}>
     {switch eventType {
-    | #LISTING =>
+    | #LISTING if isQuickbuyEnabled =>
       <MaterialUi.FormControl
         classes={MaterialUi.FormControl.Classes.make(
           ~root=Cn.make([

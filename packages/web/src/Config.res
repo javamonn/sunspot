@@ -9,6 +9,7 @@ let isMobile = () => %raw(`window.matchMedia('only screen and (max-width: 639px)
 
 let openstoreContractAddress = "0x495f947276749ce646f68ac8c248420045cb7b5e"
 let donationsAddress = "0x9Bf2A698A34b54D58d036277133d6a8205Bd5d5a"
+let adminAddress = "0x446bfBb5185D79dBBFDb77F9CA81c51409C0480b"
 
 let sentryDsn = "https://46f76de2bfc64d10a89fc90865bb1d47@o1060100.ingest.sentry.io/6049323"
 let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
