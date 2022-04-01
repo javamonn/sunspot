@@ -135,15 +135,28 @@ module Data = {
               ~message=React.string("order authorization cancelled."),
               (),
             )
-            setExecutionState(_ => OrderSection.Buy)
-          | Some(message) =>
-            openSnackbar(
-              ~type_=Contexts.Snackbar.TypeError,
-              ~message=React.string(message),
-              (),
+            setExecutionState(executionState =>
+              switch executionState {
+              | OrderSection.TransactionFailed(_)
+              | OrderSection.TransactionConfirmed(_) => executionState
+              | _ => OrderSection.Buy
+              }
             )
-            setExecutionState(_ => InvalidOrder(None))
-          | _ => setExecutionState(_ => InvalidOrder(None))
+          | Some(message) =>
+            openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
+            setExecutionState(executionState =>
+              switch executionState {
+              | TransactionFailed(_) | TransactionConfirmed(_) => executionState
+              | _ => InvalidOrder(None)
+              }
+            )
+          | _ =>
+            setExecutionState(executionState =>
+              switch executionState {
+              | TransactionFailed(_) | TransactionConfirmed(_) => executionState
+              | _ => InvalidOrder(None)
+              }
+            )
           }
           Js.Promise.resolve()
         })
@@ -333,7 +346,7 @@ let make = (~collectionSlug, ~orderId, ~onClose) => {
     None
   })
 
-  let content = switch (
+  switch (
     orderQueryData
     ->Belt.Option.flatMap(({openSeaOrder}) => openSeaOrder)
     ->Belt.Option.flatMap(parseOpenSeaOrder),
@@ -349,30 +362,4 @@ let make = (~collectionSlug, ~orderId, ~onClose) => {
   | (Some(openSeaOrder), Some(openSeaOrderFragment)) =>
     <Data openSeaOrder={openSeaOrder} openSeaOrderFragment={openSeaOrderFragment} />
   }
-
-  <div
-    className={Cn.make(["flex", "flex-col", "p-4"])}
-    style={ReactDOM.Style.make(~width="796px", ())}>
-    <header
-      style={ReactDOM.Style.make(~height="48px", ())}
-      className={Cn.make(["flex", "flex-row", "items-center"])}>
-      <MaterialUi.IconButton
-        onClick={_ => onClose()}
-        size=#Small
-        classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["mr-4"]), ())}>
-        <Externals.MaterialUi_Icons.Close />
-      </MaterialUi.IconButton>
-      <h1
-        className={Cn.make([
-          "font-mono",
-          "text-darkPrimary",
-          "font-bold",
-          "leading-none",
-          "text-lg",
-        ])}>
-        {React.string("execute buy order")}
-      </h1>
-    </header>
-    {content}
-  </div>
 }

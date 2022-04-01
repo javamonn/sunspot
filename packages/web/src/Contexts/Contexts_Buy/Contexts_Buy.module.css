@@ -1,0 +1,6 @@
+@media (min-width: 539px) {
+  .dialogPaper {
+    width: 796px !important;
+    max-width: 796px !important;
+  }
+}
