@@ -47,7 +47,7 @@ module Fragment_OrderSection_OpenSeaOrder = %graphql(`
       ethPrice
       usdPrice
     }
-    listingTime
+    createdTime
     expirationTime
     asset {
       ...OrderSection_OpenSeaAsset

@@ -71,6 +71,9 @@ const config = {
       })
     );
 
+     // FIXME: minimize breaks opensea-js in a production build, remove once orders are via custom contract 
+    config.optimization.minimize = false;
+
     return config;
   },
   redirects: () => [
