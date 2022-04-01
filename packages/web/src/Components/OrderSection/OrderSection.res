@@ -34,12 +34,12 @@ module AssetMetadata = {
     }
 
     let items = [
-      openSeaOrderFragment.listingTime
+      openSeaOrderFragment.createdTime
       ->Js.Json.decodeNumber
-      ->Belt.Option.map(listingTime => (
+      ->Belt.Option.map(createdTime => (
         "listing time",
         Externals.DateFns.formatDistance(
-          listingTime *. 1000.0,
+          createdTime *. 1000.0,
           now,
           Externals.DateFns.formatDistanceOptions(~includeSeconds=true, ~addSuffix=true, ()),
         ),
