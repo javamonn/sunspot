@@ -29,6 +29,9 @@ module Data = {
     let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
     let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
     let (useAccountResult, _) = Externals.Wagmi.UseAccount.use()
+    let {setIsQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(
+      Contexts_Buy_Context.context,
+    )
     let (executionState, setExecutionState) = React.useState(_ =>
       OrderSection.AuthenticationPending
     )
@@ -52,6 +55,19 @@ module Data = {
       }
       None
     }, [authentication])
+
+    let _ = React.useEffect1(() => {
+      switch executionState {
+      | OrderSection.Buy
+      | InvalidOrder(_)
+      | TransactionConfirmed(_)
+      | TransactionFailed(_)
+      | TransactionCreated(_) =>
+        setIsQuickbuyTxPending(false)
+      | _ => ()
+      }
+      None
+    }, [executionState])
 
     let handleExecuteOrder = (~provider, ~accountAddress) => {
       setExecutionState(_ => WalletConfirmPending)
@@ -118,7 +134,6 @@ module Data = {
           Js.Promise.resolve()
         })
         |> Js.Promise.catch(error => {
-          Js.log(error)
           let message = Js.Nullable.toOption(Obj.magic(error)["message"])
           let _ = Services.Logger.logWithData(
             "buy",

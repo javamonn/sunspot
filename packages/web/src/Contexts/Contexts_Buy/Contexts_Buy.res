@@ -1,17 +1,5 @@
 let styles = %raw("require('./Contexts_Buy.module.css')")
 
-type t = {
-  isBuyModalOpen: bool,
-  isQuickbuyTxPending: bool,
-  setIsQuickbuyTxPending: bool => unit,
-}
-
-let context = React.createContext({
-  isBuyModalOpen: false,
-  isQuickbuyTxPending: false,
-  setIsQuickbuyTxPending: _ => (),
-})
-
 module ContextProvider = {
   include React.Context
 
@@ -21,15 +9,35 @@ module ContextProvider = {
       "children": children,
     }
 
-  let make = React.Context.provider(context)
+  let make = React.Context.provider(Contexts_Buy_Context.context)
+}
+
+let parseQuery = path => {
+  let queryIndex = Js.String2.indexOf(path, "?")
+  if queryIndex !== -1 {
+    try {
+      Js.String2.substringToEnd(~from=queryIndex, path)
+      ->Externals.Webapi.URLSearchParams.make
+      ->Js.Option.some
+    } catch {
+    | _ => None
+    }
+  } else {
+    None
+  }
 }
 
 @react.component
 let make = (~children) => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
+  let queryParams = router.asPath->parseQuery
   let buyParams = switch (
-    router.query->Js.Dict.get("buyCollectionSlug"),
-    router.query->Js.Dict.get("buyOrderId")->Belt.Option.flatMap(Belt.Float.fromString),
+    queryParams->Belt.Option.flatMap(q =>
+      q->Externals.Webapi.URLSearchParams.get("buyCollectionSlug")
+    ),
+    queryParams
+    ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("buyOrderId"))
+    ->Belt.Option.flatMap(Belt.Float.fromString),
   ) {
   | (Some(collectionSlug), Some(orderId)) => Some((collectionSlug, orderId))
   | _ => None
@@ -45,7 +53,8 @@ let make = (~children) => {
   }
 
   let _ = React.useEffect1(() => {
-    let _ = setIsBuyModalOpen(currentBuyParams => Js.Option.isSome(buyParams))
+    let nextIsBuyModalOpen = Js.Option.isSome(buyParams)
+    let _ = setIsBuyModalOpen(currentBuyParams => nextIsBuyModalOpen)
     Services.Logger.logWithData(
       "buy",
       "setIsBuyDrawerOpen",
@@ -58,9 +67,10 @@ let make = (~children) => {
 
   <ContextProvider
     value={
-      isQuickbuyTxPending: isQuickbuyTxPending,
-      setIsQuickbuyTxPending: isQuickBuyTxPending =>
-        setIsQuickbuyTxPending(_ => isQuickbuyTxPending),
+      Contexts_Buy_Context.isQuickbuyTxPending: isQuickbuyTxPending,
+      setIsQuickbuyTxPending: newIsQuickbuyTxPending => {
+        setIsQuickbuyTxPending(_ => newIsQuickbuyTxPending)
+      },
       isBuyModalOpen: isBuyModalOpen,
     }>
     <MaterialUi.Dialog

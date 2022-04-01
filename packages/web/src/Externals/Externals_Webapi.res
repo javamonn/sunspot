@@ -28,3 +28,10 @@ module URL = {
   @get external pathname: t => string = "pathname"
   @get external hostname: t => string = "hostname"
 }
+
+module URLSearchParams = {
+  type t
+
+  @new external make: string => t = "URLSearchParams"
+  @send external get: (t, string) => option<string> = "get"
+}

@@ -8,9 +8,10 @@ type updateAlertModalState =
 @react.component
 let make = () => {
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
   let alertRulesQuery = Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress.use(
     ~skip=switch authentication {
-    | Authenticated(_) => false
+    | Authenticated(_) if !isQuickbuyTxPending => false
     | _ => true
     },
     switch authentication {
@@ -130,7 +131,10 @@ let make = () => {
             | #FutureAddedValue(v) => v
             }
             let formattedPrice =
-              Services.PaymentToken.parseTokenPrice(eventFilter.value, eventFilter.paymentToken.decimals)
+              Services.PaymentToken.parseTokenPrice(
+                eventFilter.value,
+                eventFilter.paymentToken.decimals,
+              )
               ->Belt.Option.map(Belt.Float.toString)
               ->Belt.Option.getExn
 
@@ -673,6 +677,7 @@ let make = () => {
   | ({called: false}, _)
   | (_, InProgress_JWTRefresh(_)) => true
   | _ if !Config.isBrowser() => true
+  | _ if isQuickbuyTxPending => true
   | _ => false
   }
 
