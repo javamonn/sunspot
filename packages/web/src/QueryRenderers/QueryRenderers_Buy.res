@@ -49,6 +49,14 @@ module Loading = {
               (),
             )}>
             {React.string("loading...")}
+            <MaterialUi.LinearProgress
+              color=#Primary
+              classes={MaterialUi.LinearProgress.Classes.make(
+                ~root=Cn.make(["absolute", "left-0", "bottom-0", "right-0"]),
+                (),
+              )}
+              variant=#Indeterminate
+            />
           </MaterialUi.Button>
         </div>
       </div>

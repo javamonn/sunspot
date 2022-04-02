@@ -132,6 +132,14 @@ module HeaderButton = {
           (),
         )}>
         {React.string("connecting...")}
+        <MaterialUi.LinearProgress
+          color=#Primary
+          classes={MaterialUi.LinearProgress.Classes.make(
+            ~root=Cn.make(["absolute", "left-0", "bottom-0", "right-0"]),
+            (),
+          )}
+          variant=#Indeterminate
+        />
       </MaterialUi.Button>
     | WalletConfirmPending =>
       <MaterialUi.Button
@@ -144,6 +152,14 @@ module HeaderButton = {
           (),
         )}>
         {React.string("wallet confirm pending...")}
+        <MaterialUi.LinearProgress
+          color=#Primary
+          classes={MaterialUi.LinearProgress.Classes.make(
+            ~root=Cn.make(["absolute", "left-0", "bottom-0", "right-0"]),
+            (),
+          )}
+          variant=#Indeterminate
+        />
       </MaterialUi.Button>
     | TransactionCreated({transactionHash}) =>
       <a href={Services.URL.etherscanTransaction(transactionHash)} target="_blank">
@@ -157,6 +173,14 @@ module HeaderButton = {
             (),
           )}>
           {React.string("tx pending...")}
+          <MaterialUi.LinearProgress
+            color=#Primary
+            classes={MaterialUi.LinearProgress.Classes.make(
+              ~root=Cn.make(["absolute", "left-0", "bottom-0", "right-0"]),
+              (),
+            )}
+            variant=#Indeterminate
+          />
         </MaterialUi.Button>
       </a>
     | TransactionConfirmed({transactionHash}) =>
