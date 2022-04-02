@@ -19,7 +19,104 @@ module Loading = {
       None
     }, [invalidRedirect])
 
-    React.null
+    <>
+      <div
+        className={Cn.make([
+          "border",
+          "border-solid",
+          "border-darkDisabled",
+          "rounded",
+          "p-6",
+          "mb-8",
+          "flex",
+          "flex-row",
+        ])}>
+        <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
+          <MaterialUi_Lab.Skeleton
+            variant=#Text
+            height={MaterialUi_Lab.Skeleton.Height.int(60)}
+            width={MaterialUi_Lab.Skeleton.Width.int(160)}
+          />
+        </div>
+        <div className={Cn.make(["flex-1"])}>
+          <MaterialUi.Button
+            disabled={true}
+            color=#Primary
+            variant=#Contained
+            fullWidth={true}
+            classes={MaterialUi.Button.Classes.make(
+              ~root=Cn.make(["flex-1", "lowercase", "font-bold", "py-4", "text-base"]),
+              (),
+            )}>
+            {React.string("loading...")}
+          </MaterialUi.Button>
+        </div>
+      </div>
+      <div
+        className={Cn.make(["flex", "flex-row", "justify-space", "flex-1", "space-x-4", "mb-8"])}>
+        <MaterialUi_Lab.Skeleton
+          variant=#Rect
+          classes={MaterialUi_Lab.Skeleton.Classes.make(~root=Cn.make(["flex-1"]), ())}
+          style={ReactDOM.Style.make(~paddingBottom="50%", ())}
+        />
+        <div className={Cn.make(["flex", "flex-col", "justify-end", "flex-1", "space-y-2"])}>
+          <MaterialUi_Lab.Skeleton
+            variant=#Text
+            height={MaterialUi_Lab.Skeleton.Height.int(44)}
+            width={MaterialUi_Lab.Skeleton.Width.int(240)}
+          />
+          <MaterialUi_Lab.Skeleton
+            variant=#Text
+            height={MaterialUi_Lab.Skeleton.Height.int(36)}
+            width={MaterialUi_Lab.Skeleton.Width.int(180)}
+          />
+        </div>
+      </div>
+      <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8"])}>
+        {Belt.Array.makeBy(8, _ =>
+          <MaterialUi.Button
+            fullWidth={true}
+            size=#Small
+            variant=#Outlined
+            classes={MaterialUi.Button.Classes.make(
+              ~label=Cn.make(["flex", "flex-col", "p-2", "space-y-2"]),
+              (),
+            )}>
+            <MaterialUi_Lab.Skeleton
+              height={MaterialUi_Lab.Skeleton.Height.int(16)}
+              width={MaterialUi_Lab.Skeleton.Width.int(30 + Js.Math.random_int(0, 60))}
+              variant=#Text
+            />
+            <MaterialUi_Lab.Skeleton
+              height={MaterialUi_Lab.Skeleton.Height.int(16)}
+              width={MaterialUi_Lab.Skeleton.Width.int(30 + Js.Math.random_int(0, 60))}
+              variant=#Text
+            />
+          </MaterialUi.Button>
+        )->React.array}
+      </div>
+      <div className={Cn.make(["grid-cols-2", "grid", "gap-2"])}>
+        {["listing time", "expiration time", "contract address", "token id"]
+        ->Belt.Array.map(label =>
+          <MaterialUi.ListItem
+            button={true}
+            classes={MaterialUi.ListItem.Classes.make(
+              ~root=Cn.make(["bg-gray-100", "rounded"]),
+              (),
+            )}>
+            <MaterialUi.ListItemText
+              primary={React.string(label)}
+              secondary={<MaterialUi_Lab.Skeleton
+                height={MaterialUi_Lab.Skeleton.Height.int(16)}
+                width={MaterialUi_Lab.Skeleton.Width.int(40 + Js.Math.random_int(0, 100))}
+                variant={#Text}
+              />}
+            />
+          </MaterialUi.ListItem>
+        )
+        ->React.array}
+      </div>
+    </>
   }
 }
 

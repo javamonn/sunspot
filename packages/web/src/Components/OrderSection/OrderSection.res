@@ -477,12 +477,12 @@ let make = (
   ~executionState,
   ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
 ) => {
-  <section className={Cn.make(["py-4", "flex", "flex-col"])}>
+  <>
     <Header
       onClickBuy={onClickBuy}
       executionState={executionState}
       openSeaOrderFragment={openSeaOrderFragment}
     />
     <AssetDetail openSeaOrderFragment={openSeaOrderFragment} />
-  </section>
+  </>
 }

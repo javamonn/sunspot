@@ -109,7 +109,8 @@ let make = (~children) => {
           </MaterialUi.Typography>
         </div>
       </MaterialUi.DialogTitle>
-      <MaterialUi.DialogContent>
+      <MaterialUi.DialogContent
+        classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["p-4"]), ())}>
         {switch buyParams {
         | Some((collectionSlug, orderId)) =>
           <QueryRenderers_Buy
