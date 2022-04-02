@@ -11,10 +11,6 @@ let make = (~value=?, ~onChange, ~eventType) => {
     | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
     },
   )
-  let isQuickbuyEnabled = switch account {
-  | Some({address}) if address === Config.adminAddress => true
-  | _ => false
-  }
 
   let onFieldChange = (fieldIdx, newField) => {
     valueWithDefault
@@ -101,7 +97,7 @@ let make = (~value=?, ~onChange, ~eventType) => {
 
   <div className={Cn.make(["flex", "flex-col"])}>
     {switch eventType {
-    | #LISTING if isQuickbuyEnabled =>
+    | #LISTING =>
       <MaterialUi.FormControl
         classes={MaterialUi.FormControl.Classes.make(
           ~root=Cn.make([
