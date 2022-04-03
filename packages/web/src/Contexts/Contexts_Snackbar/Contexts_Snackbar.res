@@ -77,7 +77,7 @@ let make = (~children) => {
           severity={alertType}
           classes={MaterialUi_Lab.Alert.Classes.make(
             ~root=Cn.make(["flex", "flex-row", "items-center", "sm:flex-1"]),
-            ~message=Cn.make(["w-96", "block", "sm:w-auto"]),
+            ~message=Cn.make(["w-96", "block", "sm:w-auto", "sm:max-w-full"]),
             (),
           )}>
           {message}
