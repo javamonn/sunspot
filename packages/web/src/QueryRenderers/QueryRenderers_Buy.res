@@ -130,7 +130,7 @@ module Loading = {
 
 module Data = {
   @react.component
-  let make = (~openSeaOrder, ~openSeaOrderFragment) => {
+  let make = (~openSeaOrder, ~openSeaOrderFragment, ~quickbuy) => {
     let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
     let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
     let (useAccountResult, _) = Externals.Wagmi.UseAccount.use()
@@ -138,7 +138,7 @@ module Data = {
       Contexts_Buy_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      OrderSection.AuthenticationPending
+      quickbuy ? OrderSection.AuthenticationPending : Buy
     )
     let openSeaClient = React.useRef(None)
     let didAutoExecuteOrder = React.useRef(false)
@@ -153,7 +153,7 @@ module Data = {
 
     let _ = React.useEffect1(() => {
       let _ = switch authentication {
-      | Contexts.Auth.Unauthenticated_AuthenticationChallengeRequired(_) =>
+      | Contexts.Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
         let _ = signIn()
       | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection.Buy)
       | _ => ()
@@ -307,7 +307,7 @@ module Data = {
           AuthenticationPending,
           Contexts.Auth.Authenticated(_),
           {Externals.Wagmi.UseAccount.data: Some({connector, address})},
-        ) if !didAutoExecuteOrder.current =>
+        ) if !didAutoExecuteOrder.current && quickbuy =>
         didAutoExecuteOrder.current = true
         handleExecuteOrder(
           ~provider=connector->Externals.Wagmi.Connector.getProvider,
@@ -440,7 +440,7 @@ let parseOpenSeaOrder = (
 }
 
 @react.component
-let make = (~collectionSlug, ~orderId, ~onClose) => {
+let make = (~collectionSlug, ~orderId, ~quickbuy) => {
   let (orderQueryData, setOrderQueryData) = React.useState(_ => None)
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
 
@@ -480,6 +480,8 @@ let make = (~collectionSlug, ~orderId, ~onClose) => {
   | (_, None) =>
     <Loading invalidRedirect={true} />
   | (Some(openSeaOrder), Some(openSeaOrderFragment)) =>
-    <Data openSeaOrder={openSeaOrder} openSeaOrderFragment={openSeaOrderFragment} />
+    <Data
+      openSeaOrder={openSeaOrder} openSeaOrderFragment={openSeaOrderFragment} quickbuy={quickbuy}
+    />
   }
 }

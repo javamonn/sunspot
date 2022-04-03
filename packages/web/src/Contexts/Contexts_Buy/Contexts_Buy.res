@@ -27,6 +27,12 @@ let parseQuery = path => {
   }
 }
 
+type params = {
+  collectionSlug: string,
+  orderId: float,
+  quickbuy: bool,
+}
+
 @react.component
 let make = (~children) => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
@@ -38,8 +44,20 @@ let make = (~children) => {
     queryParams
     ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("buyOrderId"))
     ->Belt.Option.flatMap(Belt.Float.fromString),
+    queryParams->Belt.Option.flatMap(q =>
+      q->Externals.Webapi.URLSearchParams.get("orderCollectionSlug")
+    ),
+    queryParams
+    ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("orderId"))
+    ->Belt.Option.flatMap(Belt.Float.fromString),
+    queryParams
+    ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("orderQuickbuy"))
+    ->Belt.Option.map(q => q === "true"),
   ) {
-  | (Some(collectionSlug), Some(orderId)) => Some((collectionSlug, orderId))
+  | (Some(collectionSlug), Some(orderId), _, _, _) =>
+    Some({collectionSlug: collectionSlug, orderId: orderId, quickbuy: true})
+  | (_, _, Some(collectionSlug), Some(orderId), Some(quickbuy)) =>
+    Some({collectionSlug: collectionSlug, orderId: orderId, quickbuy: quickbuy})
   | _ => None
   }
   let (isBuyModalOpen, setIsBuyModalOpen) = React.useState(_ => Js.Option.isSome(buyParams))
@@ -105,16 +123,16 @@ let make = (~children) => {
               ~root=Cn.make(["leading-none", "mt-1"]),
               (),
             )}>
-            {React.string("execute buy")}
+            {React.string("asset")}
           </MaterialUi.Typography>
         </div>
       </MaterialUi.DialogTitle>
       <MaterialUi.DialogContent
         classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["p-4"]), ())}>
         {switch buyParams {
-        | Some((collectionSlug, orderId)) =>
+        | Some({collectionSlug, orderId, quickbuy}) =>
           <QueryRenderers_Buy
-            collectionSlug={collectionSlug} orderId={orderId} onClose={handleBuyModalClose}
+            collectionSlug={collectionSlug} orderId={orderId} quickbuy={quickbuy}
           />
         | _ => React.null
         }}

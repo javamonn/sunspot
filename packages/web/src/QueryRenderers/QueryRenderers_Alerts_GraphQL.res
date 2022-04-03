@@ -9,6 +9,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     disabled
     disabledReason
     disabledExpiresAt
+    quickbuy
     collection {
       slug
       name

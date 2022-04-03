@@ -35,7 +35,7 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
                 title: template.title,
                 body: template.body,
                 isThumbnailImageSize: template.isThumbnailImageSize,
-                quickbuy: Some(template.quickbuy),
+                quickbuy: None,
               }),
             }),
             discordAlertDestination: None,
@@ -70,9 +70,7 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
             isThumbnailImageSize: template
             ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
             ->Js.Option.some,
-            quickbuy: template
-            ->AlertRule_Destination.Types.DiscordTemplate.quickbuy
-            ->Js.Option.some,
+            quickbuy: None,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>
@@ -317,6 +315,7 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
         ]->Belt.Array.keepMap(i => i),
         destination: destination,
         eventType: value->AlertModal.Value.eventType,
+        quickbuy: value->AlertModal.Value.quickbuy->Js.Option.some,
         disabled: disabled,
         disabledReason: disabledReason,
         disabledExpiresAt: disabledExpiresAt,

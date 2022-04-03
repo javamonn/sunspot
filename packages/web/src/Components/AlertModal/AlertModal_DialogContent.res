@@ -96,7 +96,6 @@ let make = (
     }
     setIsCreateTwitterIntegrationDialogOpen(_ => false)
   }
-
   let (isLoadingCollectionAggregateAttributes, collectionAggregateAttributes) = React.useMemo1(() =>
     switch collectionAggregateAttributesResult {
     | Executed({data: Some({collection: Some({attributes})})}) =>
@@ -118,6 +117,12 @@ let make = (
     | _ => (false, [])
     }
   , [collectionAggregateAttributesResult])
+
+  let handleToggleQuickbuyEnabled = () =>
+    onChange(value => {
+      ...value,
+      quickbuy: !value.quickbuy,
+    })
 
   <>
     {validationError
@@ -141,6 +146,13 @@ let make = (
       onConnectSlack={handleConnectSlack}
       onConnectTwitter={handleConnectTwitter}
     />
+    {switch value.eventType {
+    | #LISTING =>
+      <AlertRule_Quickbuy
+        value={value->AlertModal_Value.quickbuy} onChange={handleToggleQuickbuyEnabled}
+      />
+    | _ => React.null
+    }}
     <AlertRule_Accordion
       className={Cn.make(["mt-8"])}
       summaryIcon={<Externals_MaterialUi_Icons.TextFields

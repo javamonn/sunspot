@@ -43,7 +43,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
                 title: template.title,
                 body: template.body,
                 isThumbnailImageSize: template.isThumbnailImageSize,
-                quickbuy: Some(template.quickbuy),
+                quickbuy: None,
               }),
             }),
             discordAlertDestination: None,
@@ -78,9 +78,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
             isThumbnailImageSize: template
             ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
             ->Js.Option.some,
-            quickbuy: template
-            ->AlertRule_Destination.Types.DiscordTemplate.quickbuy
-            ->Js.Option.some,
+            quickbuy: None,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>
@@ -326,6 +324,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
           ]->Belt.Array.keepMap(i => i),
           destination: destination,
           eventType: newValue->AlertModal.Value.eventType,
+          quickbuy: newValue->AlertModal.Value.quickbuy->Js.Option.some,
           disabled: disabled,
           disabledReason: disabledReason,
           disabledExpiresAt: disabledExpiresAt,

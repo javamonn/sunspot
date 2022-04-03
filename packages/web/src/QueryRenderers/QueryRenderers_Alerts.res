@@ -543,7 +543,6 @@ let make = () => {
               AlertRule_Destination.Types.WebPushTemplate.title: template.title,
               body: template.body,
               isThumbnailImageSize: template.isThumbnailImageSize,
-              quickbuy: template.quickbuy->Belt.Option.getWithDefault(false),
             }),
           }),
         )
@@ -588,7 +587,6 @@ let make = () => {
               isThumbnailImageSize: template.isThumbnailImageSize->Belt.Option.getWithDefault(
                 false,
               ),
-              quickbuy: template.quickbuy->Belt.Option.getWithDefault(false),
               fields: template.fields->Belt.Option.map(fields =>
                 fields->Belt.Array.map(field => {
                   AlertRule_Destination.Types.DiscordTemplate.name: field.name,
@@ -658,6 +656,7 @@ let make = () => {
             ~contractAddress=item.collection.contractAddress,
           ),
         ),
+        ~quickbuy=item.quickbuy->Belt.Option.getWithDefault(false),
         ~priceRule,
         ~propertiesRule,
         ~saleVolumeChangeRule,

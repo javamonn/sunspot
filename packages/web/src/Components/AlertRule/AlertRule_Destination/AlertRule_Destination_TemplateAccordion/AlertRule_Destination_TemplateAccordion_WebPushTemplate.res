@@ -1,63 +1,19 @@
 open AlertRule_Destination_Types.WebPushTemplate
 
+let defaultTemplate = eventType =>
+  switch eventType {
+  | #LISTING => defaultListingTemplate
+  | #SALE => defaultSaleTemplate
+  | #FLOOR_PRICE_CHANGE => defaultFloorPriceChangeTemplate
+  | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
+  }
+
 @react.component
 let make = (~value=?, ~onChange, ~eventType) => {
   let ({data: account}: Externals.Wagmi.UseAccount.result, _) = Externals.Wagmi.UseAccount.use()
-  let valueWithDefault = value->Belt.Option.getWithDefault(
-    switch eventType {
-    | #LISTING => defaultListingTemplate
-    | #SALE => defaultSaleTemplate
-    | #FLOOR_PRICE_CHANGE => defaultFloorPriceChangeTemplate
-    | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
-    },
-  )
-
-  let onToggleQuickbuy = () =>
-    onChange(
-      Some({
-        ...valueWithDefault,
-        quickbuy: !(valueWithDefault->quickbuy),
-      }),
-    )
+  let valueWithDefault = value->Belt.Option.getWithDefault(defaultTemplate(eventType))
 
   <div className={Cn.make(["flex", "flex-col"])}>
-    {switch eventType {
-    | #LISTING =>
-      <MaterialUi.FormControl
-        classes={MaterialUi.FormControl.Classes.make(
-          ~root=Cn.make([
-            "flex",
-            "mb-6",
-            "flex-row",
-            "border",
-            "border-darkDivider",
-            "rounded",
-            "border-solid",
-            "p-4",
-          ]),
-          (),
-        )}>
-        <div className={Cn.make(["flex", "items-center", "justify-center"])}>
-          <MaterialUi.Checkbox
-            color=#Primary
-            checked={valueWithDefault->quickbuy}
-            onChange={_ => onToggleQuickbuy()}
-            classes={MaterialUi.Checkbox.Classes.make(~root=Cn.make(["p-0", "mr-4"]), ())}
-          />
-        </div>
-        <div className={Cn.make(["flex", "flex-col"])}>
-          <MaterialUi.Typography variant=#Subtitle2>
-            {React.string("quick-buy")}
-          </MaterialUi.Typography>
-          <MaterialUi.FormHelperText>
-            {React.string(
-              "prompt asset quick-buy when alert is triggered. quick-buys interact with the OpenSea exchange contract, but are routed directly through sunspot for increased execution speed.",
-            )}
-          </MaterialUi.FormHelperText>
-        </div>
-      </MaterialUi.FormControl>
-    | _ => React.null
-    }}
     <AlertRule_Destination_TemplateAccordion_InfoAlert
       eventType={eventType} className={Cn.make(["mb-4"])}
     />

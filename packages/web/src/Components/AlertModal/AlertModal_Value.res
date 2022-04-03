@@ -15,6 +15,7 @@ type t = {
   floorPriceChangeRule: option<AlertModal_AlertRules_FloorPriceChange.t>,
   destination: option<AlertRule_Destination.Types.Value.t>,
   disabled: option<disabledReason>,
+  quickbuy: bool,
 }
 
 let make = (
@@ -28,6 +29,7 @@ let make = (
   ~destination,
   ~eventType,
   ~disabled,
+  ~quickbuy,
 ) => {
   id: id,
   collection: collection,
@@ -39,6 +41,7 @@ let make = (
   saleVolumeChangeRule: saleVolumeChangeRule,
   floorPriceChangeRule: floorPriceChangeRule,
   disabled: disabled,
+  quickbuy: quickbuy,
 }
 
 let empty = () => {
@@ -54,4 +57,5 @@ let empty = () => {
     ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template: None}))
     : None,
   disabled: None,
+  quickbuy: false,
 }

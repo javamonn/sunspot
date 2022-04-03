@@ -645,9 +645,7 @@ let make = (~onCreated, ~params) => {
             isThumbnailImageSize: template
             ->AlertRule_Destination.Types.DiscordTemplate.isThumbnailImageSize
             ->Js.Option.some,
-            quickbuy: template
-            ->AlertRule_Destination.Types.DiscordTemplate.quickbuy
-            ->Js.Option.some,
+            quickbuy: None,
             fields: template
             ->AlertRule_Destination.Types.DiscordTemplate.fields
             ->Belt.Option.map(fields =>
@@ -736,6 +734,7 @@ let make = (~onCreated, ~params) => {
         ]->Belt.Array.keepMap(i => i),
         destination: destination,
         eventType: alertRuleValue->AlertModal.Value.eventType,
+        quickbuy: alertRuleValue->AlertModal.Value.quickbuy->Js.Option.some,
         disabled: disabled,
         disabledExpiresAt: disabledExpiresAt,
         disabledReason: disabledReason,
