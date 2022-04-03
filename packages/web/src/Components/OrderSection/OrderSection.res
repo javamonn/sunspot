@@ -72,7 +72,7 @@ module AssetMetadata = {
       )),
     ]->Belt.Array.keepMap(i => i)
 
-    <div className={Cn.make(["grid-cols-2", "grid", "gap-2"])}>
+    <div className={Cn.make(["grid-cols-2", "grid", "gap-2", "sm:grid-cols-1"])}>
       {items
       ->Belt.Array.map(((label, value, href)) => {
         let text =
@@ -250,6 +250,9 @@ module Header = {
         "mb-8",
         "flex",
         "flex-row",
+        "sm:flex-col",
+        "sm:p-4",
+        "sm:space-y-4",
       ])}>
       <div className={Cn.make(["flex", "flex-row", "justify-space", "flex-1", "leading-none"])}>
         <div className={Cn.make(["flex", "items-center", "justify-center", "mr-1"])}>
@@ -335,6 +338,10 @@ module AssetDetail = {
     })
 
     let media = switch asset {
+    | {imageUrl: Some(uri)}
+    | {imagePreviewUrl: Some(uri)}
+    | {imageThumbnailUrl: Some(uri)} =>
+      <img className={Cn.make(["rounded"])} src={Services.URL.resolveMedia(~uri, ())} />
     | {animationUrl: Some(animationUrl)} =>
       <video
         controls={true}
@@ -345,39 +352,45 @@ module AssetDetail = {
           ? `https://ipfs.io${Services.Ipfs.getNormalizedCidPath(animationUrl)}`
           : animationUrl}
       />
-    | _ =>
-      let assetImageUrl = Services.URL.assetImageUrl(
-        ~contractAddress=metadata.address,
-        ~tokenId=metadata.id,
-        ~cacheId=openSeaOrderFragment.id
-        ->Js.Json.decodeNumber
-        ->Belt.Option.getWithDefault(-1.0)
-        ->Belt.Float.toString,
-        (),
-      )
-      <img className={Cn.make(["rounded"])} src={assetImageUrl} />
+    | _ => <div className={Cn.make(["rounded", "bg-gray-100"])} />
     }
 
     <>
       <div className={Cn.make(["flex", "flex-col"])}>
-        <div className={Cn.make(["flex", "flex-row", "space-x-4", "mb-8"])}>
-          <div className={Cn.make(["flex-1"])}> {media} </div>
+        <div
+          className={Cn.make([
+            "flex",
+            "flex-row",
+            "space-x-4",
+            "mb-8",
+            "sm:flex-col",
+            "sm:space-x-0",
+          ])}>
+          <div className={Cn.make(["flex-1", "sm:order-last", "sm:mt-4"])}> {media} </div>
           <div className={Cn.make(["flex-1", "justify-end", "flex", "flex-col"])}>
             <a href={asset.permalink} onClick={_ => handleClick("asset")} target="_blank">
               <MaterialUi.Button
                 variant=#Text
                 size=#Small
-                classes={MaterialUi.Button.Classes.make(~root=Cn.make(["normal-case"]), ())}>
+                classes={MaterialUi.Button.Classes.make(
+                  ~root=Cn.make(["normal-case"]),
+                  ~label=Cn.make(["flex", "flex-row", "items-end"]),
+                  (),
+                )}>
                 <h1
                   className={Cn.make([
                     "font-bold",
                     "font-mono",
                     "text-4xl",
+                    "sm:text-2xl",
                     "text-darkPrimary",
                     "leading-none",
                   ])}>
                   {React.string(asset.name)}
                 </h1>
+                <Externals.MaterialUi_Icons.OpenInNew
+                  className={Cn.make(["opacity-50", "w-4", "h-4", "ml-2"])}
+                />
               </MaterialUi.Button>
             </a>
             {collection
@@ -393,16 +406,26 @@ module AssetDetail = {
                     ~root=Cn.make(["normal-case", "mt-2"]),
                     (),
                   )}>
-                  <div className={Cn.make(["flex-row", "flex"])}>
+                  <div className={Cn.make(["flex-row", "flex", "items-center"])}>
                     {collection.imageUrl
                     ->Belt.Option.map(imageUrl =>
                       <MaterialUi.Avatar
-                        classes={MaterialUi.Avatar.Classes.make(~root=Cn.make(["w-8", "h-8"]), ())}>
+                        classes={MaterialUi.Avatar.Classes.make(
+                          ~root=Cn.make(["w-8", "h-8", "sm:w-6", "sm:h-6"]),
+                          (),
+                        )}>
                         <img src={imageUrl} />
                       </MaterialUi.Avatar>
                     )
                     ->Belt.Option.getWithDefault(React.null)}
-                    <h2 className={Cn.make(["font-mono", "text-xl", "text-darkSecondary", "ml-2"])}>
+                    <h2
+                      className={Cn.make([
+                        "font-mono",
+                        "text-xl",
+                        "text-darkSecondary",
+                        "ml-2",
+                        "sm:text-base",
+                      ])}>
                       {collection.name->Belt.Option.getWithDefault(collection.slug)->React.string}
                     </h2>
                   </div>
@@ -415,7 +438,7 @@ module AssetDetail = {
       </div>
       {asset.attributes
       ->Belt.Option.map(attributes =>
-        <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8"])}>
+        <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8", "sm:grid-cols-2"])}>
           {attributes
           ->Belt.Array.keepMap(attribute =>
             switch attribute {

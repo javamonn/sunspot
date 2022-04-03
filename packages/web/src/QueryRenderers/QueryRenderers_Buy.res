@@ -30,6 +30,9 @@ module Loading = {
           "mb-8",
           "flex",
           "flex-row",
+          "sm:flex-col",
+          "sm:p-4",
+          "sm:space-y-4",
         ])}>
         <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
           <MaterialUi_Lab.Skeleton
@@ -61,10 +64,22 @@ module Loading = {
         </div>
       </div>
       <div
-        className={Cn.make(["flex", "flex-row", "justify-space", "flex-1", "space-x-4", "mb-8"])}>
+        className={Cn.make([
+          "flex",
+          "flex-row",
+          "justify-space",
+          "flex-1",
+          "space-x-4",
+          "mb-8",
+          "sm:flex-col",
+          "sm:space-x-0",
+        ])}>
         <MaterialUi_Lab.Skeleton
           variant=#Rect
-          classes={MaterialUi_Lab.Skeleton.Classes.make(~root=Cn.make(["flex-1"]), ())}
+          classes={MaterialUi_Lab.Skeleton.Classes.make(
+            ~root=Cn.make(["flex-1", "sm:order-last"]),
+            (),
+          )}
           style={ReactDOM.Style.make(~paddingBottom="50%", ())}
         />
         <div className={Cn.make(["flex", "flex-col", "justify-end", "flex-1", "space-y-2"])}>
@@ -80,7 +95,7 @@ module Loading = {
           />
         </div>
       </div>
-      <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8"])}>
+      <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8", "sm:grid-cols-2"])}>
         {Belt.Array.makeBy(8, _ =>
           <MaterialUi.Button
             fullWidth={true}
@@ -103,7 +118,7 @@ module Loading = {
           </MaterialUi.Button>
         )->React.array}
       </div>
-      <div className={Cn.make(["grid-cols-2", "grid", "gap-2"])}>
+      <div className={Cn.make(["grid-cols-2", "grid", "gap-2", "sm:grid-cols-1"])}>
         {["listing time", "expiration time", "contract address", "token id"]
         ->Belt.Array.map(label =>
           <MaterialUi.ListItem

@@ -92,7 +92,18 @@ let make = (~children) => {
       isBuyModalOpen: isBuyModalOpen,
     }>
     <MaterialUi.Dialog
-      classes={MaterialUi.Dialog.Classes.make(~paper=Cn.make([styles["dialogPaper"]]), ())}
+      classes={MaterialUi.Dialog.Classes.make(
+        ~paper=Cn.make([
+          styles["dialogPaper"],
+          "sm:w-full",
+          "sm:h-full",
+          "sm:max-w-full",
+          "sm:max-h-full",
+          "sm:m-0",
+          "sm:rounded-none",
+        ]),
+        (),
+      )}
       _open={isBuyModalOpen}
       onClose={(_, _) => handleBuyModalClose()}
       onExited={_ => handleBuyModalClosed()}>
@@ -106,6 +117,8 @@ let make = (~children) => {
             "border-b",
             "border-solid",
             "border-darkBorder",
+            "sm:px-4",
+            "sm:py-4",
           ]),
           (),
         )}>
@@ -123,7 +136,7 @@ let make = (~children) => {
               ~root=Cn.make(["leading-none", "mt-1"]),
               (),
             )}>
-            {React.string("asset")}
+            {React.string("listing")}
           </MaterialUi.Typography>
         </div>
       </MaterialUi.DialogTitle>

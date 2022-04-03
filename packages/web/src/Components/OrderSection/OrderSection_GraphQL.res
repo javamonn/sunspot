@@ -5,6 +5,8 @@ module Fragment_OrderSection_OpenSeaOrder = %graphql(`
     permalink
     tokenMetadata
     imageUrl
+    imagePreviewUrl
+    imageThumbnailUrl
     animationUrl
     collectionSlug
     collection {
