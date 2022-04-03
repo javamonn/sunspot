@@ -374,7 +374,7 @@ module AssetDetail = {
                 size=#Small
                 classes={MaterialUi.Button.Classes.make(
                   ~root=Cn.make(["normal-case"]),
-                  ~label=Cn.make(["flex", "flex-row", "items-end"]),
+                  ~label=Cn.make(["flex", "flex-row", "items-center"]),
                   (),
                 )}>
                 <h1
