@@ -263,7 +263,7 @@ module Header = {
           />
         </div>
         <div className={Cn.make(["flex", "justify-center", "items-center"])}>
-          <div className={Cn.make(["flex", "flex-row", "items-end"])}>
+          <div className={Cn.make(["flex", "flex-row", "items-end", "font-mono"])}>
             <span className={Cn.make(["font-bold", "text-4xl", "block", "mr-2", "leading-none"])}>
               {openSeaOrderFragment.basePrice
               ->Services.PaymentToken.parseTokenPrice(
@@ -293,6 +293,7 @@ module Header = {
       </div>
       <div className={Cn.make(["flex-1"])}>
         <HeaderButton executionState={executionState} onClickBuy={onClickBuy} />
+        <QuickbuyPrompt className={Cn.make(["hidden", "sm:flex", "sm:mt-4"])} />
       </div>
     </div>
 }

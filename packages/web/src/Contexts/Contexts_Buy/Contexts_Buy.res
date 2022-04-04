@@ -112,33 +112,33 @@ let make = (~children) => {
         classes={MaterialUi.DialogTitle.Classes.make(
           ~root=Cn.make([
             "flex",
-            "justify-between",
-            "items-center",
+            "p-4",
             "border-b",
             "border-solid",
             "border-darkBorder",
+            "grid",
+            "grid-cols-2",
             "sm:px-4",
             "sm:py-4",
+            "sm:block",
           ]),
           (),
         )}>
         <div className={Cn.make(["flex", "flex-row", "items-center"])}>
-          <MaterialUi.IconButton
-            onClick={_ => handleBuyModalClose()}
-            size=#Small
-            classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["mr-4"]), ())}>
+          <MaterialUi.IconButton onClick={_ => handleBuyModalClose()} size=#Small>
             <Externals.MaterialUi_Icons.Close />
           </MaterialUi.IconButton>
           <MaterialUi.Typography
             color=#Primary
             variant=#H6
             classes={MaterialUi.Typography.Classes.make(
-              ~root=Cn.make(["leading-none", "mt-1"]),
+              ~root=Cn.make(["leading-none", "mt-1", "ml-2", "bold"]),
               (),
             )}>
             {React.string("listing")}
           </MaterialUi.Typography>
         </div>
+        <QuickbuyPrompt className={Cn.make(["sm:hidden"])} />
       </MaterialUi.DialogTitle>
       <MaterialUi.DialogContent
         classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["p-4"]), ())}>
