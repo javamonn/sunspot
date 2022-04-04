@@ -147,7 +147,7 @@ module DiscordTemplate = {
         inline: true,
       },
       {
-        name: "floor price",
+        name: "trailing 15 sales floor price",
         value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
         inline: true,
       },
@@ -197,7 +197,7 @@ module DiscordTemplate = {
         inline: true,
       },
       {
-        name: "floor price",
+        name: "trailing 15 sales floor price",
         value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
         inline: true,
       },
