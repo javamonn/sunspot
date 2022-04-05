@@ -450,14 +450,15 @@ module AssetDetail = {
                   value: numberValue,
                 }),
               )
-            | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+            | #OpenSeaAssetStringAttribute({traitType, stringValue})
+              if Js.String2.length(stringValue) > 0 =>
               Some(
                 Services.OpenSea.StringTrait({
                   name: traitType,
                   value: stringValue,
                 }),
               )
-            | #FutureAddedValue(_) => None
+            | #FutureAddedValue(_) | _ => None
             }
           )
           ->Belt.Array.map(trait => {
