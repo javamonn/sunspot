@@ -138,7 +138,10 @@ let make = (~children) => {
             {React.string("listing")}
           </MaterialUi.Typography>
         </div>
-        <QuickbuyPrompt className={Cn.make(["sm:hidden"])} />
+        {switch buyParams {
+        | Some({quickbuy}) if !quickbuy => <QuickbuyPrompt className={Cn.make(["sm:hidden"])} />
+        | _ => React.null
+        }}
       </MaterialUi.DialogTitle>
       <MaterialUi.DialogContent
         classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["p-4"]), ())}>

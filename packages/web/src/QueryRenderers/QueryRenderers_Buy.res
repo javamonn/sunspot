@@ -337,6 +337,7 @@ module Data = {
       executionState={executionState}
       openSeaOrderFragment={openSeaOrderFragment}
       onClickBuy={() => handleClickBuy()}
+      quickbuy={quickbuy}
     />
   }
 }

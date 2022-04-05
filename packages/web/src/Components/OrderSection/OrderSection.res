@@ -239,6 +239,7 @@ module Header = {
     ~onClickBuy,
     ~executionState,
     ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
+    ~quickbuy,
   ) =>
     <div
       className={Cn.make([
@@ -293,7 +294,9 @@ module Header = {
       </div>
       <div className={Cn.make(["flex-1"])}>
         <HeaderButton executionState={executionState} onClickBuy={onClickBuy} />
-        <QuickbuyPrompt className={Cn.make(["hidden", "sm:flex", "sm:mt-4"])} />
+        {!quickbuy
+          ? <QuickbuyPrompt className={Cn.make(["hidden", "sm:flex", "sm:mt-4"])} />
+          : React.null}
       </div>
     </div>
 }
@@ -525,12 +528,14 @@ let make = (
   ~onClickBuy,
   ~executionState,
   ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
+  ~quickbuy,
 ) => {
   <>
     <Header
       onClickBuy={onClickBuy}
       executionState={executionState}
       openSeaOrderFragment={openSeaOrderFragment}
+      quickbuy={quickbuy}
     />
     <AssetDetail openSeaOrderFragment={openSeaOrderFragment} />
   </>
