@@ -1,11 +1,14 @@
 const bsconfig = require("./bsconfig.json");
-const fs = require("fs");
-const path = require("path");
 const RemarkHTML = require("remark-html");
 const webpack = require("webpack");
+const path = require("path");
 
 const transpileModules = ["rescript"].concat(bsconfig["bs-dependencies"]);
 const withTM = require("next-transpile-modules")(transpileModules);
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
 const activeDiscordClientId = "909830001363394593";
 
 const config = {
@@ -33,8 +36,7 @@ const config = {
       };
     }
 
-    // opensea-js includes a duplicate instance of ethers
-    // config.resolve.alias["ethers"] = path.resolve("./node_modules/ethers");
+    config.resolve.alias["bn.js"] = path.resolve("./node_modules/bn.js");
 
     // We need this additional rule to make sure that mjs files are
     // correctly detected within our src/ folder
@@ -65,14 +67,17 @@ const config = {
       ],
     });
 
+    // aws-appsync has unused dep on s3-client
+    config.module.rules.push({
+      test: path.resolve(__dirname, "node_modules/@aws-sdk/client-s3"),
+      use: "null-loader",
+    });
+
     config.plugins.push(
       new webpack.ProvidePlugin({
         process: "process/browser",
       })
     );
-
-     // FIXME: minimize breaks opensea-js in a production build, remove once orders are via custom contract 
-    config.optimization.minimize = false;
 
     return config;
   },
@@ -97,4 +102,4 @@ const config = {
   ],
 };
 
-module.exports = withTM(config);
+module.exports = withBundleAnalyzer(withTM(config));
