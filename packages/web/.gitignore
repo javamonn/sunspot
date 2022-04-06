@@ -13,7 +13,7 @@ yarn-error.log
 .merlin
 lib/
 
-**/**.mjs
+**/**.bs.js
 public/service-worker.js
 
 #amplify-do-not-edit-begin

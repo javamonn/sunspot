@@ -6,7 +6,7 @@ import "@fontsource/ibm-plex-mono";
 // doesn't help FastRefresh to detect the
 // React component, since an alias isn't attached
 // to the original React component function name.
-import ResApp from "src/App.mjs";
+import ResApp from "src/App.bs.js";
 
 if (globalThis.navigator && "serviceWorker" in globalThis.navigator) {
   globalThis.addEventListener("load", () => {
