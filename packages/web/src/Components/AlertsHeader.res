@@ -31,12 +31,9 @@ let make = (
       </MaterialUi.Button>
       {switch account {
       | _ if connecting => <LoadingButton />
-      | Some({address, connector}) =>
+      | Some({address}) =>
         <WalletButton
-          onClick={onWalletButtonClicked}
-          authentication={authentication}
-          address={address}
-          provider={connector->Externals_Wagmi.Connector.getProvider}
+          onClick={onWalletButtonClicked} authentication={authentication} address={address}
         />
       | None => <ConnectWalletButton onClick={onConnectWalletClicked} />
       }}
