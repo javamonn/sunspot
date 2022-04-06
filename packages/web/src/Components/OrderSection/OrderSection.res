@@ -1,6 +1,6 @@
 type executionState =
   | Buy
-  | AuthenticationPending
+  | SeaportClientPending
   | WalletConfirmPending
   | TransactionCreated({transactionHash: string})
   | TransactionConfirmed({transactionHash: string})
@@ -121,7 +121,7 @@ module HeaderButton = {
         )}>
         {React.string("buy")}
       </MaterialUi.Button>
-    | AuthenticationPending =>
+    | SeaportClientPending =>
       <MaterialUi.Button
         color=#Primary
         variant=#Contained
@@ -375,7 +375,6 @@ module AssetDetail = {
             <a href={asset.permalink} onClick={_ => handleClick("asset")} target="_blank">
               <MaterialUi.Button
                 variant=#Text
-                size=#Small
                 classes={MaterialUi.Button.Classes.make(
                   ~root=Cn.make(["normal-case"]),
                   ~label=Cn.make(["flex", "flex-row", "items-center"]),
@@ -385,10 +384,11 @@ module AssetDetail = {
                   className={Cn.make([
                     "font-bold",
                     "font-mono",
-                    "text-4xl",
-                    "sm:text-2xl",
+                    "text-3xl",
+                    "sm:text-lg",
                     "text-darkPrimary",
                     "leading-none",
+                    "text-left",
                   ])}>
                   {React.string(asset.name)}
                 </h1>
@@ -405,7 +405,6 @@ module AssetDetail = {
                 target="_blank">
                 <MaterialUi.Button
                   variant=#Text
-                  size=#Small
                   classes={MaterialUi.Button.Classes.make(
                     ~root=Cn.make(["normal-case", "mt-2"]),
                     (),
@@ -425,9 +424,11 @@ module AssetDetail = {
                     <h2
                       className={Cn.make([
                         "font-mono",
-                        "text-xl",
+                        "text-lg",
                         "text-darkSecondary",
                         "ml-2",
+                        "leading-none",
+                        "text-left",
                         "sm:text-base",
                       ])}>
                       {collection.name->Belt.Option.getWithDefault(collection.slug)->React.string}
@@ -448,7 +449,7 @@ module AssetDetail = {
             switch attribute {
             | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
               Some(
-                Services.OpenSea.NumberTrait({
+                Services.OpenSea.URL.NumberTrait({
                   name: traitType,
                   value: numberValue,
                 }),
@@ -456,7 +457,7 @@ module AssetDetail = {
             | #OpenSeaAssetStringAttribute({traitType, stringValue})
               if Js.String2.length(stringValue) > 0 =>
               Some(
-                Services.OpenSea.StringTrait({
+                Services.OpenSea.URL.StringTrait({
                   name: traitType,
                   value: stringValue,
                 }),
@@ -465,7 +466,7 @@ module AssetDetail = {
             }
           )
           ->Belt.Array.map(trait => {
-            let traitUrl = Services.OpenSea.makeAssetsUrl(
+            let traitUrl = Services.OpenSea.URL.makeAssetsUrl(
               ~collectionSlug=asset.collectionSlug,
               ~traitsFilter=[trait],
               ~eventType=#LISTING,

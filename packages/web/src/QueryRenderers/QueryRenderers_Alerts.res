@@ -203,7 +203,7 @@ let make = () => {
       | #FLOOR_PRICE_CHANGE => "floor price change"
       | #SALE_VOLUME_CHANGE => "sale volume change"
       }
-      let externalUrl = Services.OpenSea.makeAssetsUrl(
+      let externalUrl = Services.OpenSea.URL.makeAssetsUrl(
         ~collectionSlug=item.collection.slug,
         ~eventType=item.eventType,
         ~priceFilter=?item.eventFilters
@@ -221,9 +221,9 @@ let make = () => {
               eventFilter.paymentToken.decimals,
             )->Belt.Option.flatMap(price =>
               switch eventFilter.direction {
-              | #ALERT_ABOVE => Some(Services.OpenSea.Min(price))
-              | #ALERT_BELOW => Some(Services.OpenSea.Max(price))
-              | #ALERT_EQUAL => Some(Services.OpenSea.Eq(price))
+              | #ALERT_ABOVE => Some(Services.OpenSea.URL.Min(price))
+              | #ALERT_BELOW => Some(Services.OpenSea.URL.Max(price))
+              | #ALERT_EQUAL => Some(Services.OpenSea.URL.Eq(price))
               | #FutureAddedValue(_) => None
               }
             )
@@ -237,9 +237,9 @@ let make = () => {
             attributes->Belt.Array.keepMap(attribute =>
               switch attribute {
               | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
-                Some(Services.OpenSea.NumberTrait({name: traitType, value: numberValue}))
+                Some(Services.OpenSea.URL.NumberTrait({name: traitType, value: numberValue}))
               | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
-                Some(Services.OpenSea.StringTrait({name: traitType, value: stringValue}))
+                Some(Services.OpenSea.URL.StringTrait({name: traitType, value: stringValue}))
               | #FutureAddedValue(_) => None
               }
             )

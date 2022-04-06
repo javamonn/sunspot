@@ -145,26 +145,27 @@ module Loading = {
 
 module Data = {
   @react.component
-  let make = (~openSeaOrder, ~openSeaOrderFragment, ~quickbuy) => {
+  let make = (~openSeaOrder, ~openSeaOrderFragment, ~quickbuy, ~seaportClient) => {
     let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
     let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-    let (useAccountResult, _) = Externals.Wagmi.UseAccount.use()
     let {setIsQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(
       Contexts_Buy_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      quickbuy ? OrderSection.AuthenticationPending : Buy
+      quickbuy ? OrderSection.SeaportClientPending : Buy
     )
-    let openSeaClient = React.useRef(None)
-    let didAutoExecuteOrder = React.useRef(false)
+    let (waitForTransactionResult, _) = Externals.Wagmi.UseWaitForTransaction.use({
+      let hash = switch executionState {
+      | TransactionCreated({transactionHash})
+      | TransactionConfirmed({transactionHash})
+      | TransactionFailed({transactionHash}) =>
+        Some(transactionHash)
+      | _ => None
+      }
 
-    let _ = React.useEffect0(() => {
-      Some(
-        () => {
-          openSeaClient.current->Belt.Option.forEach(Externals.OpenSea.removeAllListeners)
-        },
-      )
+      Externals.Wagmi.UseWaitForTransaction.config(~hash?, ~skip=!Js.Option.isSome(hash), ())
     })
+    let didAutoExecuteOrder = React.useRef(false)
 
     let _ = React.useEffect1(() => {
       let _ = switch authentication {
@@ -177,7 +178,51 @@ module Data = {
     }, [authentication])
 
     let _ = React.useEffect1(() => {
-      switch executionState {
+      setExecutionState(executionState =>
+        switch (executionState, waitForTransactionResult) {
+        | (TransactionCreated({transactionHash}), {data: Some(transactionReceipt)}) =>
+          Services.Logger.logWithData(
+            "buy",
+            "transaction confirmed",
+            [
+              (
+                "transactionReceipt",
+                transactionReceipt
+                ->Js.Json.stringifyAny
+                ->Belt.Option.getWithDefault("")
+                ->Js.Json.string,
+              ),
+            ]
+            ->Js.Dict.fromArray
+            ->Js.Json.object_,
+          )
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeSuccess,
+            ~message=React.string("transaction confirmed."),
+            (),
+          )
+          TransactionConfirmed({transactionHash: transactionHash})
+        | (TransactionCreated({transactionHash}), {error: Some(error)}) =>
+          Services.Logger.jsExn(
+            ~tag="buy",
+            ~message="transaction failed",
+            ~extra=[("transactionHash", Js.Json.string(transactionHash))],
+            error,
+          )
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeError,
+            ~message=React.string("transaction failed."),
+            (),
+          )
+          TransactionFailed({transactionHash: transactionHash})
+        | _ => executionState
+        }
+      )
+      None
+    }, [waitForTransactionResult.loading])
+
+    let _ = React.useEffect1(() => {
+      let _ = switch executionState {
       | OrderSection.Buy
       | InvalidOrder(_)
       | TransactionConfirmed(_)
@@ -189,123 +234,92 @@ module Data = {
       None
     }, [executionState])
 
-    let handleExecuteOrder = (~provider, ~accountAddress) => {
+    let handleExecuteOrder = (
+      {wyvernExchangeContract, accountAddress}: Contexts_Buy_Types.seaportClient,
+    ) => {
       setExecutionState(_ => WalletConfirmPending)
-      Services.Logger.log("buy", "handleExecuteOrder")
-      let client = Externals.OpenSea.makeClient(
-        provider,
-        Externals.OpenSea.clientParams(~networkName=Externals.OpenSea.mainNetwork, ()),
-      )
-      openSeaClient.current = Some(client)
-
-      let _ = Externals.OpenSea.addListener(
-        client,
-        #TransactionCreated(
-          ({transactionHash}) => {
-            Services.Logger.log("buy", "transaction created")
-            setExecutionState(_ => TransactionCreated({transactionHash: transactionHash}))
-          },
+      Services.OpenSea.Seaport.fulfillOrder(
+        Services.OpenSea.Seaport.fulfillOrderParams(
+          ~order=openSeaOrder,
+          ~accountAddress,
+          ~wyvernExchangeContract,
+          ~networkName=#main,
+          (),
         ),
       )
-      let _ = Externals.OpenSea.addListener(
-        client,
-        #TransactionConfirmed(
-          ({transactionHash}) => {
-            let _ = Services.Logger.logWithData(
-              "buy",
-              "transaction confirmed",
-              [("transactionHash", Js.Json.string(transactionHash))]
-              ->Js.Dict.fromArray
-              ->Js.Json.object_,
-            )
-            setExecutionState(_ => TransactionConfirmed({transactionHash: transactionHash}))
-            let _ = Externals.OpenSea.removeAllListeners(client)
-          },
-        ),
-      )
-      let _ = Externals.OpenSea.addListener(
-        client,
-        #TransactionFailed(
-          ({transactionHash}) => {
-            let _ = Services.Logger.logWithData(
-              "buy",
-              "transaction failed",
-              [("transactionHash", Js.Json.string(transactionHash))]
-              ->Js.Dict.fromArray
-              ->Js.Json.object_,
-            )
-            setExecutionState(_ => TransactionFailed({transactionHash: transactionHash}))
-            let _ = Externals.OpenSea.removeAllListeners(client)
-          },
-        ),
-      )
-
-      let _ =
-        Externals.OpenSea.fulfillOrder(
-          client,
-          Externals.OpenSea.orderParams(
-            ~order=openSeaOrder,
-            ~accountAddress,
-            ~referrerAddress=Config.donationsAddress,
-            (),
-          ),
+      |> Js.Promise.then_(transaction => {
+        setExecutionState(_ => TransactionCreated({
+          transactionHash: transaction->Externals.Ethers.Transaction.hash,
+        }))
+        let _ = Services.Logger.logWithData(
+          "buy",
+          "transaction created",
+          [
+            (
+              "transaction",
+              transaction->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->Js.Json.string,
+            ),
+          ]
+          ->Js.Dict.fromArray
+          ->Js.Json.object_,
         )
-        |> Js.Promise.then_(tx => {
-          Js.Promise.resolve()
-        })
-        |> Js.Promise.catch(error => {
-          let message = Js.Nullable.toOption(Obj.magic(error)["message"])
-          let _ = Services.Logger.logWithData(
-            "buy",
-            "invalid order",
-            [("message", message->Belt.Option.getWithDefault("")->Js.Json.string)]
-            ->Js.Dict.fromArray
-            ->Js.Json.object_,
+        Js.Promise.resolve()
+      })
+      |> Js.Promise.catch(error => {
+        let message = Js.Nullable.toOption(Obj.magic(error)["message"])
+        let _ = Services.Logger.logWithData(
+          "buy",
+          "invalid order",
+          [("message", message->Belt.Option.getWithDefault("")->Js.Json.string)]
+          ->Js.Dict.fromArray
+          ->Js.Json.object_,
+        )
+        switch message {
+        | Some(message)
+          if Js.String2.startsWith(message, "Failed to authorize transaction") ||
+          Js.String2.startsWith(
+            message,
+            "MetaMask Tx Signature: User denied transaction signature.",
+          ) =>
+          let _ = Services.Logger.log("buy", "failed to authorize transaction")
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeError,
+            ~message=React.string("order authorization cancelled."),
+            (),
           )
-          switch message {
-          | Some(message) if Js.String2.startsWith(message, "Failed to authorize transaction") =>
-            let _ = Services.Logger.log("buy", "failed to authorize transaction")
-            openSnackbar(
-              ~type_=Contexts.Snackbar.TypeError,
-              ~message=React.string("order authorization cancelled."),
-              (),
-            )
-            setExecutionState(executionState =>
-              switch executionState {
-              | OrderSection.TransactionFailed(_)
-              | OrderSection.TransactionConfirmed(_) => executionState
-              | _ => OrderSection.Buy
-              }
-            )
-          | Some(message) =>
-            openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
-            setExecutionState(executionState =>
-              switch executionState {
-              | TransactionFailed(_) | TransactionConfirmed(_) => executionState
-              | _ => InvalidOrder(None)
-              }
-            )
-          | _ =>
-            setExecutionState(executionState =>
-              switch executionState {
-              | TransactionFailed(_) | TransactionConfirmed(_) => executionState
-              | _ => InvalidOrder(None)
-              }
-            )
-          }
-          Js.Promise.resolve()
-        })
+          setExecutionState(executionState =>
+            switch executionState {
+            | OrderSection.TransactionFailed(_)
+            | OrderSection.TransactionConfirmed(_) => executionState
+            | _ => OrderSection.Buy
+            }
+          )
+        | Some(message) =>
+          openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
+          setExecutionState(executionState =>
+            switch executionState {
+            | TransactionFailed(_) | TransactionConfirmed(_) => executionState
+            | _ => InvalidOrder(None)
+            }
+          )
+        | _ =>
+          setExecutionState(executionState =>
+            switch executionState {
+            | TransactionFailed(_) | TransactionConfirmed(_) => executionState
+            | _ => InvalidOrder(None)
+            }
+          )
+        }
+        Js.Promise.resolve()
+      })
     }
 
     let handleClickBuy = () => {
-      switch useAccountResult {
-      | {Externals.Wagmi.UseAccount.data: Some({connector, address})} =>
-        let _ = handleExecuteOrder(
-          ~provider=connector->Externals.Wagmi.Connector.getProvider,
-          ~accountAddress=address,
-        )
-      | {data: None} =>
-        setExecutionState(_ => AuthenticationPending)
+      switch seaportClient {
+      | Some(seaportClient) =>
+        let _ = handleExecuteOrder(seaportClient)
+      | _ =>
+        setExecutionState(_ => SeaportClientPending)
         let _ =
           signIn()
           |> Js.Promise.then_(_ => Js.Promise.resolve())
@@ -317,21 +331,14 @@ module Data = {
     }
 
     let _ = React.useEffect2(() => {
-      switch (executionState, authentication, useAccountResult) {
-      | (
-          AuthenticationPending,
-          Contexts.Auth.Authenticated(_),
-          {Externals.Wagmi.UseAccount.data: Some({connector, address})},
-        ) if !didAutoExecuteOrder.current && quickbuy =>
+      switch (executionState, seaportClient) {
+      | (SeaportClientPending, Some(seaportClient)) if !didAutoExecuteOrder.current =>
         didAutoExecuteOrder.current = true
-        handleExecuteOrder(
-          ~provider=connector->Externals.Wagmi.Connector.getProvider,
-          ~accountAddress=address,
-        )
+        let _ = handleExecuteOrder(seaportClient)
       | _ => ()
       }
       None
-    }, (authentication, useAccountResult.data->Belt.Option.map(data => data.connector.ready)))
+    }, (executionState, seaportClient))
 
     <OrderSection
       executionState={executionState}
@@ -399,16 +406,16 @@ let parseOpenSeaOrder = (
       cancelledOrFinalized: order.cancelled || order.finalized,
       markedInvalid: order.markedInvalid,
       metadata: parseMetadata(order.metadata),
-      quantity: order.quantity->Externals_BigNumber.make,
+      quantity: order.quantity->Externals.Ethers.BigNumber.makeFromString,
       makerAccount: order.maker->parseUser,
       takerAccount: order.taker->parseUser,
       maker: order.maker.address,
       taker: order.taker.address,
-      makerRelayerFee: order.makerRelayerFee->Externals_BigNumber.make,
-      takerRelayerFee: order.takerRelayerFee->Externals_BigNumber.make,
-      makerProtocolFee: order.makerProtocolFee->Externals_BigNumber.make,
-      takerProtocolFee: order.takerProtocolFee->Externals_BigNumber.make,
-      makerReferrerFee: order.makerReferrerFee->Externals_BigNumber.make,
+      makerRelayerFee: order.makerRelayerFee->Externals.Ethers.BigNumber.makeFromString,
+      takerRelayerFee: order.takerRelayerFee->Externals.Ethers.BigNumber.makeFromString,
+      makerProtocolFee: order.makerProtocolFee->Externals.Ethers.BigNumber.makeFromString,
+      takerProtocolFee: order.takerProtocolFee->Externals.Ethers.BigNumber.makeFromString,
+      makerReferrerFee: order.makerReferrerFee->Externals.Ethers.BigNumber.makeFromString,
       waitingForBestCounterOrder: order.feeRecipient.address === Config.nullAddress,
       feeMethod: order.feeMethod,
       feeRecipientAccount: order.feeRecipient->parseUser,
@@ -422,23 +429,23 @@ let parseOpenSeaOrder = (
       staticTarget: order.staticTarget,
       staticExtradata: order.staticExtradata,
       paymentToken: order.paymentToken,
-      basePrice: order.basePrice->Externals_BigNumber.make,
-      extra: order.extra->Externals_BigNumber.make,
-      currentBounty: order.currentBounty->Externals_BigNumber.make,
-      currentPrice: order.currentPrice->Externals_BigNumber.make,
+      basePrice: order.basePrice->Externals.Ethers.BigNumber.makeFromString,
+      extra: order.extra->Externals.Ethers.BigNumber.makeFromString,
+      currentBounty: order.currentBounty->Externals.Ethers.BigNumber.makeFromString,
+      currentPrice: order.currentPrice->Externals.Ethers.Utils.parseUnits,
       createdTime: order.createdTime
       ->Js.Json.decodeNumber
       ->Belt.Option.getExn
-      ->Externals_BigNumber.makeWithFloat,
+      ->Externals.Ethers.BigNumber.makeFromFloat,
       listingTime: order.listingTime
       ->Js.Json.decodeNumber
       ->Belt.Option.getExn
-      ->Externals_BigNumber.makeWithFloat,
+      ->Externals.Ethers.BigNumber.makeFromFloat,
       expirationTime: order.expirationTime
       ->Js.Json.decodeNumber
       ->Belt.Option.getExn
-      ->Externals_BigNumber.makeWithFloat,
-      salt: order.salt->Externals_BigNumber.make,
+      ->Externals.Ethers.BigNumber.makeFromFloat,
+      salt: order.salt->Externals.Ethers.BigNumber.makeFromString,
       v: v,
       r: r,
       s: s,
@@ -449,14 +456,14 @@ let parseOpenSeaOrder = (
 
     Some({
       ...parsedOrder,
-      currentPrice: Externals_OpenSea.estimateCurrentPrice(parsedOrder),
+      currentPrice: Services.OpenSea.Seaport.estimateCurrentPrice(parsedOrder),
     })
   | _ => None
   }
 }
 
 @react.component
-let make = (~collectionSlug, ~orderId, ~quickbuy) => {
+let make = (~collectionSlug, ~orderId, ~quickbuy, ~seaportClient) => {
   let (orderQueryData, setOrderQueryData) = React.useState(_ => None)
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
 
@@ -497,7 +504,10 @@ let make = (~collectionSlug, ~orderId, ~quickbuy) => {
     <Loading invalidRedirect={true} />
   | (Some(openSeaOrder), Some(openSeaOrderFragment)) =>
     <Data
-      openSeaOrder={openSeaOrder} openSeaOrderFragment={openSeaOrderFragment} quickbuy={quickbuy}
+      openSeaOrder={openSeaOrder}
+      openSeaOrderFragment={openSeaOrderFragment}
+      quickbuy={quickbuy}
+      seaportClient={seaportClient}
     />
   }
 }

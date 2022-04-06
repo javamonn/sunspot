@@ -1,3 +1,7 @@
+module Signer = {
+  type t
+}
+
 module Connector = {
   @deriving(accessors)
   type t = {
@@ -7,14 +11,17 @@ module Connector = {
   }
 
   @send external getProvider: t => Externals_Ethereum.t = "getProvider"
+  @send external getSigner: t => Js.Promise.t<Signer.t> = "getSigner"
 }
 
 module Provider = {
-  type connectorsOptions = {chainId: int}
+  type chainIdParam = {chainId: int}
   @module("wagmi") @react.component
   external make: (
     ~autoConnect: bool=?,
-    ~connectors: connectorsOptions => array<Connector.t>=?,
+    ~connectors: chainIdParam => array<Connector.t>=?,
+    ~provider: chainIdParam => Externals_Ethers.Provider.t,
+    ~webSocketProvider: chainIdParam => Externals_Ethers.Provider.t,
     ~children: React.element,
   ) => React.element = "Provider"
 }
@@ -143,6 +150,24 @@ module UseTransaction = {
 
   @module("wagmi")
   external use: unit => (result, options => Js.Promise.t<result>) = "useTransaction"
+}
+
+module UseWaitForTransaction = {
+  @deriving(abstract)
+  type config = {
+    @optional hash: string,
+    @optional skip: bool,
+  }
+
+  type result = {
+    data: option<Externals_Ethers.TransactionReceipt.t>,
+    loading: option<bool>,
+    error: option<Js.Exn.t>,
+  }
+  type wait
+
+  @module("wagmi")
+  external use: config => (result, wait) = "useWaitForTransaction"
 }
 
 module UseProvider = {

@@ -37,7 +37,7 @@ let theme = MaterialUi.Theme.create({
 })
 Services.Logger.initialize()
 
-let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.connectorsOptions) => {
+let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.chainIdParam) => {
   open Externals.Wagmi
 
   let rpcUrl =
@@ -67,6 +67,12 @@ let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.connectorsOptions) => 
   ]
 }
 
+let infuraProvider = ({chainId}: Externals.Wagmi.Provider.chainIdParam) =>
+  Externals.Ethers.Provider.makeInfuraProvider(chainId, Config.infuraId)
+
+let infuraWebSocketProvider = ({chainId}: Externals.Wagmi.Provider.chainIdParam) =>
+  Externals.Ethers.Provider.makeInfuraWebSocketProvider(chainId, Config.infuraId)
+
 let default = (props: props): React.element => {
   let {component, pageProps} = props
   let elem = React.createElement(component, pageProps)
@@ -85,7 +91,11 @@ let default = (props: props): React.element => {
     </Externals.Next.Head>
     <MaterialUi.ThemeProvider theme={theme}>
       <Contexts.Snackbar>
-        <Externals.Wagmi.Provider connectors={wagmiConnector} autoConnect={true}>
+        <Externals.Wagmi.Provider
+          connectors={wagmiConnector}
+          autoConnect={true}
+          provider={infuraProvider}
+          webSocketProvider={infuraWebSocketProvider}>
           <Contexts.Auth>
             <Contexts.Apollo> <Contexts_Buy> {elem} </Contexts_Buy> </Contexts.Apollo>
           </Contexts.Auth>

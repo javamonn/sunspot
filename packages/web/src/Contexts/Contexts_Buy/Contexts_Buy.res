@@ -33,9 +33,33 @@ type params = {
   quickbuy: bool,
 }
 
+let makeSeaportClient = (useAccountResult: Externals.Wagmi.UseAccount.data) => {
+  switch useAccountResult {
+  | {connector, address} if connector.ready =>
+    connector
+    |> Externals.Wagmi.Connector.getSigner
+    |> Js.Promise.then_(signer =>
+      Js.Promise.resolve(
+        Some({
+          Contexts_Buy_Types.wyvernExchangeContract: Services.OpenSea.Seaport.makeWyvernExchangeContract(
+            Services.OpenSea.Seaport.makeWyvernExchangeContractParams(~web3=signer),
+          ),
+          accountAddress: address,
+        }),
+      )
+    )
+  | _ => Js.Promise.resolve(None)
+  }
+}
+
 @react.component
 let make = (~children) => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
+  let (
+    {data: useAccountData}: Externals.Wagmi.UseAccount.result,
+    _,
+  ) = Externals.Wagmi.UseAccount.use()
+  let {authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
   let queryParams = router.asPath->parseQuery
   let buyParams = switch (
     queryParams->Belt.Option.flatMap(q =>
@@ -62,6 +86,7 @@ let make = (~children) => {
   }
   let (isBuyModalOpen, setIsBuyModalOpen) = React.useState(_ => Js.Option.isSome(buyParams))
   let (isQuickbuyTxPending, setIsQuickbuyTxPending) = React.useState(_ => isBuyModalOpen)
+  let (seaportClient, setSeaportClient) = React.useState(_ => None)
 
   let handleBuyModalClose = ev => {
     setIsBuyModalOpen(_ => false)
@@ -72,7 +97,7 @@ let make = (~children) => {
 
   let _ = React.useEffect1(() => {
     let nextIsBuyModalOpen = Js.Option.isSome(buyParams)
-    let _ = setIsBuyModalOpen(currentBuyParams => nextIsBuyModalOpen)
+    let _ = setIsBuyModalOpen(_ => nextIsBuyModalOpen)
     Services.Logger.logWithData(
       "buy",
       "setIsBuyDrawerOpen",
@@ -82,6 +107,22 @@ let make = (~children) => {
     )
     None
   }, [Js.Option.isSome(buyParams)])
+
+  let _ = React.useEffect3(() => {
+    let _ = switch (useAccountData, authentication) {
+    | (Some(useAccountData), Authenticated(_)) =>
+      let _ = makeSeaportClient(useAccountData) |> Js.Promise.then_(seaportClient => {
+        let _ = setSeaportClient(_ => seaportClient)
+        Js.Promise.resolve()
+      })
+    | _ => ()
+    }
+    None
+  }, (
+    useAccountData->Belt.Option.map(data => data.connector.ready),
+    useAccountData->Belt.Option.map(data => data.address),
+    authentication,
+  ))
 
   <ContextProvider
     value={
@@ -148,7 +189,10 @@ let make = (~children) => {
         {switch buyParams {
         | Some({collectionSlug, orderId, quickbuy}) =>
           <QueryRenderers_Buy
-            collectionSlug={collectionSlug} orderId={orderId} quickbuy={quickbuy}
+            collectionSlug={collectionSlug}
+            orderId={orderId}
+            quickbuy={quickbuy}
+            seaportClient={seaportClient}
           />
         | _ => React.null
         }}

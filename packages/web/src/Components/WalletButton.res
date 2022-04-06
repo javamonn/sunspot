@@ -1,5 +1,5 @@
 @react.component
-let make = (~provider, ~address, ~onClick, ~authentication: Contexts.Auth.authentication) => {
+let make = (~address, ~onClick, ~authentication: Contexts.Auth.authentication) => {
   let {state: {connecting}} = Externals.Wagmi.UseContext.use()
   let content = switch authentication {
   | InProgress_PromptConnectWallet
@@ -35,7 +35,8 @@ let make = (~provider, ~address, ~onClick, ~authentication: Contexts.Auth.authen
         <Externals.MaterialUi_Icons.Error
           className={Cn.make(["w-5", "h-5", "ml-2", "text-red-400"])}
         />
-      | Authenticated(_) => <Externals.Davatar address={address} size={16} provider={provider} />
+      | Authenticated(_) =>
+        <Externals.Davatar.Jazzicon address={address} size={16} />
       | _ => React.null
       }}
     </MaterialUi.Button>
