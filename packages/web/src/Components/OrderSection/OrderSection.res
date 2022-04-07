@@ -392,7 +392,6 @@ module AssetDetail = {
         }
       | _ => None
       }
-
       result->Belt.Option.getExn
     })
 
@@ -466,7 +465,7 @@ module AssetDetail = {
                     "leading-none",
                     "text-left",
                   ])}>
-                  {React.string(asset.name)}
+                  {asset.name->Belt.Option.getWithDefault(`#${asset.tokenId}`)->React.string}
                 </h1>
                 <Externals.MaterialUi_Icons.OpenInNew
                   className={Cn.make(["opacity-50", "w-4", "h-4", "ml-2"])}
