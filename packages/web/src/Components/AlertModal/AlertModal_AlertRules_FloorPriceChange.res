@@ -124,6 +124,8 @@ let make = (~value, ~onChange) => {
           #MACRO_TIME_WINDOW_10M,
           #MACRO_TIME_WINDOW_30M,
           #MACRO_TIME_WINDOW_1H,
+          #MACRO_TIME_WINDOW_12H,
+          #MACRO_TIME_WINDOW_24H,
         ]->Belt.Array.map(timeWindow => {
           <MaterialUi.MenuItem value={timeWindow->Obj.magic->MaterialUi.MenuItem.Value.string}>
             {AlertModal_Types.MacroTimeWindow.toDisplay(timeWindow)}

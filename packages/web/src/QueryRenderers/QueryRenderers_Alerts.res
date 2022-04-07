@@ -187,6 +187,8 @@ let make = () => {
             | #MACRO_TIME_WINDOW_10M => " in 10m"
             | #MACRO_TIME_WINDOW_30M => " in 30m"
             | #MACRO_TIME_WINDOW_1H => " in 1h"
+            | #MACRO_TIME_WINDOW_12H => " in 12h"
+            | #MACRO_TIME_WINDOW_24H => " in 24h"
             | #FutureAddedValue(_) => ""
             }
 
@@ -407,7 +409,9 @@ let make = () => {
             | #FutureAddedValue(_) => None
             | #MACRO_TIME_WINDOW_10M as e
             | #MACRO_TIME_WINDOW_30M as e
-            | #MACRO_TIME_WINDOW_1H as e =>
+            | #MACRO_TIME_WINDOW_1H as e
+            | #MACRO_TIME_WINDOW_12H as e
+            | #MACRO_TIME_WINDOW_24H as e =>
               Some(e)
             }
 
@@ -441,7 +445,8 @@ let make = () => {
             let timeBucket = switch e.timeBucket {
             | Some(#MACRO_TIME_BUCKET_5M as e)
             | Some(#MACRO_TIME_BUCKET_15M as e)
-            | Some(#MACRO_TIME_BUCKET_30M as e) =>
+            | Some(#MACRO_TIME_BUCKET_30M as e)
+            | Some(#MACRO_TIME_BUCKET_1H as e) =>
               Some(e)
             | _ => None
             }
@@ -449,7 +454,9 @@ let make = () => {
             | #FutureAddedValue(_) => None
             | #MACRO_TIME_WINDOW_10M as e
             | #MACRO_TIME_WINDOW_30M as e
-            | #MACRO_TIME_WINDOW_1H as e =>
+            | #MACRO_TIME_WINDOW_1H as e
+            | #MACRO_TIME_WINDOW_12H as e
+            | #MACRO_TIME_WINDOW_24H as e =>
               Some(e)
             }
 

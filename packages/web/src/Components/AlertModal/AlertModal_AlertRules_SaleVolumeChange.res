@@ -128,6 +128,7 @@ let make = (~value, ~onChange) => {
             #MACRO_TIME_BUCKET_5M,
             #MACRO_TIME_BUCKET_15M,
             #MACRO_TIME_BUCKET_30M,
+            #MACRO_TIME_BUCKET_1H,
           ]->Belt.Array.map(timeBucket =>
             <MaterialUi.MenuItem value={timeBucket->Obj.magic->MaterialUi.MenuItem.Value.string}>
               {AlertModal_Types.MacroTimeBucket.toDisplay(timeBucket)}
@@ -157,11 +158,16 @@ let make = (~value, ~onChange) => {
             #MACRO_TIME_WINDOW_10M,
             #MACRO_TIME_WINDOW_30M,
             #MACRO_TIME_WINDOW_1H,
+            #MACRO_TIME_WINDOW_12H,
+            #MACRO_TIME_WINDOW_24H,
           ]->Belt.Array.map(timeWindow => {
             let disabled = switch (value->getValueWithDefault->timeBucket, timeWindow) {
-            | (#MACRO_TIME_BUCKET_15M, #MACRO_TIME_WINDOW_10M) => true
-            | (#MACRO_TIME_BUCKET_30M, #MACRO_TIME_WINDOW_30M) => true
-            | (#MACRO_TIME_BUCKET_30M, #MACRO_TIME_WINDOW_10M) => true
+            | (#MACRO_TIME_BUCKET_15M, #MACRO_TIME_WINDOW_10M)
+            | (#MACRO_TIME_BUCKET_30M, #MACRO_TIME_WINDOW_30M)
+            | (#MACRO_TIME_BUCKET_30M, #MACRO_TIME_WINDOW_10M)
+            | (#MACRO_TIME_BUCKET_1H, #MACRO_TIME_WINDOW_1H)
+            | (#MACRO_TIME_BUCKET_1H, #MACRO_TIME_WINDOW_30M)
+            | (#MACRO_TIME_BUCKET_1H, #MACRO_TIME_WINDOW_10M) => true
             | _ => false
             }
             <MaterialUi.MenuItem
