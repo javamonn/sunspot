@@ -180,7 +180,8 @@ module Data = {
     let _ = React.useEffect1(() => {
       setExecutionState(executionState =>
         switch (executionState, waitForTransactionResult) {
-        | (TransactionCreated({transactionHash}), {data: Some(transactionReceipt)}) =>
+        | (TransactionCreated({transactionHash}), {data: Some({status} as transactionReceipt)})
+          if status =>
           Services.Logger.logWithData(
             "buy",
             "transaction confirmed",
@@ -212,6 +213,30 @@ module Data = {
           openSnackbar(
             ~type_=Contexts.Snackbar.TypeError,
             ~message=React.string("transaction failed."),
+            (),
+          )
+          TransactionFailed({transactionHash: transactionHash})
+        | (TransactionCreated({transactionHash}), {data: Some({status} as transactionReceipt)})
+          if !status =>
+          Services.Logger.logWithData(
+            "buy",
+            "transaction failed",
+            [
+              ("transactionHash", Js.Json.string(transactionHash)),
+              (
+                "transactionReceipt",
+                transactionReceipt
+                ->Js.Json.stringifyAny
+                ->Belt.Option.getWithDefault("")
+                ->Js.Json.string,
+              ),
+            ]
+            ->Js.Dict.fromArray
+            ->Js.Json.object_,
+          )
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeError,
+            ~message=React.string("transaction reverted."),
             (),
           )
           TransactionFailed({transactionHash: transactionHash})

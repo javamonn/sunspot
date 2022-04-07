@@ -34,7 +34,7 @@ module Utils = {
 
 module TransactionReceipt = {
   // https://docs.ethers.io/v5/api/providers/types/#providers-TransactionReceipt
-  type t = {transactionHash: string}
+  type t = {transactionHash: string, status: bool}
 }
 
 module Transaction = {
