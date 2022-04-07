@@ -21,3 +21,8 @@ html {
   height: var(--root-height);
   display: flex;
 }
+
+/** override react-image-lightbox/style.css **/
+.ril-toolbar {
+  display: none !important;
+}

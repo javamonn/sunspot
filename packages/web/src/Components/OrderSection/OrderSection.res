@@ -1,3 +1,4 @@
+%raw(`require('react-image-lightbox/style.css')`)
 type executionState =
   | Buy
   | SeaportClientPending
@@ -6,6 +7,59 @@ type executionState =
   | TransactionConfirmed({transactionHash: string})
   | TransactionFailed({transactionHash: string})
   | InvalidOrder(option<string>)
+
+let eventsScatterplotHours = 4.0
+
+module CollectionStatistics = {
+  @react.component
+  let make = (
+    ~collection: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaAsset.t_collection,
+  ) => {
+    let (isLightboxOpen, setIsLightboxOpen) = React.useState(_ => false)
+    let eventsScatterplotSrc = {
+      let endCreatedAtMinuteTime =
+        Js.Math.floor_float(Js.Math.floor_float(Js.Date.now() /. 1000.0) /. 60.0) *. 60.0
+      let startCreatedAtMinuteTime =
+        endCreatedAtMinuteTime -. 60.0 *. 60.0 *. eventsScatterplotHours
+
+      let start = startCreatedAtMinuteTime->Belt.Float.toInt->Belt.Int.toString
+      let end = endCreatedAtMinuteTime->Belt.Float.toInt->Belt.Int.toString
+      let collectionSlug = collection.slug
+
+      `https://dpldouen3w8e7.cloudfront.net/production/events-scatterplot?collectionSlug=${collectionSlug}&startCreatedAtMinuteTime=${start}&endCreatedAtMinuteTime=${end}`
+    }
+
+    <>
+      <img
+        onClick={_ => {
+          setIsLightboxOpen(_ => true)
+        }}
+        src={eventsScatterplotSrc}
+        className={Cn.make([
+          "flex-1",
+          "border",
+          "border-solid",
+          "rounded",
+          "cursor-pointer",
+          "border-darkBorder",
+          "mt-8",
+        ])}
+      />
+      {isLightboxOpen
+        ? <Externals.ReactImageLightbox
+            mainSrc={eventsScatterplotSrc}
+            onCloseRequest={() => setIsLightboxOpen(_ => false)}
+            imagePadding={30}
+            reactModalStyle={{
+              "overlay": {
+                "zIndex": "1500",
+              },
+            }}
+          />
+        : React.null}
+    </>
+  }
+}
 
 module AssetMetadata = {
   @react.component
@@ -311,6 +365,7 @@ module AssetDetail = {
   let make = (
     ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
   ) => {
+    let (isLightboxOpen, setIsLightboxOpen) = React.useState(_ => false)
     let handleClick = destination => {
       Services.Logger.logWithData(
         "buy",
@@ -345,7 +400,28 @@ module AssetDetail = {
     | {imageUrl: Some(uri)}
     | {imagePreviewUrl: Some(uri)}
     | {imageThumbnailUrl: Some(uri)} =>
-      <img className={Cn.make(["rounded"])} src={Services.URL.resolveMedia(~uri, ())} />
+      let imageSrc = Services.URL.resolveMedia(~uri, ())
+      <>
+        <img
+          className={Cn.make(["rounded", "cursor-pointer"])}
+          src={imageSrc}
+          onClick={_ => {
+            setIsLightboxOpen(_ => true)
+          }}
+        />
+        {isLightboxOpen
+          ? <Externals.ReactImageLightbox
+              mainSrc={imageSrc}
+              onCloseRequest={() => setIsLightboxOpen(_ => false)}
+              imagePadding={30}
+              reactModalStyle={{
+                "overlay": {
+                  "zIndex": "1500",
+                },
+              }}
+            />
+          : React.null}
+      </>
     | {animationUrl: Some(animationUrl)} =>
       <video
         controls={true}
@@ -520,6 +596,9 @@ module AssetDetail = {
       )
       ->Belt.Option.getWithDefault(React.null)}
       <AssetMetadata openSeaOrderFragment={openSeaOrderFragment} asset={asset} />
+      {asset.collection
+      ->Belt.Option.map(collection => <CollectionStatistics collection={collection} />)
+      ->Belt.Option.getWithDefault(React.null)}
     </>
   }
 }

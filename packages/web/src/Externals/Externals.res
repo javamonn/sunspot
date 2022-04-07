@@ -21,3 +21,4 @@ module Raw = Externals_Raw
 module Ethers = Externals_Ethers
 module OpenSea = Externals_OpenSea
 module DateFns = Externals_DateFns
+module ReactImageLightbox = Externals_ReactImageLightbox
