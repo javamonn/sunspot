@@ -1,0 +1,318 @@
+{
+  "_format": "ethers-rs-sol-cache-3",
+  "paths": {
+    "artifacts": "out",
+    "sources": "src",
+    "tests": "test",
+    "libraries": [
+      "lib"
+    ]
+  },
+  "files": {
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/ds-test/src/test.sol": {
+      "lastModificationDate": 1649364017562,
+      "contentHash": "1aa80125d139ca211efb68cb29bf68d2",
+      "sourceName": "lib/ds-test/src/test.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "DSTest": {
+          "0.8.10+commit.fc410830.Linux.gcc": "test.sol/DSTest.json"
+        }
+      }
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1649426950868,
+      "contentHash": "8398972af73b4e9e5ff3b31cad86234f",
+      "sourceName": "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol"
+      ],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {}
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
+      "lastModificationDate": 1649426950876,
+      "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
+      "sourceName": "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {}
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+      "lastModificationDate": 1649426950876,
+      "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
+      "sourceName": "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {}
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/src/TelescopeManual.sol": {
+      "lastModificationDate": 1649436576518,
+      "contentHash": "694a1828f03286aaaa07e4e585c33b61",
+      "sourceName": "src/TelescopeManual.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol"
+      ],
+      "versionRequirement": "=0.8.10",
+      "artifacts": {
+        "TelescopeManual": {
+          "0.8.10+commit.fc410830.Linux.gcc": "TelescopeManual.sol/TelescopeManual.json"
+        }
+      }
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/TelescopeManual.t.sol": {
+      "lastModificationDate": 1649437555259,
+      "contentHash": "4480a1de1504ec55deec0a8b68e6afbc",
+      "sourceName": "src/test/TelescopeManual.t.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [
+        "lib/ds-test/src/test.sol",
+        "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+        "src/TelescopeManual.sol",
+        "src/test/fixtures/WyvernExchangeFixtures.sol",
+        "src/test/utils/Test.sol"
+      ],
+      "versionRequirement": "=0.8.10",
+      "artifacts": {
+        "TelescopeManualTest": {
+          "0.8.10+commit.fc410830.Linux.gcc": "TelescopeManual.t.sol/TelescopeManualTest.json"
+        }
+      }
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/fixtures/WyvernExchangeFixtures.sol": {
+      "lastModificationDate": 1649434380553,
+      "contentHash": "09e5af60e66e4cd65939fb068a709d44",
+      "sourceName": "src/test/fixtures/WyvernExchangeFixtures.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [],
+      "versionRequirement": "=0.8.10",
+      "artifacts": {}
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/utils/Test.sol": {
+      "lastModificationDate": 1649433614489,
+      "contentHash": "d76a0205854e02cef189f21dd9321194",
+      "sourceName": "src/test/utils/Test.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [
+        "lib/ds-test/src/test.sol"
+      ],
+      "versionRequirement": "=0.8.10",
+      "artifacts": {
+        "CheatCodes": {
+          "0.8.10+commit.fc410830.Linux.gcc": "Test.sol/CheatCodes.json"
+        },
+        "ICheats": {
+          "0.8.10+commit.fc410830.Linux.gcc": "Test.sol/ICheats.json"
+        },
+        "ITest": {
+          "0.8.10+commit.fc410830.Linux.gcc": "Test.sol/ITest.json"
+        },
+        "Test": {
+          "0.8.10+commit.fc410830.Linux.gcc": "Test.sol/Test.json"
+        }
+      }
+    }
+  }
+}
