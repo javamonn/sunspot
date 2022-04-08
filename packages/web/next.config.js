@@ -43,7 +43,11 @@ const config = {
     config.module.rules.push({
       test: /\.m?js$/,
       use: options.defaultLoaders.babel,
-      exclude: /node_modules/,
+      include: [
+        path.resolve(__dirname, "pages"),
+        path.resolve(__dirname, "src"),
+        path.resolve(__dirname, "node_modules/wagmi-core"),
+      ],
       type: "javascript/auto",
       resolve: {
         fullySpecified: false,
