@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
-contract WyvernExchangeRevertMock {
+contract WyvernExchangeMock {
     function atomicMatch_(
         address[14] memory _addrs,
         uint256[18] memory _uints,
@@ -26,7 +26,5 @@ contract WyvernExchangeRevertMock {
         (_staticExtradataSell);
         (_vs);
         (_rssMetadata);
-
-        require(false, "Mock Revert");
     }
 }
