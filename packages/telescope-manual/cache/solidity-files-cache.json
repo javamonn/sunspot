@@ -10,8 +10,8 @@
   },
   "files": {
     "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/ds-test/src/test.sol": {
-      "lastModificationDate": 1649364017562,
-      "contentHash": "1aa80125d139ca211efb68cb29bf68d2",
+      "lastModificationDate": 1649451604064,
+      "contentHash": "82a8604fe648c30a9bd56444368704f0",
       "sourceName": "lib/ds-test/src/test.sol",
       "solcConfig": {
         "settings": {
@@ -40,14 +40,10 @@
       },
       "imports": [],
       "versionRequirement": ">=0.5.0",
-      "artifacts": {
-        "DSTest": {
-          "0.8.10+commit.fc410830.Linux.gcc": "test.sol/DSTest.json"
-        }
-      }
+      "artifacts": {}
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1649426950868,
+      "lastModificationDate": 1649451604624,
       "contentHash": "8398972af73b4e9e5ff3b31cad86234f",
       "sourceName": "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -82,7 +78,7 @@
       "artifacts": {}
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
-      "lastModificationDate": 1649426950876,
+      "lastModificationDate": 1649451604632,
       "contentHash": "92f9448b23a90ea3bb932ee55cc3ccce",
       "sourceName": "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
       "solcConfig": {
@@ -115,7 +111,7 @@
       "artifacts": {}
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/lib/openzeppelin-contracts/contracts/utils/Context.sol": {
-      "lastModificationDate": 1649426950876,
+      "lastModificationDate": 1649451604632,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
       "sourceName": "lib/openzeppelin-contracts/contracts/utils/Context.sol",
       "solcConfig": {
@@ -148,8 +144,8 @@
       "artifacts": {}
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/src/TelescopeManual.sol": {
-      "lastModificationDate": 1649436576518,
-      "contentHash": "694a1828f03286aaaa07e4e585c33b61",
+      "lastModificationDate": 1649463963357,
+      "contentHash": "970c0e1d6f9c8f5ed23f891691e924be",
       "sourceName": "src/TelescopeManual.sol",
       "solcConfig": {
         "settings": {
@@ -189,8 +185,8 @@
       }
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/TelescopeManual.t.sol": {
-      "lastModificationDate": 1649437555259,
-      "contentHash": "4480a1de1504ec55deec0a8b68e6afbc",
+      "lastModificationDate": 1649463292863,
+      "contentHash": "2885d90b2936d23a4dc54b970b32026d",
       "sourceName": "src/test/TelescopeManual.t.sol",
       "solcConfig": {
         "settings": {
@@ -224,7 +220,8 @@
         "lib/openzeppelin-contracts/contracts/utils/Context.sol",
         "src/TelescopeManual.sol",
         "src/test/fixtures/WyvernExchangeFixtures.sol",
-        "src/test/utils/Test.sol"
+        "src/test/utils/Test.sol",
+        "src/test/utils/WyvernExchangeRevertMock.sol"
       ],
       "versionRequirement": "=0.8.10",
       "artifacts": {
@@ -267,8 +264,8 @@
       "artifacts": {}
     },
     "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/utils/Test.sol": {
-      "lastModificationDate": 1649433614489,
-      "contentHash": "d76a0205854e02cef189f21dd9321194",
+      "lastModificationDate": 1649456270278,
+      "contentHash": "352b2a8ea9a3498e82f54f6a53a5108e",
       "sourceName": "src/test/utils/Test.sol",
       "solcConfig": {
         "settings": {
@@ -311,6 +308,43 @@
         },
         "Test": {
           "0.8.10+commit.fc410830.Linux.gcc": "Test.sol/Test.json"
+        }
+      }
+    },
+    "/home/daniel/Documents/sunspot/packages/telescope-manual/src/test/utils/WyvernExchangeRevertMock.sol": {
+      "lastModificationDate": 1649457662205,
+      "contentHash": "0244d2bc19dae7b928467c2058647ca2",
+      "sourceName": "src/test/utils/WyvernExchangeRevertMock.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london"
+        }
+      },
+      "imports": [],
+      "versionRequirement": null,
+      "artifacts": {
+        "WyvernExchangeRevertMock": {
+          "0.8.10+commit.fc410830.Linux.gcc": "WyvernExchangeRevertMock.sol/WyvernExchangeRevertMock.json"
         }
       }
     }

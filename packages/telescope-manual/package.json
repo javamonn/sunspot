@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "format": "prettier --write **/*.sol"
+    "format": "prettier --write src/"
   },
   "author": "",
   "license": "ISC",

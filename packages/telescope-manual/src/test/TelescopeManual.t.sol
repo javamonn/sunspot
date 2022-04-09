@@ -2,55 +2,125 @@
 pragma solidity 0.8.10;
 
 import "ds-test/test.sol";
-import { Test } from "./utils/Test.sol";
-import { atomicMatchData } from "./fixtures/WyvernExchangeFixtures.sol";
+import {Test} from "./utils/Test.sol";
+import {atomicMatchSig} from "./fixtures/WyvernExchangeFixtures.sol";
+import "./utils/WyvernExchangeRevertMock.sol";
 import "../TelescopeManual.sol";
 
 contract TelescopeManualTest is Test {
-  TelescopeManual telescope;
+    TelescopeManual telescope;
 
-  function setUp() public override {
-    telescope = new TelescopeManual(address(0xBEEF));
-  }
+    function setUp() public override {
+        telescope = new TelescopeManual(address(1), address(2));
+    }
 
-  function testAtomicMatch() public {
-    cheats.expectCall(telescope.wyvernExchange(), atomicMatchData);
+    function atomicMatchData() internal pure returns (bytes memory) {
+        return
+            abi.encodeWithSignature(
+                atomicMatchSig,
+                [
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0),
+                    address(0)
+                ],
+                [
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0),
+                    uint256(0)
+                ],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                [0, 0],
+                [
+                    bytes32(""),
+                    bytes32(""),
+                    bytes32(""),
+                    bytes32(""),
+                    bytes32("")
+                ]
+            );
+    }
 
-    telescope.atomicMatch(0 wei, atomicMatchData);
-  }
+    function testAtomicMatch() public {
+        bytes memory data = atomicMatchData();
+        cheats.expectCall(telescope.wyvernExchange(), data);
 
-  function testSetEnabled() public {
-    telescope.setEnabled(false);
-    assertTrue(telescope.enabled() == false);
-  }
+        telescope.atomicMatch(0, 0, data);
+    }
 
-  function testSetFeeArbiter() public {
-    telescope.setFeeArbiter(address(0xABE));
-    assertEq(telescope.feeArbiter(), address(0xABE));
-  }
+    function testFailWhenWyvernExchangeReverts() public {
+        WyvernExchangeRevertMock wyvernExchangeMock = new WyvernExchangeRevertMock();
+        TelescopeManual telescopeWithMock = new TelescopeManual(
+            address(2),
+            address(wyvernExchangeMock)
+        );
 
-  function testCannotAtomicMatchWhenNotEnabled() public {
-    telescope.setEnabled(false);
-    cheats.expectRevert(TelescopeManual.Disabled.selector);
+        telescopeWithMock.atomicMatch(0, 0, atomicMatchData());
+    }
 
-    telescope.atomicMatch(0 wei, atomicMatchData);
-  }
+    function testSetEnabled() public {
+        telescope.setEnabled(false);
+        assertTrue(telescope.enabled() == false);
+    }
 
-  function testCannotSetEnabledWhenNotOwner() public {
-    cheats.startPrank(address(0xBAD));
-    cheats.expectRevert(bytes("Ownable: caller is not the owner"));
+    function testSetFeeArbiter() public {
+        telescope.setFeeArbiter(address(3));
+        assertEq(telescope.feeArbiter(), address(3));
+    }
 
-    telescope.setEnabled(false);
+    function testCannotAtomicMatchWhenNotEnabled() public {
+        telescope.setEnabled(false);
+        cheats.expectRevert(TelescopeManual.Disabled.selector);
 
-    cheats.stopPrank();
-  }
+        telescope.atomicMatch(0, 0, atomicMatchData());
+    }
 
-  function testCannotSetFeeArbiterWhenNotOwner() public {
-    cheats.startPrank(address(0xBAD));
-    cheats.expectRevert(bytes("Ownable: caller is not the owner"));
+    function testCannotSetEnabledWhenNotOwner() public {
+        cheats.startPrank(address(4));
+        cheats.expectRevert(bytes("Ownable: caller is not the owner"));
 
-    telescope.setFeeArbiter(address(0xABE));
+        telescope.setEnabled(false);
 
-    cheats.stopPrank();
-  }
+        cheats.stopPrank();
+    }
+
+    function testCannotSetFeeArbiterWhenNotOwner() public {
+        cheats.startPrank(address(4));
+        cheats.expectRevert(bytes("Ownable: caller is not the owner"));
+
+        telescope.setFeeArbiter(address(4));
+
+        cheats.stopPrank();
+    }
 }

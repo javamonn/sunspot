@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
-import {DSTest} from 'ds-test/test.sol';
+import {DSTest} from "ds-test/test.sol";
 
 interface ICheats {
     // Set block.timestamp
@@ -17,10 +17,20 @@ interface ICheats {
     function load(address account, bytes32 slot) external returns (bytes32);
 
     // Stores a value to an address' storage slot
-    function store(address account, bytes32 slot, bytes32 value) external;
+    function store(
+        address account,
+        bytes32 slot,
+        bytes32 value
+    ) external;
 
     // Signs data
-    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function sign(uint256 privateKey, bytes32 digest)
+        external
+        returns (
+            uint8 v,
+            bytes32 r,
+            bytes32 s
+        );
 
     // Computes address for a given private key
     function addr(uint256 privateKey) external returns (address);
@@ -58,25 +68,38 @@ interface ICheats {
 
     // Expects an error on next call
     function expectRevert() external;
+
     function expectRevert(bytes calldata) external;
+
     function expectRevert(bytes4) external;
 
     // Record all storage reads and writes
     function record() external;
 
     // Gets all accessed reads and write slot from a recording session, for a given address
-    function accesses(address) external returns (bytes32[] memory reads, bytes32[] memory writes);
+    function accesses(address)
+        external
+        returns (bytes32[] memory reads, bytes32[] memory writes);
 
     // Prepare an expected log with (bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData).
     // Call this function, then emit an event, then call a function. Internally after the call, we check if
     // logs were emitted in the expected order with the expected topics and data (as specified by the booleans)
-    function expectEmit(bool, bool, bool, bool) external;
+    function expectEmit(
+        bool,
+        bool,
+        bool,
+        bool
+    ) external;
 
     // Mocks a call to an address, returning specified data.
     // Calldata can either be strict or a partial match, e.g. if you only
     // pass a Solidity selector to the expected calldata, then the entire Solidity
     // function will be mocked.
-    function mockCall(address, bytes calldata, bytes calldata) external;
+    function mockCall(
+        address,
+        bytes calldata,
+        bytes calldata
+    ) external;
 
     // Clears all mocked calls
     function clearMockedCalls() external;
@@ -109,10 +132,20 @@ interface CheatCodes {
     function load(address account, bytes32 slot) external returns (bytes32);
 
     // Stores a value to an address' storage slot
-    function store(address account, bytes32 slot, bytes32 value) external;
+    function store(
+        address account,
+        bytes32 slot,
+        bytes32 value
+    ) external;
 
     // Signs data
-    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function sign(uint256 privateKey, bytes32 digest)
+        external
+        returns (
+            uint8 v,
+            bytes32 r,
+            bytes32 s
+        );
 
     // Computes address for a given private key
     function addr(uint256 privateKey) external returns (address);
@@ -150,25 +183,38 @@ interface CheatCodes {
 
     // Expects an error on next call
     function expectRevert() external;
+
     function expectRevert(bytes calldata) external;
+
     function expectRevert(bytes4) external;
 
     // Record all storage reads and writes
     function record() external;
 
     // Gets all accessed reads and write slot from a recording session, for a given address
-    function accesses(address) external returns (bytes32[] memory reads, bytes32[] memory writes);
+    function accesses(address)
+        external
+        returns (bytes32[] memory reads, bytes32[] memory writes);
 
     // Prepare an expected log with (bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData).
     // Call this function, then emit an event, then call a function. Internally after the call, we check if
     // logs were emitted in the expected order with the expected topics and data (as specified by the booleans)
-    function expectEmit(bool, bool, bool, bool) external;
+    function expectEmit(
+        bool,
+        bool,
+        bool,
+        bool
+    ) external;
 
     // Mocks a call to an address, returning specified data.
     // Calldata can either be strict or a partial match, e.g. if you only
     // pass a Solidity selector to the expected calldata, then the entire Solidity
     // function will be mocked.
-    function mockCall(address, bytes calldata, bytes calldata) external;
+    function mockCall(
+        address,
+        bytes calldata,
+        bytes calldata
+    ) external;
 
     // Clears all mocked calls
     function clearMockedCalls() external;
