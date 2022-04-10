@@ -206,7 +206,7 @@ let make = () => {
       | #SALE_VOLUME_CHANGE => "sale volume change"
       }
       let externalUrl = Services.OpenSea.URL.makeAssetsUrl(
-        ~collectionSlug=item.collection.slug,
+        ~collectionSlug=item.collectionSlug,
         ~eventType=item.eventType,
         ~priceFilter=?item.eventFilters
         ->Belt.Array.getBy(eventFilter =>
@@ -349,7 +349,7 @@ let make = () => {
       {
         AlertsTable.id: item.id,
         collectionName: item.collection.name,
-        collectionSlug: item.collection.slug,
+        collectionSlug: item.collectionSlug,
         collectionImageUrl: item.collection.imageUrl,
         eventType: displayEventType,
         externalUrl: externalUrl,
@@ -658,9 +658,9 @@ let make = () => {
         ~collection=Some(
           AlertModal.CollectionOption.make(
             ~name=item.collection.name,
-            ~slug=item.collection.slug,
+            ~slug=item.collectionSlug,
             ~imageUrl=item.collection.imageUrl,
-            ~contractAddress=item.collection.contractAddress,
+            ~contractAddress=item.contractAddress,
           ),
         ),
         ~quickbuy=item.quickbuy->Belt.Option.getWithDefault(false),

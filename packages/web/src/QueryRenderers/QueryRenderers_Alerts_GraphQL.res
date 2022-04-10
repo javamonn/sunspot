@@ -10,11 +10,10 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     disabledReason
     disabledExpiresAt
     quickbuy
+    collectionSlug
     collection {
-      slug
       name
       imageUrl
-      contractAddress
     }
     destination {
       ... on WebPushAlertDestination {
