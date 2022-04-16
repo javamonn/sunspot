@@ -91,7 +91,13 @@ contract TelescopeManual is Ownable, ReentrancyGuard {
         isEnabled
         hasCorrectValue(msg.value, feeValue, wyvernExchangeValue)
         hasFeeArbiterSignature(
-            atomicMatchHash(feeValue, wyvernExchangeValue, wyvernExchangeData),
+            ECDSA.toEthSignedMessageHash(
+                atomicMatchHash(
+                    feeValue,
+                    wyvernExchangeValue,
+                    wyvernExchangeData
+                )
+            ),
             signature
         )
     {

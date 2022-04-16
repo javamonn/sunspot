@@ -4,6 +4,8 @@ pragma solidity 0.8.10;
 import "ds-test/test.sol";
 import {Test} from "./utils/Test.sol";
 
+import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+
 import "./utils/WyvernExchangeRevertMock.sol";
 import "./utils/WyvernExchangeMock.sol";
 import "./utils/AtomicMatchUtils.sol";
@@ -17,7 +19,10 @@ contract TelescopeManualTest is Test {
         internal
         returns (bytes memory)
     {
-        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(pkey, digest);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(
+            pkey,
+            ECDSA.toEthSignedMessageHash(digest)
+        );
         return abi.encodePacked(r, s, v);
     }
 
@@ -261,40 +266,39 @@ contract TelescopeManualTest is Test {
         uint96 feeValue,
         uint96 wyvernExchangeValue
     ) public {
-      cheats.assume(user != address(0));
-      cheats.assume(feeArbiterPkey != 0);
-      cheats.assume(spoofedFeeArbiterPkey != 0);
-      cheats.assume(feeArbiterPkey != spoofedFeeArbiterPkey);
+        cheats.assume(user != address(0));
+        cheats.assume(feeArbiterPkey != 0);
+        cheats.assume(spoofedFeeArbiterPkey != 0);
+        cheats.assume(feeArbiterPkey != spoofedFeeArbiterPkey);
 
-      TelescopeManual telescope = makeTelescopeWithWyvernExchangeMock(
-          payable(cheats.addr(feeArbiterPkey))
-      );
-      uint256 value = uint256(feeValue) + wyvernExchangeValue;
-      bytes memory wyvernExchangeData = AtomicMatchUtils.wyvernExchangeData(
-          WyvernExchangeMock.atomicMatch_.selector
-      );
-      bytes memory spoofedSignature = makeSignature(
-          spoofedFeeArbiterPkey,
-          telescope.atomicMatchHash(
-              feeValue,
-              wyvernExchangeValue,
-              wyvernExchangeData
-          )
-      );
+        TelescopeManual telescope = makeTelescopeWithWyvernExchangeMock(
+            payable(cheats.addr(feeArbiterPkey))
+        );
+        uint256 value = uint256(feeValue) + wyvernExchangeValue;
+        bytes memory wyvernExchangeData = AtomicMatchUtils.wyvernExchangeData(
+            WyvernExchangeMock.atomicMatch_.selector
+        );
+        bytes memory spoofedSignature = makeSignature(
+            spoofedFeeArbiterPkey,
+            telescope.atomicMatchHash(
+                feeValue,
+                wyvernExchangeValue,
+                wyvernExchangeData
+            )
+        );
 
-      cheats.deal(user, value);
-      cheats.startPrank(user);
-      cheats.expectRevert(TelescopeManual.InvalidSignature.selector);
-      telescope.atomicMatch{value: value}(
-          feeValue,
-          wyvernExchangeValue,
-          wyvernExchangeData,
-          spoofedSignature
-      );
-      
-      cheats.stopPrank();
+        cheats.deal(user, value);
+        cheats.startPrank(user);
+        cheats.expectRevert(TelescopeManual.InvalidSignature.selector);
+        telescope.atomicMatch{value: value}(
+            feeValue,
+            wyvernExchangeValue,
+            wyvernExchangeData,
+            spoofedSignature
+        );
+
+        cheats.stopPrank();
     }
-
 
     function testCannotAtomicMatchWhenNotEnabled(
         uint248 feeArbiterPkey,

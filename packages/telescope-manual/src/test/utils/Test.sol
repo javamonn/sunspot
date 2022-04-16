@@ -241,7 +241,8 @@ interface ITest {
 
 abstract contract Test is ITest, DSTest {
     ICheats public constant cheats = ICheats(HEVM_ADDRESS);
-    address public constant owner = address(0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84);
+    address public constant owner =
+        address(0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84);
 
     function setUp() public virtual;
 }
