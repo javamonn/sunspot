@@ -33,20 +33,13 @@ type params = {
   quickbuy: bool,
 }
 
-let makeSeaportClient = (useAccountResult: Externals.Wagmi.UseAccount.data) => {
+let makeTelescopeManualContract = (useAccountResult: Externals.Wagmi.UseAccount.data) => {
   switch useAccountResult {
   | {connector, address} if connector.ready =>
     connector
     |> Externals.Wagmi.Connector.getSigner
     |> Js.Promise.then_(signer =>
-      Js.Promise.resolve(
-        Some({
-          Contexts_Buy_Types.wyvernExchangeContract: Services.OpenSea.Seaport.makeWyvernExchangeContract(
-            Services.OpenSea.Seaport.makeWyvernExchangeContractParams(~web3=signer),
-          ),
-          accountAddress: address,
-        }),
-      )
+      signer->Services.TelescopeManual.makeContract->Js.Option.some->Js.Promise.resolve
     )
   | _ => Js.Promise.resolve(None)
   }
@@ -86,7 +79,7 @@ let make = (~children) => {
   }
   let (isBuyModalOpen, setIsBuyModalOpen) = React.useState(_ => Js.Option.isSome(buyParams))
   let (isQuickbuyTxPending, setIsQuickbuyTxPending) = React.useState(_ => isBuyModalOpen)
-  let (seaportClient, setSeaportClient) = React.useState(_ => None)
+  let (telescopeManualContract, setTelescopeManualContract) = React.useState(_ => None)
 
   let handleBuyModalClose = ev => {
     setIsBuyModalOpen(_ => false)
@@ -111,8 +104,10 @@ let make = (~children) => {
   let _ = React.useEffect3(() => {
     let _ = switch (useAccountData, authentication) {
     | (Some(useAccountData), Authenticated(_)) =>
-      let _ = makeSeaportClient(useAccountData) |> Js.Promise.then_(seaportClient => {
-        let _ = setSeaportClient(_ => seaportClient)
+      let _ = makeTelescopeManualContract(
+        useAccountData,
+      ) |> Js.Promise.then_(telescopeManualContract => {
+        let _ = setTelescopeManualContract(_ => telescopeManualContract)
         Js.Promise.resolve()
       })
     | _ => ()
@@ -192,7 +187,7 @@ let make = (~children) => {
             collectionSlug={collectionSlug}
             orderId={orderId}
             quickbuy={quickbuy}
-            seaportClient={seaportClient}
+            telescopeManualContract={telescopeManualContract}
           />
         | _ => React.null
         }}

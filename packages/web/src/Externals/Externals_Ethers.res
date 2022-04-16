@@ -17,6 +17,11 @@ module Provider = {
   external makeInfuraWebSocketProvider: (int, string) => t = "InfuraWebSocketProvider"
 }
 
+module Signer = {
+  type t
+}
+
+
 module Interface = {
   type t
   @new @scope("utils") @module("ethers") external makeWithString: string => t = "Interface"
@@ -26,6 +31,9 @@ module Contract = {
   type t
   @new @module("ethers")
   external makeWithProvider: (string, Interface.t, Provider.t) => t = "Contract"
+
+  @new @module("ethers")
+  external makeWithSigner: (string, Interface.t, Signer.t) => t = "Contract"
 }
 
 module Utils = {

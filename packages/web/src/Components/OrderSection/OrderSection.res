@@ -1,7 +1,7 @@
 %raw(`require('react-image-lightbox/style.css')`)
 type executionState =
   | Buy
-  | SeaportClientPending
+  | ClientPending 
   | WalletConfirmPending
   | TransactionCreated({transactionHash: string})
   | TransactionConfirmed({transactionHash: string})
@@ -175,7 +175,7 @@ module HeaderButton = {
         )}>
         {React.string("buy")}
       </MaterialUi.Button>
-    | SeaportClientPending =>
+    | ClientPending =>
       <MaterialUi.Button
         color=#Primary
         variant=#Contained
