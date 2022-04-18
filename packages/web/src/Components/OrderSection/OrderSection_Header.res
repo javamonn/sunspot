@@ -17,7 +17,7 @@ let make = (
       ->div(feeValue->makeFromString->mul(makeFromString(Config.bigNumberInverseBasisPoint)))
       ->toNumber
 
-    `(+${Belt.Float.toString(100.0 /. ratio)}% sunspot fee)`
+    `(+ ${Belt.Float.toString(100.0 /. ratio)}% sunspot fee)`
   })
 
   <div
