@@ -160,7 +160,7 @@ module Data = {
     )
     let (executionState, setExecutionState) = React.useState(_ =>
       switch telescopeManualAtomicMatchInput {
-      | Some(_) if quickbuy => OrderSection.ClientPending
+      | Some(_) if quickbuy => OrderSection_Types.ClientPending
       | Some(_) => Buy
       | None => InvalidOrder(None)
       }
@@ -182,7 +182,7 @@ module Data = {
       let _ = switch authentication {
       | Contexts.Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
         let _ = signIn()
-      | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection.Buy)
+      | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection_Types.Buy)
       | _ => ()
       }
       None
@@ -259,7 +259,7 @@ module Data = {
 
     let _ = React.useEffect1(() => {
       let _ = switch executionState {
-      | OrderSection.Buy
+      | OrderSection_Types.Buy
       | InvalidOrder(_)
       | TransactionConfirmed(_)
       | TransactionFailed(_)
@@ -350,7 +350,7 @@ module Data = {
             ~message=React.string("invalid order."),
             (),
           )
-          setExecutionState(_ => OrderSection.InvalidOrder(None))
+          setExecutionState(_ => OrderSection_Types.InvalidOrder(None))
         | (Some(message), _)
           if Js.String2.startsWith(message, "Failed to authorize transaction") ||
           Js.String2.startsWith(
@@ -365,9 +365,9 @@ module Data = {
           )
           setExecutionState(executionState =>
             switch executionState {
-            | OrderSection.TransactionFailed(_)
-            | OrderSection.TransactionConfirmed(_) => executionState
-            | _ => OrderSection.Buy
+            | OrderSection_Types.TransactionFailed(_)
+            | OrderSection_Types.TransactionConfirmed(_) => executionState
+            | _ => OrderSection_Types.Buy
             }
           )
         | (Some(message), _) =>
@@ -402,7 +402,7 @@ module Data = {
         let _ =
           signIn()
           |> Js.Promise.then_(_ => Js.Promise.resolve())
-          |> Js.Promise.catch(error => {
+          |> Js.Promise.catch(_ => {
             setExecutionState(_ => Buy)
             Js.Promise.resolve()
           })

@@ -56,12 +56,6 @@ let make = (~children) => {
   let queryParams = router.asPath->parseQuery
   let buyParams = switch (
     queryParams->Belt.Option.flatMap(q =>
-      q->Externals.Webapi.URLSearchParams.get("buyCollectionSlug")
-    ),
-    queryParams
-    ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("buyOrderId"))
-    ->Belt.Option.flatMap(Belt.Float.fromString),
-    queryParams->Belt.Option.flatMap(q =>
       q->Externals.Webapi.URLSearchParams.get("orderCollectionSlug")
     ),
     queryParams
@@ -71,9 +65,7 @@ let make = (~children) => {
     ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("orderQuickbuy"))
     ->Belt.Option.map(q => q === "true"),
   ) {
-  | (Some(collectionSlug), Some(orderId), _, _, _) =>
-    Some({collectionSlug: collectionSlug, orderId: orderId, quickbuy: true})
-  | (_, _, Some(collectionSlug), Some(orderId), Some(quickbuy)) =>
+  | (Some(collectionSlug), Some(orderId), Some(quickbuy)) =>
     Some({collectionSlug: collectionSlug, orderId: orderId, quickbuy: quickbuy})
   | _ => None
   }

@@ -8,6 +8,7 @@ module BigNumber = {
   @send external div: (t, t) => t = "div"
   @send external add: (t, t) => t = "add"
   @send external toString: t => string = "toString"
+  @send external toNumber: t => float = "toNumber"
 }
 
 module Provider = {

@@ -76,5 +76,9 @@ module Fragment_OrderSection_OpenSeaOrder = %graphql(`
       }
       schema
     }
+    telescopeManualAtomicMatchInput {
+      feeValue
+      wyvernExchangeValue
+    }
   }
 `)
