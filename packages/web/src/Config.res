@@ -7,6 +7,8 @@ let isProduction = nodeEnv == "production"
 let isBrowser = () => %raw(`typeof window !== 'undefined'`)
 let isMobile = () => %raw(`window.matchMedia('only screen and (max-width: 639px)').matches`)
 
+let bigNumberInverseBasisPoint = "10000"
+
 let openstoreContractAddress = "0x495f947276749ce646f68ac8c248420045cb7b5e"
 let donationsAddress = "0x9Bf2A698A34b54D58d036277133d6a8205Bd5d5a"
 let adminAddress = "0x446bfBb5185D79dBBFDb77F9CA81c51409C0480b"

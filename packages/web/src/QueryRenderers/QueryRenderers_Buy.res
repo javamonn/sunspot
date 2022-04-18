@@ -146,7 +146,9 @@ module Loading = {
 module Data = {
   @react.component
   let make = (
-    ~telescopeManualAtomicMatchInput: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
+    ~telescopeManualAtomicMatchInput: option<
+      QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
+    >,
     ~openSeaOrderFragment,
     ~quickbuy,
     ~telescopeManualContract,
@@ -157,7 +159,11 @@ module Data = {
       Contexts_Buy_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      quickbuy ? OrderSection.ClientPending : Buy
+      switch telescopeManualAtomicMatchInput {
+      | Some(_) if quickbuy => OrderSection.ClientPending
+      | Some(_) => Buy
+      | None => InvalidOrder(None)
+      }
     )
     let (waitForTransactionResult, _) = Externals.Wagmi.UseWaitForTransaction.use({
       let hash = switch executionState {
@@ -264,14 +270,45 @@ module Data = {
       None
     }, [executionState])
 
-    let handleExecuteOrder = telescopeManualContract => {
+    let handleExecuteOrder = (
+      ~contract,
+      ~input: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
+    ) => {
       setExecutionState(_ => WalletConfirmPending)
 
-      telescopeManualContract->Services.TelescopeManual.atomicMatch(
-        telescopeManualAtomicMatchInput.feeValue->Externals.Ethers.BigNumber.makeFromString,
-        telescopeManualAtomicMatchInput.wyvernExchangeValue->Externals.Ethers.BigNumber.makeFromString,
-        telescopeManualAtomicMatchInput.wyvernExchangeData,
-        telescopeManualAtomicMatchInput.signature,
+      let feeValue = input.feeValue->Externals.Ethers.BigNumber.makeFromString
+      let wyvernExchangeValue = input.wyvernExchangeValue->Externals.Ethers.BigNumber.makeFromString
+
+      Services.TelescopeManual.estimateGasAtomicMatch(
+        contract,
+        feeValue,
+        wyvernExchangeValue,
+        input.wyvernExchangeData,
+        input.signature,
+        Externals.Ethers.Contract.transactionOverrides(
+          ~value=Externals.Ethers.BigNumber.add(wyvernExchangeValue, feeValue),
+          (),
+        ),
+      )
+      |> Js.Promise.then_(gasEstimate =>
+        Services.TelescopeManual.atomicMatch(
+          contract,
+          feeValue,
+          wyvernExchangeValue,
+          input.wyvernExchangeData,
+          input.signature,
+          Externals.Ethers.Contract.transactionOverrides(
+            ~value=Externals.Ethers.BigNumber.add(wyvernExchangeValue, feeValue),
+            ~gasLimit={
+              open Externals.Ethers.BigNumber
+              gasEstimate
+              ->mul(makeFromString("100"))
+              ->div(makeFromString(Config.bigNumberInverseBasisPoint))
+              ->add(gasEstimate)
+            },
+            (),
+          ),
+        )
       )
       |> Js.Promise.then_(transaction => {
         setExecutionState(_ => TransactionCreated({
@@ -293,6 +330,11 @@ module Data = {
       })
       |> Js.Promise.catch(error => {
         let message = Js.Nullable.toOption(Obj.magic(error)["message"])
+        let dataMessage =
+          Obj.magic(error)["data"]
+          ->Js.Nullable.toOption
+          ->Belt.Option.flatMap(data => data["message"])
+
         let _ = Services.Logger.logWithData(
           "buy",
           "invalid order",
@@ -300,8 +342,16 @@ module Data = {
           ->Js.Dict.fromArray
           ->Js.Json.object_,
         )
-        switch message {
-        | Some(message)
+        switch (message, dataMessage) {
+        | (_, Some(dataMessage)) if Js.String2.startsWith(dataMessage, "execution reverted") =>
+          let _ = Services.Logger.log("buy", "invalid order")
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeError,
+            ~message=React.string("invalid order."),
+            (),
+          )
+          setExecutionState(_ => OrderSection.InvalidOrder(None))
+        | (Some(message), _)
           if Js.String2.startsWith(message, "Failed to authorize transaction") ||
           Js.String2.startsWith(
             message,
@@ -320,7 +370,7 @@ module Data = {
             | _ => OrderSection.Buy
             }
           )
-        | Some(message) =>
+        | (Some(message), _) =>
           openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
           setExecutionState(executionState =>
             switch executionState {
@@ -341,9 +391,12 @@ module Data = {
     }
 
     let handleClickBuy = () => {
-      switch telescopeManualContract {
-      | Some(telescopeManualContract) =>
-        let _ = handleExecuteOrder(telescopeManualContract)
+      switch (telescopeManualContract, telescopeManualAtomicMatchInput) {
+      | (Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput)) =>
+        let _ = handleExecuteOrder(
+          ~contract=telescopeManualContract,
+          ~input=telescopeManualAtomicMatchInput,
+        )
       | _ =>
         setExecutionState(_ => ClientPending)
         let _ =
@@ -357,10 +410,14 @@ module Data = {
     }
 
     let _ = React.useEffect2(() => {
-      switch (executionState, telescopeManualContract) {
-      | (ClientPending, Some(telescopeManualContract)) if !didAutoExecuteOrder.current =>
+      switch (executionState, telescopeManualContract, telescopeManualAtomicMatchInput) {
+      | (ClientPending, Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput))
+        if !didAutoExecuteOrder.current =>
         didAutoExecuteOrder.current = true
-        let _ = handleExecuteOrder(telescopeManualContract)
+        let _ = handleExecuteOrder(
+          ~contract=telescopeManualContract,
+          ~input=telescopeManualAtomicMatchInput,
+        )
       | _ => ()
       }
       None
@@ -377,40 +434,26 @@ module Data = {
 
 @react.component
 let make = (~collectionSlug, ~orderId, ~quickbuy, ~telescopeManualContract) => {
-  let (orderQueryData, setOrderQueryData) = React.useState(_ => None)
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
-
-  let _ = React.useEffect0(() => {
-    let _ = Contexts_Apollo_Client.inst.contents.query(
-      ~query=module(QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder),
-      {
-        collectionSlug: collectionSlug,
-        id: Obj.magic(orderId), // schema typed as int but numbers are large enough to want to use float
-      },
-    ) |> Js.Promise.then_(result => {
-      let _ = switch result {
-      | Ok(
-          {data}: ApolloClient__Core_Types.ApolloQueryResult.t__ok<
-            QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t,
-          >,
-        ) =>
-        setOrderQueryData(_ => Some(data))
-      | Error(_) => setInvalidRedirect(_ => true)
-      }
-      Js.Promise.resolve()
-    })
-    None
+  let orderQuery = QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.use({
+    collectionSlug: collectionSlug,
+    id: Obj.magic(orderId), // schema typed as int but numbers are large enough to want to use float
   })
 
-  switch orderQueryData->Belt.Option.flatMap(({openSeaOrder}) => openSeaOrder) {
+  switch orderQuery {
   | _ if invalidRedirect => <Loading invalidRedirect={true} />
-  | None => <Loading />
-  | Some({orderSection_OpenSeaOrder, telescopeManualAtomicMatchInput}) =>
+  | {loading: true} => <Loading />
+  | {
+      data: Some({
+        openSeaOrder: Some({orderSection_OpenSeaOrder, telescopeManualAtomicMatchInput}),
+      }),
+    } =>
     <Data
       openSeaOrderFragment={orderSection_OpenSeaOrder}
       telescopeManualAtomicMatchInput={telescopeManualAtomicMatchInput}
       quickbuy={quickbuy}
       telescopeManualContract={telescopeManualContract}
     />
+  | _ => <Loading invalidRedirect=true />
   }
 }

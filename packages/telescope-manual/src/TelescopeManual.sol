@@ -53,7 +53,7 @@ contract TelescopeManual is Ownable, ReentrancyGuard {
         uint256 feeValue,
         uint256 wyvernExchangeValue,
         bytes memory wyvernExchangeData
-    ) public returns (bytes32) {
+    ) public pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
