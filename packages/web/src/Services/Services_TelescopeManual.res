@@ -29,7 +29,7 @@ let abi = %raw(`[
     "type": "function"
   }
 ]`)
-let address = "0x2fa99301cf59c3f343955e39c3545a669e1868bd"
+let address = "0x028045c9ce959b00a0539603b492e09384fa4bae"
 
 let interface = Externals_Ethers.Interface.makeWithString(abi)
 let makeContract = (signer): contract =>
