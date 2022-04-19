@@ -1,7 +1,3 @@
-module Signer = {
-  type t
-}
-
 module Connector = {
   @deriving(accessors)
   type t = {
@@ -11,7 +7,7 @@ module Connector = {
   }
 
   @send external getProvider: t => Externals_Ethereum.t = "getProvider"
-  @send external getSigner: t => Js.Promise.t<Signer.t> = "getSigner"
+  @send external getSigner: t => Js.Promise.t<Externals_Ethers.Signer.t> = "getSigner"
 }
 
 module Provider = {

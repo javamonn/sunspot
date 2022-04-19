@@ -145,14 +145,25 @@ module Loading = {
 
 module Data = {
   @react.component
-  let make = (~openSeaOrder, ~openSeaOrderFragment, ~quickbuy, ~seaportClient) => {
+  let make = (
+    ~telescopeManualAtomicMatchInput: option<
+      QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
+    >,
+    ~openSeaOrderFragment,
+    ~quickbuy,
+    ~telescopeManualContract,
+  ) => {
     let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
     let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
     let {setIsQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(
       Contexts_Buy_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      quickbuy ? OrderSection.SeaportClientPending : Buy
+      switch telescopeManualAtomicMatchInput {
+      | Some(_) if quickbuy => OrderSection_Types.ClientPending
+      | Some(_) => Buy
+      | None => InvalidOrder(None)
+      }
     )
     let (waitForTransactionResult, _) = Externals.Wagmi.UseWaitForTransaction.use({
       let hash = switch executionState {
@@ -171,7 +182,7 @@ module Data = {
       let _ = switch authentication {
       | Contexts.Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
         let _ = signIn()
-      | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection.Buy)
+      | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection_Types.Buy)
       | _ => ()
       }
       None
@@ -248,7 +259,7 @@ module Data = {
 
     let _ = React.useEffect1(() => {
       let _ = switch executionState {
-      | OrderSection.Buy
+      | OrderSection_Types.Buy
       | InvalidOrder(_)
       | TransactionConfirmed(_)
       | TransactionFailed(_)
@@ -260,17 +271,44 @@ module Data = {
     }, [executionState])
 
     let handleExecuteOrder = (
-      {wyvernExchangeContract, accountAddress}: Contexts_Buy_Types.seaportClient,
+      ~contract,
+      ~input: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
     ) => {
       setExecutionState(_ => WalletConfirmPending)
-      Services.OpenSea.Seaport.fulfillOrder(
-        Services.OpenSea.Seaport.fulfillOrderParams(
-          ~order=openSeaOrder,
-          ~accountAddress,
-          ~wyvernExchangeContract,
-          ~networkName=#main,
+
+      let feeValue = input.feeValue->Externals.Ethers.BigNumber.makeFromString
+      let wyvernExchangeValue = input.wyvernExchangeValue->Externals.Ethers.BigNumber.makeFromString
+
+      Services.TelescopeManual.estimateGasAtomicMatch(
+        contract,
+        feeValue,
+        wyvernExchangeValue,
+        input.wyvernExchangeData,
+        input.signature,
+        Externals.Ethers.Contract.transactionOverrides(
+          ~value=Externals.Ethers.BigNumber.add(wyvernExchangeValue, feeValue),
           (),
         ),
+      )
+      |> Js.Promise.then_(gasEstimate =>
+        Services.TelescopeManual.atomicMatch(
+          contract,
+          feeValue,
+          wyvernExchangeValue,
+          input.wyvernExchangeData,
+          input.signature,
+          Externals.Ethers.Contract.transactionOverrides(
+            ~value=Externals.Ethers.BigNumber.add(wyvernExchangeValue, feeValue),
+            ~gasLimit={
+              open Externals.Ethers.BigNumber
+              gasEstimate
+              ->mul(makeFromString("100"))
+              ->div(makeFromString(Config.bigNumberInverseBasisPoint))
+              ->add(gasEstimate)
+            },
+            (),
+          ),
+        )
       )
       |> Js.Promise.then_(transaction => {
         setExecutionState(_ => TransactionCreated({
@@ -292,6 +330,11 @@ module Data = {
       })
       |> Js.Promise.catch(error => {
         let message = Js.Nullable.toOption(Obj.magic(error)["message"])
+        let dataMessage =
+          Obj.magic(error)["data"]
+          ->Js.Nullable.toOption
+          ->Belt.Option.flatMap(data => data["message"])
+
         let _ = Services.Logger.logWithData(
           "buy",
           "invalid order",
@@ -299,8 +342,16 @@ module Data = {
           ->Js.Dict.fromArray
           ->Js.Json.object_,
         )
-        switch message {
-        | Some(message)
+        switch (message, dataMessage) {
+        | (_, Some(dataMessage)) if Js.String2.startsWith(dataMessage, "execution reverted") =>
+          let _ = Services.Logger.log("buy", "invalid order")
+          openSnackbar(
+            ~type_=Contexts.Snackbar.TypeError,
+            ~message=React.string("invalid order."),
+            (),
+          )
+          setExecutionState(_ => OrderSection_Types.InvalidOrder(None))
+        | (Some(message), _)
           if Js.String2.startsWith(message, "Failed to authorize transaction") ||
           Js.String2.startsWith(
             message,
@@ -314,12 +365,12 @@ module Data = {
           )
           setExecutionState(executionState =>
             switch executionState {
-            | OrderSection.TransactionFailed(_)
-            | OrderSection.TransactionConfirmed(_) => executionState
-            | _ => OrderSection.Buy
+            | OrderSection_Types.TransactionFailed(_)
+            | OrderSection_Types.TransactionConfirmed(_) => executionState
+            | _ => OrderSection_Types.Buy
             }
           )
-        | Some(message) =>
+        | (Some(message), _) =>
           openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
           setExecutionState(executionState =>
             switch executionState {
@@ -340,15 +391,18 @@ module Data = {
     }
 
     let handleClickBuy = () => {
-      switch seaportClient {
-      | Some(seaportClient) =>
-        let _ = handleExecuteOrder(seaportClient)
+      switch (telescopeManualContract, telescopeManualAtomicMatchInput) {
+      | (Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput)) =>
+        let _ = handleExecuteOrder(
+          ~contract=telescopeManualContract,
+          ~input=telescopeManualAtomicMatchInput,
+        )
       | _ =>
-        setExecutionState(_ => SeaportClientPending)
+        setExecutionState(_ => ClientPending)
         let _ =
           signIn()
           |> Js.Promise.then_(_ => Js.Promise.resolve())
-          |> Js.Promise.catch(error => {
+          |> Js.Promise.catch(_ => {
             setExecutionState(_ => Buy)
             Js.Promise.resolve()
           })
@@ -356,14 +410,18 @@ module Data = {
     }
 
     let _ = React.useEffect2(() => {
-      switch (executionState, seaportClient) {
-      | (SeaportClientPending, Some(seaportClient)) if !didAutoExecuteOrder.current =>
+      switch (executionState, telescopeManualContract, telescopeManualAtomicMatchInput) {
+      | (ClientPending, Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput))
+        if !didAutoExecuteOrder.current =>
         didAutoExecuteOrder.current = true
-        let _ = handleExecuteOrder(seaportClient)
+        let _ = handleExecuteOrder(
+          ~contract=telescopeManualContract,
+          ~input=telescopeManualAtomicMatchInput,
+        )
       | _ => ()
       }
       None
-    }, (executionState, seaportClient))
+    }, (executionState, telescopeManualContract))
 
     <OrderSection
       executionState={executionState}
@@ -374,165 +432,28 @@ module Data = {
   }
 }
 
-let parseOpenSeaOrder = (
-  order: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrder.t_openSeaOrder,
-) => {
-  let parseMetadataAsset = (
-    a: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrderMetadataAsset.t,
-  ) => {
-    Externals_OpenSea.id: a.id,
-    address: a.address,
-    quantity: a.quantity,
-  }
-
-  let parseMetadataBundle = (
-    a: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrderMetadataBundle.t,
-  ) => {
-    Externals_OpenSea.assets: a.assets->Belt.Array.map(parseMetadataAsset),
-    schemas: a.schemas->Belt.Array.map(Obj.magic),
-    name: a.name,
-    description: a.description,
-    externalLink: a.externalLink,
-  }
-
-  let parseMetadata = (
-    m: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrder.t_openSeaOrder_metadata,
-  ) => {
-    Externals_OpenSea.asset: m.asset->Belt.Option.map(parseMetadataAsset),
-    bundle: m.bundle->Belt.Option.map(parseMetadataBundle),
-    schema: m.schema->Belt.Option.map(Obj.magic),
-    referrerAddress: None,
-  }
-
-  let parseUser = (u: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrderUser.t) => {
-    Externals_OpenSea.address: u.address,
-    config: u.config,
-    profileImgUrl: u.profileImgUrl,
-    user: u.userId->Belt.Option.flatMap(Belt.Int.fromString),
-  }
-
-  let parseOpenSeaFungibleToken = (
-    t: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrder.t_openSeaOrder_paymentTokenContract,
-  ) => {
-    Externals_OpenSea.name: t.name,
-    symbol: t.symbol,
-    decimals: t.decimals,
-    address: t.address,
-    imageUrl: t.imageUrl,
-    ethPrice: t.ethPrice,
-    usdPrice: t.usdPrice,
-  }
-
-  switch (order.v, order.r, order.s) {
-  | (Some(v), Some(r), Some(s)) =>
-    let parsedOrder = {
-      Externals_OpenSea.exchange: order.exchange,
-      hash: Some(order.orderHash),
-      cancelledOrFinalized: order.cancelled || order.finalized,
-      markedInvalid: order.markedInvalid,
-      metadata: parseMetadata(order.metadata),
-      quantity: order.quantity->Externals.Ethers.BigNumber.makeFromString,
-      makerAccount: order.maker->parseUser,
-      takerAccount: order.taker->parseUser,
-      maker: order.maker.address,
-      taker: order.taker.address,
-      makerRelayerFee: order.makerRelayerFee->Externals.Ethers.BigNumber.makeFromString,
-      takerRelayerFee: order.takerRelayerFee->Externals.Ethers.BigNumber.makeFromString,
-      makerProtocolFee: order.makerProtocolFee->Externals.Ethers.BigNumber.makeFromString,
-      takerProtocolFee: order.takerProtocolFee->Externals.Ethers.BigNumber.makeFromString,
-      makerReferrerFee: order.makerReferrerFee->Externals.Ethers.BigNumber.makeFromString,
-      waitingForBestCounterOrder: order.feeRecipient.address === Config.nullAddress,
-      feeMethod: order.feeMethod,
-      feeRecipientAccount: order.feeRecipient->parseUser,
-      feeRecipient: order.feeRecipient.address,
-      side: order.side,
-      saleKind: order.saleKind,
-      target: order.target,
-      howToCall: order.howToCall,
-      calldata: order.calldata,
-      replacementPattern: order.replacementPattern,
-      staticTarget: order.staticTarget,
-      staticExtradata: order.staticExtradata,
-      paymentToken: order.paymentToken,
-      basePrice: order.basePrice->Externals.Ethers.BigNumber.makeFromString,
-      extra: order.extra->Externals.Ethers.BigNumber.makeFromString,
-      currentBounty: order.currentBounty->Externals.Ethers.BigNumber.makeFromString,
-      currentPrice: order.currentPrice->Externals.Ethers.Utils.parseUnits,
-      createdTime: order.createdTime
-      ->Js.Json.decodeNumber
-      ->Belt.Option.getExn
-      ->Externals.Ethers.BigNumber.makeFromFloat,
-      listingTime: order.listingTime
-      ->Js.Json.decodeNumber
-      ->Belt.Option.getExn
-      ->Externals.Ethers.BigNumber.makeFromFloat,
-      expirationTime: order.expirationTime
-      ->Js.Json.decodeNumber
-      ->Belt.Option.getExn
-      ->Externals.Ethers.BigNumber.makeFromFloat,
-      salt: order.salt->Externals.Ethers.BigNumber.makeFromString,
-      v: v,
-      r: r,
-      s: s,
-      paymentTokenContract: order.paymentTokenContract->parseOpenSeaFungibleToken,
-      englishAuctionReservePrice: None,
-      nonce: None,
-    }
-
-    Some({
-      ...parsedOrder,
-      currentPrice: Services.OpenSea.Seaport.estimateCurrentPrice(parsedOrder),
-    })
-  | _ => None
-  }
-}
-
 @react.component
-let make = (~collectionSlug, ~orderId, ~quickbuy, ~seaportClient) => {
-  let (orderQueryData, setOrderQueryData) = React.useState(_ => None)
+let make = (~collectionSlug, ~orderId, ~quickbuy, ~telescopeManualContract) => {
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
-
-  let _ = React.useEffect0(() => {
-    let _ = Contexts_Apollo_Client.inst.contents.query(
-      ~query=module(QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrder),
-      {
-        collectionSlug: collectionSlug,
-        id: Obj.magic(orderId), // schema typed as int but numbers are large enough to want to use float
-      },
-    ) |> Js.Promise.then_(result => {
-      let _ = switch result {
-      | Ok(
-          {data}: ApolloClient__Core_Types.ApolloQueryResult.t__ok<
-            QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.OpenSeaOrder.t,
-          >,
-        ) =>
-        setOrderQueryData(_ => Some(data))
-      | Error(_) => setInvalidRedirect(_ => true)
-      }
-      Js.Promise.resolve()
-    })
-    None
+  let orderQuery = QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.use({
+    collectionSlug: collectionSlug,
+    id: Obj.magic(orderId), // schema typed as int but numbers are large enough to want to use float
   })
 
-  switch (
-    orderQueryData
-    ->Belt.Option.flatMap(({openSeaOrder}) => openSeaOrder)
-    ->Belt.Option.flatMap(parseOpenSeaOrder),
-    orderQueryData
-    ->Belt.Option.flatMap(({openSeaOrder}) => openSeaOrder)
-    ->Belt.Option.map(({orderSection_OpenSeaOrder}) => orderSection_OpenSeaOrder),
-  ) {
+  switch orderQuery {
   | _ if invalidRedirect => <Loading invalidRedirect={true} />
-  | (None, None) => <Loading />
-  | (None, _)
-  | (_, None) =>
-    <Loading invalidRedirect={true} />
-  | (Some(openSeaOrder), Some(openSeaOrderFragment)) =>
+  | {loading: true} => <Loading />
+  | {
+      data: Some({
+        openSeaOrder: Some({orderSection_OpenSeaOrder, telescopeManualAtomicMatchInput}),
+      }),
+    } =>
     <Data
-      openSeaOrder={openSeaOrder}
-      openSeaOrderFragment={openSeaOrderFragment}
+      openSeaOrderFragment={orderSection_OpenSeaOrder}
+      telescopeManualAtomicMatchInput={telescopeManualAtomicMatchInput}
       quickbuy={quickbuy}
-      seaportClient={seaportClient}
+      telescopeManualContract={telescopeManualContract}
     />
+  | _ => <Loading invalidRedirect=true />
   }
 }
