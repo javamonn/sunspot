@@ -8,7 +8,7 @@ module Client = {
     @optional
     credentials: unit => Js.Promise.t<Externals_AWSAmplify.Credentials.t>,
     @optional
-    apiKey: string
+    apiKey: string,
   }
 
   let authWithCognitoUserPools = (~jwtToken) =>
@@ -25,23 +25,58 @@ module Client = {
     mandatorySignIn: bool,
     complexObjectsCredentials: unit => Js.Promise.t<Externals_AWSAmplify.Credentials.t>,
   }
-  @module("aws-appsync")
-  external createAppSyncLink: appSyncLinkOptions => ReasonMLCommunity__ApolloClient.Link.t =
-    "createAppSyncLink"
-
-  @new @module("aws-appsync")
-  external make: appSyncLinkOptions => ReasonMLCommunity__ApolloClient.t = "default"
 
   type makeWithApolloOptions<'serialized> = {
     link: option<ReasonMLCommunity__ApolloClient.Link.t>,
     cache: option<ReasonMLCommunity__ApolloClient.Cache.t<'serialized>>,
   }
+}
 
-  @new @module("aws-appsync")
-  external makeWithOptions: (
-    appSyncLinkOptions,
-    makeWithApolloOptions<'serialized>,
-  ) => ReasonMLCommunity__ApolloClient.t = "default"
+module LinkAuthOptions = {
+  @deriving(abstract)
+  type t = {
+    @as("type")
+    type_: string,
+    @optional
+    jwtToken: unit => Js.Promise.t<Js.Json.t>,
+    @optional
+    credentials: unit => Js.Promise.t<Externals_AWSAmplify.Credentials.t>,
+    @optional
+    apiKey: string,
+  }
+
+  let make = t
+
+  let withCognitoUserPools = (~jwtToken) => make(~type_="AMAZON_COGNITO_USER_POOLS", ~jwtToken, ())
+  let withIAM = (~credentials) => make(~type_="AWS_IAM", ~credentials, ())
+  let withAPIKey = (~apiKey) => make(~type_="API_KEY", ~apiKey, ())
+}
+
+module AuthLink = {
+  @deriving(abstract)
+  type params = {
+    url: string,
+    region: string,
+    auth: LinkAuthOptions.t,
+  }
+
+  @val @module("aws-appsync-auth-link")
+  external createAuthLink: params => ReasonMLCommunity__ApolloClient.Link.t = "createAuthLink"
+}
+
+module SubscriptionHandshakeLink = {
+  @deriving(abstract)
+  type params = {
+    url: string,
+    region: string,
+    auth: LinkAuthOptions.t,
+  }
+
+  @val @module("aws-appsync-subscription-link")
+  external createSubscriptionHandshakeLink: (
+    params,
+    ReasonMLCommunity__ApolloClient.Link.t,
+  ) => ReasonMLCommunity__ApolloClient.Link.t = "createSubscriptionHandshakeLink"
 }
 
 module Rehydrated = {

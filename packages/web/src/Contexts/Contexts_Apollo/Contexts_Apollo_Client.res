@@ -1,4 +1,5 @@
 exception CredentialsExpired
+exception InvalidAuthConfiguration
 
 let _ = Externals.AWSAmplify.configure(Externals.AWSAmplify.inst, Config.awsAmplifyConfig)
 
@@ -10,10 +11,10 @@ let makeAmplifyCredentials = awsCredentials => {
   authenticated: true,
 }
 
-let makeAppSyncLink = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
-  let auth = switch (credentials, apiKey, refreshCredentials) {
+let makeAuthOptions = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) =>
+  switch (credentials, apiKey, refreshCredentials) {
   | (Some({awsCredentials, jwt}: Contexts_Auth_Credentials.t), _, Some(refreshCredentials)) =>
-    Externals.AWSAppSync.Client.authWithIAM(~credentials=() => {
+    Externals.AWSAppSync.LinkAuthOptions.withIAM(~credentials=() => {
       if Contexts_Auth_Credentials.isAwsCredentialValid(awsCredentials) {
         awsCredentials->makeAmplifyCredentials->Js.Promise.resolve
       } else if Contexts_Auth_Credentials.isJwtValid(jwt) {
@@ -33,26 +34,37 @@ let makeAppSyncLink = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => 
       } else {
         Js.Promise.reject(CredentialsExpired)
       }
-    })->Js.Option.some
-  | (_, Some(apiKey), _) => Some(Externals.AWSAppSync.Client.authWithAPIKey(~apiKey))
-  | _ => None
+    })
+  | (_, Some(apiKey), _) => Externals.AWSAppSync.LinkAuthOptions.withAPIKey(~apiKey)
+  | _ => raise(InvalidAuthConfiguration)
   }
 
-  let options = Externals.AWSAppSync.Client.appSyncLinkOptions(
-    ~url=Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncGraphqlEndpointGet,
-    ~region=Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncRegionGet,
-    ~auth,
-    ~disableOffline=true,
-    ~complexObjectsCredentials=() =>
-      Externals.AWSAmplify.Auth.inst->Externals.AWSAmplify.Auth.currentCredentials,
-    ~mandatorySignIn=false,
+let makeAuthLink = auth =>
+  Externals.AWSAppSync.AuthLink.createAuthLink(
+    Externals.AWSAppSync.AuthLink.params(
+      ~auth,
+      ~url=Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncGraphqlEndpointGet,
+      ~region=Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncRegionGet,
+    ),
   )
 
-  Externals.AWSAppSync.Client.createAppSyncLink(options)
+let makeSubscriptionHandshakeLink = auth => {
+  let url = Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncGraphqlEndpointGet
+
+  Externals.AWSAppSync.SubscriptionHandshakeLink.createSubscriptionHandshakeLink(
+    Externals.AWSAppSync.SubscriptionHandshakeLink.params(
+      ~auth,
+      ~url,
+      ~region=Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncRegionGet,
+    ),
+    ApolloClient.Link.HttpLink.make(~uri=_ => url, ()),
+  )
 }
 
 let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
   open ApolloClient
+
+  let authOptions = makeAuthOptions(~credentials?, ~apiKey?, ~refreshCredentials?, ())
 
   make(
     ~cache=Cache.InMemoryCache.make(),
@@ -64,8 +76,9 @@ let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
       (),
     ),
     ~link=Link.from([
-      Contexts_Apollo_AnalyticsLink.link,
-      makeAppSyncLink(~credentials?, ~apiKey?, ~refreshCredentials?, ()),
+      // Contexts_Apollo_AnalyticsLink.link,
+      makeAuthLink(authOptions),
+      makeSubscriptionHandshakeLink(authOptions),
     ]),
     (),
   )
