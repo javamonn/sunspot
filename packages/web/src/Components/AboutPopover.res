@@ -44,7 +44,7 @@ let make = (~iconButtonClassName=?) => {
           color=#Primary
           classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-6"]), ())}>
           {React.string(
-            "alert rules are defined over collections, event type, and optional price filter. when an event satisfying an alert rule occurs, a notification will be delivered notifying you in near real-time.",
+            "alert rules are defined over collections, event type, and optional price filter. when an event satisfying an alert rule occurs, a notification will be delivered notifying you in near real-time. sunspot works in the background - you will receive alerts even when the app is closed.",
           )}
         </MaterialUi.Typography>
         <MaterialUi.Typography
@@ -52,15 +52,7 @@ let make = (~iconButtonClassName=?) => {
           color=#Primary
           classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-6"]), ())}>
           {React.string(
-            "sunspot is a work in progress. in the near future, more complex event types (e.g. floor price movement), filters (e.g. rarity-based), and alert destinations (e.g. sms) will be supported.",
-          )}
-        </MaterialUi.Typography>
-        <MaterialUi.Typography
-          variant=#Body1
-          color=#Primary
-          classes={MaterialUi.Typography.Classes.make(~body1=Cn.make(["mb-6"]), ())}>
-          {React.string(
-            "sunspot is user supported. if you find it useful, please consider donating: 0x9Bf2A698A34b54D58d036277133d6a8205Bd5d5a",
+            "sunspot is a work in progress. in the near future, more complex event types (e.g. listing volume increase), filters (e.g. rarity-based), and alert destinations (e.g. telegram) will be supported.",
           )}
         </MaterialUi.Typography>
         <MaterialUi.Typography variant=#Body1 color=#Primary>

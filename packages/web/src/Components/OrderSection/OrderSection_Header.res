@@ -5,20 +5,36 @@ let make = (
   ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
   ~quickbuy,
 ) => {
-  let displayFee = openSeaOrderFragment.telescopeManualAtomicMatchInput->Belt.Option.map(({
+  let {openDialog: openAccountSubscriptionDialog} = React.useContext(
+    Contexts_AccountSubscriptionDialog_Context.context,
+  )
+  let displayFee = openSeaOrderFragment.telescopeManualAtomicMatchInput->Belt.Option.flatMap(({
     feeValue,
     wyvernExchangeValue,
   }) => {
     open Externals.Ethers.BigNumber
-    let ratio =
-      wyvernExchangeValue
-      ->makeFromString
-      ->mul(makeFromString(Config.bigNumberInverseBasisPoint))
-      ->div(feeValue->makeFromString->mul(makeFromString(Config.bigNumberInverseBasisPoint)))
-      ->toNumber
+    let parsedFeeValue = feeValue->makeFromString
 
-    `(+ ${Belt.Float.toString(100.0 /. ratio)}% sunspot fee)`
+    if !eq(parsedFeeValue, makeFromString("0")) {
+      let ratio =
+        wyvernExchangeValue
+        ->makeFromString
+        ->mul(makeFromString(Config.bigNumberInverseBasisPoint))
+        ->div(parsedFeeValue->mul(makeFromString(Config.bigNumberInverseBasisPoint)))
+        ->toNumber
+
+      Some(`(+ ${Belt.Float.toString(100.0 /. ratio)}% sunspot fee)`)
+    } else {
+      None
+    }
   })
+
+  let handleDisplayAccountSubscriptionDialog = _ => {
+    Js.log("click")
+    let _ = openAccountSubscriptionDialog(
+      Some(React.string("upgrade account to reduce quickbuy fee.")),
+    )
+  }
 
   <div
     className={Cn.make([
@@ -56,18 +72,26 @@ let make = (
             </span>
             {displayFee
             ->Belt.Option.map(displayFee =>
-              <span
-                className={Cn.make([
-                  "flex",
-                  "flex-row",
-                  "font-mono",
-                  "text-sm",
-                  "text-darkSecondary",
-                  "leading-none",
-                  "mb-1",
-                ])}>
-                {React.string(displayFee)}
-              </span>
+              <MaterialUi.Tooltip title={React.string("upgrade account to reduce quickbuy fee.")}>
+                <MaterialUi.Button
+                  onClick={handleDisplayAccountSubscriptionDialog}
+                  variant=#Text
+                  size=#Small
+                  classes={MaterialUi.Button.Classes.make(
+                    ~label=Cn.make([
+                      "flex",
+                      "flex-row",
+                      "font-mono",
+                      "text-sm",
+                      "text-darkSecondary",
+                      "leading-none",
+                      "lowercase",
+                    ]),
+                    (),
+                  )}>
+                  {React.string(displayFee)}
+                </MaterialUi.Button>
+              </MaterialUi.Tooltip>
             )
             ->Belt.Option.getWithDefault(React.null)}
           </div>

@@ -25,7 +25,7 @@ let default = () => {
       "max-w-6xl",
       "mx-auto",
     ])}>
-    <Containers.OAuthIntegration
+    <QueryRenderers.OAuthIntegration
       onCreated={handleCreated}
       params={Containers_OAuthIntegration.Discord({
         code: code->Belt.Option.getWithDefault(""),

@@ -385,6 +385,7 @@ let handleDeleteAlertRule = (
           discordIntegrations,
           slackIntegrations,
           twitterIntegrations,
+          accountSubscription,
         ) = switch readQuery(
           ~query=module(
             QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
@@ -396,6 +397,7 @@ let handleDeleteAlertRule = (
             discordIntegrations,
             slackIntegrations,
             twitterIntegrations,
+            accountSubscription,
           })) =>
           let newItems =
             items
@@ -406,8 +408,14 @@ let handleDeleteAlertRule = (
               }
             )
             ->Js.Option.some
-          (newItems, discordIntegrations, slackIntegrations, twitterIntegrations)
-        | _ => (None, None, None, None)
+          (
+            newItems,
+            discordIntegrations,
+            slackIntegrations,
+            twitterIntegrations,
+            accountSubscription,
+          )
+        | _ => (None, None, None, None, None)
         }
 
         newItems->Belt.Option.forEach(newItems => {
@@ -424,6 +432,7 @@ let handleDeleteAlertRule = (
               discordIntegrations: discordIntegrations,
               slackIntegrations: slackIntegrations,
               twitterIntegrations: twitterIntegrations,
+              accountSubscription: accountSubscription,
             },
             QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
           )
@@ -438,9 +447,18 @@ let handleDeleteAlertRule = (
 let defaultValue = AlertModal.Value.empty()
 
 @react.component
-let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinationOptions) => {
-  let (updateAlertRuleMutation, updateAlertRuleMutationResult) = Mutation_UpdateAlertRule.use()
-  let (deleteAlertRuleMutation, deleteAlertRuleMutationResult) = Mutation_DeleteAlertRule.use()
+let make = (
+  ~isOpen,
+  ~value=?,
+  ~onClose,
+  ~onExited,
+  ~accountAddress,
+  ~destinationOptions,
+  ~accountSubscriptionType,
+  ~alertCount,
+) => {
+  let (updateAlertRuleMutation, _) = Mutation_UpdateAlertRule.use()
+  let (deleteAlertRuleMutation, _) = Mutation_DeleteAlertRule.use()
   let (newValue, setNewValue) = React.useState(_ => value)
   let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
   let _ = React.useEffect1(_ => {
@@ -571,6 +589,7 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
     isOpen
     onClose
     onExited={onExited}
+    updatingValue=?{value}
     value={newValue->Belt.Option.getWithDefault(defaultValue)}
     onChange={setterFn =>
       setNewValue(value =>
@@ -580,6 +599,8 @@ let make = (~isOpen, ~value=?, ~onClose, ~onExited, ~accountAddress, ~destinatio
     actionLabel="update"
     title="update alert"
     destinationOptions={destinationOptions}
+    accountSubscriptionType
+    alertCount
     renderOverflowActionMenuItems={(~onClick) =>
       [
         {

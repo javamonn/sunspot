@@ -426,20 +426,23 @@ let make = (~children) => {
     }
   }
 
-  let handleSignIn = () => {
-    let deferred = Externals.PDefer.make()
-    authenticationDeferred.current = Some(deferred)
-    setAuthentication(authentication =>
-      switch authentication {
-      | Unauthenticated_ConnectRequired => InProgress_PromptConnectWallet
-      | Unauthenticated_AuthenticationChallengeRequired(account) =>
-        InProgress_PromptAuthenticationChallenge(account)
-      | s => s
-      }
-    )
+  let handleSignIn = () =>
+    switch authentication {
+    | Authenticated(a) => Js.Promise.resolve(authentication)
+    | _ =>
+      let deferred = Externals.PDefer.make()
+      authenticationDeferred.current = Some(deferred)
+      setAuthentication(authentication =>
+        switch authentication {
+        | Unauthenticated_ConnectRequired => InProgress_PromptConnectWallet
+        | Unauthenticated_AuthenticationChallengeRequired(account) =>
+          InProgress_PromptAuthenticationChallenge(account)
+        | s => s
+        }
+      )
 
-    deferred->Externals.PDefer.promise
-  }
+      deferred->Externals.PDefer.promise
+    }
 
   <ContextProvider
     value={

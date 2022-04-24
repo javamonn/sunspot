@@ -344,6 +344,7 @@ let handleCreateAlertRule = (
           discordIntegrations,
           slackIntegrations,
           twitterIntegrations,
+          accountSubscription,
         ) = switch readQuery(
           ~query=module(
             QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
@@ -355,13 +356,15 @@ let handleCreateAlertRule = (
             discordIntegrations,
             slackIntegrations,
             twitterIntegrations,
+            accountSubscription,
           })) => (
             Belt.Array.concat([Some(alertRule)], items),
             discordIntegrations,
             slackIntegrations,
             twitterIntegrations,
+            accountSubscription,
           )
-        | _ => ([Some(alertRule)], None, None, None)
+        | _ => ([Some(alertRule)], None, None, None, None)
         }
 
         let _ = writeQuery(
@@ -377,6 +380,7 @@ let handleCreateAlertRule = (
             discordIntegrations: discordIntegrations,
             slackIntegrations: slackIntegrations,
             twitterIntegrations: twitterIntegrations,
+            accountSubscription: accountSubscription,
           },
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         )
@@ -389,7 +393,7 @@ let handleCreateAlertRule = (
 }
 
 @react.component
-let make = (~isOpen, ~onClose, ~destinationOptions) => {
+let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~alertCount) => {
   let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
   let (value, setValue) = React.useState(() => AlertModal.Value.empty())
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
@@ -566,5 +570,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions) => {
     actionLabel="create"
     title="create alert"
     renderOverflowActionMenuItems=?{handleRenderOverflowActionMenuItems}
+    accountSubscriptionType
+    alertCount
   />
 }

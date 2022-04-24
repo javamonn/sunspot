@@ -12,21 +12,6 @@ module ContextProvider = {
   let make = React.Context.provider(Contexts_Buy_Context.context)
 }
 
-let parseQuery = path => {
-  let queryIndex = Js.String2.indexOf(path, "?")
-  if queryIndex !== -1 {
-    try {
-      Js.String2.substringToEnd(~from=queryIndex, path)
-      ->Externals.Webapi.URLSearchParams.make
-      ->Js.Option.some
-    } catch {
-    | _ => None
-    }
-  } else {
-    None
-  }
-}
-
 type params = {
   collectionSlug: string,
   orderId: float,
@@ -53,7 +38,7 @@ let make = (~children) => {
     _,
   ) = Externals.Wagmi.UseAccount.use()
   let {authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let queryParams = router.asPath->parseQuery
+  let queryParams = router.asPath->Services.Next.parseQuery
   let buyParams = switch (
     queryParams->Belt.Option.flatMap(q =>
       q->Externals.Webapi.URLSearchParams.get("orderCollectionSlug")

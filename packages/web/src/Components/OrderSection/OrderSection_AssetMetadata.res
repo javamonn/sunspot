@@ -28,10 +28,10 @@ let make = (
     ->Js.Json.decodeNumber
     ->Belt.Option.map(createdTime => (
       "listing time",
-      Externals.DateFns.formatDistance(
+      Externals.DateFns.formatDistanceStrict(
         createdTime *. 1000.0,
         now,
-        Externals.DateFns.formatDistanceOptions(~includeSeconds=true, ~addSuffix=true, ()),
+        Externals.DateFns.formatDistanceStrictOptions(~addSuffix=true, ()),
       ),
       None,
     )),
@@ -39,10 +39,10 @@ let make = (
     ->Js.Json.decodeNumber
     ->Belt.Option.map(expirationTime => (
       "expiration time",
-      Externals.DateFns.formatDistance(
+      Externals.DateFns.formatDistanceStrict(
         expirationTime *. 1000.0,
         now,
-        Externals.DateFns.formatDistanceOptions(~includeSeconds=true, ~addSuffix=true, ()),
+        Externals.DateFns.formatDistanceStrictOptions(~addSuffix=true, ()),
       ),
       None,
     )),

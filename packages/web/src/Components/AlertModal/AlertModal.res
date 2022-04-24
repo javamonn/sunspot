@@ -4,91 +4,15 @@ module CollectionOption = AlertModal_Types.CollectionOption
 module Value = AlertModal_Value
 module Utils = AlertModal_Utils
 
-let validate = value => {
-  let collectionValidation = switch value->Value.collection {
-  | None => Some("collection is required")
-  | Some(_) => None
-  }
-  let priceRuleValidation = switch value->Value.priceRule {
-  | Some({modifier}) if Js.String2.length(modifier) == 0 => Some("price rule modifier is required.")
-  | Some({value: None}) => Some("price rule value is required.")
-  | Some({value: Some(value)}) =>
-    switch Belt.Float.fromString(value) {
-    | Some(value) if value <= 0.00 => Some("price rule value must be a positive number.")
-    | None => Some("price rule value must be a positive number.")
-    | _ => None
-    }
-  | None => None
-  }
-  let propertiesRuleValidation = switch value->Value.propertiesRule {
-  | Some(value) if Belt.Array.length(value) == 0 =>
-    Some("properties rule value must include properties")
-  | _ => None
-  }
-  let destinationValidation = switch value->Value.destination {
-  | None => Some("destination is required.")
-  | Some(DiscordAlertDestination({template: Some({fields: Some(fields)})})) =>
-    if (
-      Belt.Array.some(fields, field =>
-        field->AlertRule_Destination_Types.DiscordTemplate.name->Js.String2.length == 0 ||
-          field->AlertRule_Destination_Types.DiscordTemplate.value->Js.String2.length == 0
-      )
-    ) {
-      Some("discord template fields must not contain empty name or value.")
-    } else {
-      None
-    }
-  | Some(_) => None
-  }
-
-  let quantityRuleValidation = switch value->Value.quantityRule {
-  | Some({modifier}) if Js.String2.length(modifier) == 0 =>
-    Some("quantity rule modifier is required.")
-  | Some({value: None}) => Some("quantity rule value is required.")
-  | Some({value: Some(value)}) =>
-    switch value->Belt.Int.fromString {
-    | Some(value) if value <= 0 => Some("quantity rule value must be a positive whole number.")
-    | Some(parsedValue)
-      if parsedValue->Belt.Float.fromInt !==
-        value->Belt.Float.fromString->Belt.Option.getWithDefault(-1.) =>
-      Some("quantity rule value must be a positive whole number.")
-    | None => Some("quantity rule value must be a positive number.")
-    | _ => None
-    }
-  | None => None
-  }
-  let macroRelativeChangeEventFilterValidation = switch (
-    value->Value.eventType,
-    value->Value.floorPriceChangeRule,
-    value->Value.saleVolumeChangeRule,
-  ) {
-  | (#SALE_VOLUME_CHANGE, _, Some({relativeValueChange: None, absoluteValueChange: None}))
-  | (#FLOOR_PRICE_CHANGE, Some({relativeValueChange: None, absoluteValueChange: None}), _) =>
-    Some("at least one of (threshold percent change, threshold absolute change) is required")
-  | (_, Some({absoluteValueChange: Some(absoluteValueChange)}), _)
-    if absoluteValueChange->Belt.Float.fromString->Js.Option.isNone =>
-    Some("absolute value change must be a number")
-  | _ => None
-  }
-
-  [
-    collectionValidation,
-    priceRuleValidation,
-    propertiesRuleValidation,
-    quantityRuleValidation,
-    destinationValidation,
-    macroRelativeChangeEventFilterValidation,
-  ]
-  ->Belt.Array.keepMap(i => i)
-  ->Belt.Array.get(0)
-}
-
 @react.component
 let make = (
   ~isOpen,
   ~onClose,
   ~onExited=?,
   ~value,
+  ~accountSubscriptionType,
+  ~alertCount,
+  ~updatingValue=?,
   ~destinationOptions,
   ~onChange,
   ~onAction,
@@ -99,6 +23,9 @@ let make = (
   let (isExited, setIsExited) = React.useState(_ => isOpen)
   let (validationError, setValidationError) = React.useState(_ => None)
   let (isActioning, setIsActioning) = React.useState(_ => false)
+  let {openDialog: openAccountSubscriptionDialog} = React.useContext(
+    Contexts_AccountSubscriptionDialog_Context.context,
+  )
 
   let _ = React.useEffect1(() => {
     if isOpen {
@@ -114,11 +41,9 @@ let make = (
   }
 
   let handleAction = () => {
-    let validationResult = validate(value)
-    setValidationError(_ => validationResult)
-    switch validationResult {
-    | None =>
+    let executeAction = () => {
       setIsActioning(_ => true)
+      setValidationError(_ => None)
       let _ =
         onAction()
         |> Js.Promise.then_(_ => {
@@ -129,7 +54,33 @@ let make = (
           setIsActioning(_ => false)
           Js.Promise.resolve()
         })
-    | Some(_) => ()
+    }
+    switch AlertModal_Validate.execute(
+      ~accountSubscriptionType,
+      ~alertCount,
+      ~updatingValue,
+      ~value,
+    ) {
+    | None => executeAction()
+    | Some(AccountSubscriptionRequired({message, requiredAccountSubscriptionType})) =>
+      let _ =
+        message->React.string->Js.Option.some->openAccountSubscriptionDialog
+        |> Js.Promise.then_(newSubscriptionType => {
+          switch (requiredAccountSubscriptionType, newSubscriptionType) {
+          | (#TELESCOPE, Some(#TELESCOPE))
+          | (#OBSERVATORY, Some(#OBSERVATORY))
+          | (#TELESCOPE, Some(#OBSERVATORY)) =>
+            let _ = executeAction()
+          | _ => setValidationError(_ => Some(message))
+          }
+          Js.Promise.resolve()
+        })
+        |> Js.Promise.catch(error => {
+          Services.Logger.promiseError("AlertModal handleAction", "error", error)
+          let _ = setValidationError(_ => Some(message))
+          Js.Promise.resolve()
+        })
+    | Some(InvalidInput(s)) => setValidationError(_ => Some(s))
     }
   }
 
@@ -184,10 +135,12 @@ let make = (
         ->Belt.Option.map(disabled => {
           let title = switch disabled {
           | Snoozed => "alert has been disabled."
-          | DestinationMissingAccess => "unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
+          | DestinationMissingAccess =>  "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
           | DestinationRateLimitExceeded(
               _,
-            ) => "alert has been ratelimited and will automatically re-enable after a period of time."
+            ) => "alert has been disabled due to a ratelimit and will automatically re-enable after a period of time."
+          | AccountSubscriptionAlertLimitExceeded => "alert has been disabled due to exceeding your account alert limit. upgrade your account for increased limits."
+          | AccountSubscriptionMissingFunctionality => "alert has been disabled due to exceeding your account functionality. upgrade your account for advanced functionality."
           }
 
           <MaterialUi.Tooltip title={React.string(title)}>

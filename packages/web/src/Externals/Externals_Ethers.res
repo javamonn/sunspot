@@ -7,6 +7,7 @@ module BigNumber = {
   @send external mul: (t, t) => t = "mul"
   @send external div: (t, t) => t = "div"
   @send external add: (t, t) => t = "add"
+  @send external eq: (t, t) => bool = "eq"
   @send external toString: t => string = "toString"
   @send external toNumber: t => float = "toNumber"
 }
@@ -62,4 +63,9 @@ module Transaction = {
   // https://docs.ethers.io/v5/api/utils/transactions/#Transaction
   @deriving(accessors)
   type t = {hash: string}
+}
+
+module TransactionResponse = {
+  @deriving(accessors)
+  type t = {wait: Js.Promise.t<TransactionReceipt.t>}
 }

@@ -133,8 +133,8 @@ module UseSignMessage = {
 module UseTransaction = {
   @deriving(accessors)
   type result = {
-    data: option<Js.Json.t>,
-    error: option<string>,
+    data: option<Externals_Ethers.TransactionResponse.t>,
+    error: option<Js.Exn.t>,
   }
 
   type request = {
@@ -153,6 +153,7 @@ module UseWaitForTransaction = {
   type config = {
     @optional hash: string,
     @optional skip: bool,
+    @optional wait: Js.Promise.t<Externals_Ethers.TransactionReceipt.t>,
   }
 
   type result = {

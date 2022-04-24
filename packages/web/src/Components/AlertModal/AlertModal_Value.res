@@ -1,6 +1,8 @@
 type disabledReason =
   | DestinationRateLimitExceeded(option<Js.Json.t>)
   | DestinationMissingAccess
+  | AccountSubscriptionAlertLimitExceeded 
+  | AccountSubscriptionMissingFunctionality
   | Snoozed
 
 @deriving(accessors)

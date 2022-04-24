@@ -27,7 +27,7 @@ let default = () => {
       "max-w-6xl",
       "mx-auto",
     ])}>
-    <Containers.OAuthIntegration
+    <QueryRenderers.OAuthIntegration
       onCreated={handleCreated}
       params={Containers.OAuthIntegration.Slack({
         code: code->Belt.Option.getWithDefault(""),

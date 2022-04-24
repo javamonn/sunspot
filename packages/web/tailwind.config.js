@@ -17,7 +17,7 @@ module.exports = {
   theme: {
     extend: {
       flex: {
-        '2': '2 2 0%'
+        2: "2 2 0%",
       },
       listStyleType: {
         circle: "circle",
@@ -38,6 +38,7 @@ module.exports = {
     },
     screens: {
       sm: { max: "639px" },
+      md: { max: "900px" },
     },
     fontSize: {
       xs: ".75rem",
