@@ -254,12 +254,22 @@ let make = () => {
 
       let disabledInfo = switch (item.disabled, item.disabledReason) {
       | (Some(true), Some(#DESTINATION_RATE_LIMIT_EXCEEDED)) =>
-        Some("alert has been ratelimited and will automatically re-enable after a period of time.")
+        Some(
+          "alert has been disabled due to a ratelimit and will automatically re-enable after a period of time.",
+        )
       | (Some(true), Some(#DESTINATION_MISSING_ACCESS)) =>
         Some(
-          "unable to connect to the destination. try reconnecting or adjusting permissions and re-enable.",
+          "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable.",
         )
       | (Some(true), Some(#SNOOZED)) => Some("alert has been disabled.")
+      | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_ALERT_LIMIT_EXCEEDED)) =>
+        Some(
+          "alert has been disabled due to exceeding your account alert limit. upgrade your account for increased limits.",
+        )
+      | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_MISSING_FUNCTIONALITY)) =>
+        Some(
+          "alert has been disabled due to exceeding your account functionality. upgrade your account for advanced functionality.",
+        )
       | _ => None
       }
 
@@ -359,7 +369,7 @@ let make = () => {
       }
     })
 
-  let handleConnectWalletClicked = _ => {
+  let handleWalletButtonClicked = _ => {
     let _ = signIn()
   }
 
@@ -650,6 +660,10 @@ let make = () => {
         Some(AlertModal.Value.DestinationMissingAccess)
       | (Some(true), Some(#DESTINATION_RATE_LIMIT_EXCEEDED)) =>
         Some(AlertModal.Value.DestinationRateLimitExceeded(item.disabledExpiresAt))
+      | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_ALERT_LIMIT_EXCEEDED)) =>
+        Some(AlertModal.Value.AccountSubscriptionAlertLimitExceeded)
+      | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_MISSING_FUNCTIONALITY)) =>
+        Some(AlertModal.Value.AccountSubscriptionMissingFunctionality)
       | (Some(true), Some(#SNOOZED)) => Some(AlertModal.Value.Snoozed)
       | _ => None
       }
@@ -677,6 +691,10 @@ let make = () => {
 
       setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
     })
+  let accountSubscription = switch alertRulesQuery {
+  | {data: Some({accountSubscription})} => accountSubscription
+  | _ => None
+  }
 
   let isLoading = switch (alertRulesQuery, authentication) {
   | ({loading: true}, _)
@@ -687,53 +705,74 @@ let make = () => {
   | _ => false
   }
 
-  <>
-    <AlertsHeader
-      authentication
-      onConnectWalletClicked={handleConnectWalletClicked}
-      onWalletButtonClicked={handleConnectWalletClicked}
-      onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
-    />
-    <AlertsTable
-      isLoading={isLoading}
-      rows={tableRows}
-      onRowClick={handleRowClick}
-      onCreateAlertClick={_ => setCreateAlertModalIsOpen(_ => true)}
-    />
-    <Containers.CreateAlertModal
-      isOpen={createAlertModalIsOpen}
-      onClose={_ => setCreateAlertModalIsOpen(_ => false)}
-      destinationOptions={integrationOptions}
-    />
-    {switch authentication {
-    | Authenticated({jwt: {accountAddress}}) => <>
-        <Containers.UpdateAlertModal
-          isOpen={switch updateAlertModal {
-          | UpdateAlertModalOpen(_) => true
-          | _ => false
-          }}
-          value=?{switch updateAlertModal {
-          | UpdateAlertModalOpen(v) | UpdateAlertModalClosing(v) => Some(v)
-          | _ => None
-          }}
-          onExited={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
-          onClose={_ =>
-            setUpdateAlertModal(alertModalValue =>
-              switch alertModalValue {
-              | UpdateAlertModalOpen(v) => UpdateAlertModalClosing(v)
-              | _ => alertModalValue
-              }
-            )}
-          destinationOptions={integrationOptions}
-          accountAddress={accountAddress}
-        />
-      </>
-    | _ => React.null
-    }}
-    <CreateAlertFAB
-      className={Cn.make(["hidden", "sm:block", "absolute", "bottom-0", "right-0", "mb-4", "mr-4"])}
-      onClick={_ => setCreateAlertModalIsOpen(_ => true)}
-    />
-    <AlertsFooter className={Cn.make(["sm:hidden"])} />
-  </>
+  let enabledAlertCount =
+    alertRuleItems
+    ->Belt.Array.keep(alertRule => !(alertRule.disabled->Belt.Option.getWithDefault(false)))
+    ->Belt.Array.length
+
+  <Contexts.AccountSubscriptionDialog accountSubscription={accountSubscription}>
+    <Contexts_Buy>
+      <AlertsHeader
+        authentication
+        onConnectWalletClicked={handleWalletButtonClicked}
+        onWalletButtonClicked={handleWalletButtonClicked}
+        onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
+        accountSubscription={accountSubscription}
+        isLoading={isLoading}
+      />
+      <AlertsTable
+        isLoading={isLoading}
+        rows={tableRows}
+        onRowClick={handleRowClick}
+        onCreateAlertClick={_ => setCreateAlertModalIsOpen(_ => true)}
+      />
+      <Containers.CreateAlertModal
+        isOpen={createAlertModalIsOpen}
+        onClose={_ => setCreateAlertModalIsOpen(_ => false)}
+        destinationOptions={integrationOptions}
+        accountSubscriptionType={accountSubscription->Belt.Option.map(({type_}) => type_)}
+        alertCount={enabledAlertCount}
+      />
+      {switch authentication {
+      | Authenticated({jwt: {accountAddress}}) => <>
+          <Containers.UpdateAlertModal
+            isOpen={switch updateAlertModal {
+            | UpdateAlertModalOpen(_) => true
+            | _ => false
+            }}
+            value=?{switch updateAlertModal {
+            | UpdateAlertModalOpen(v) | UpdateAlertModalClosing(v) => Some(v)
+            | _ => None
+            }}
+            onExited={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
+            onClose={_ =>
+              setUpdateAlertModal(alertModalValue =>
+                switch alertModalValue {
+                | UpdateAlertModalOpen(v) => UpdateAlertModalClosing(v)
+                | _ => alertModalValue
+                }
+              )}
+            destinationOptions={integrationOptions}
+            accountAddress={accountAddress}
+            accountSubscriptionType={accountSubscription->Belt.Option.map(({type_}) => type_)}
+            alertCount={alertRuleItems->Belt.Array.length}
+          />
+        </>
+      | _ => React.null
+      }}
+      <CreateAlertFAB
+        className={Cn.make([
+          "hidden",
+          "sm:block",
+          "absolute",
+          "bottom-0",
+          "right-0",
+          "mb-4",
+          "mr-4",
+        ])}
+        onClick={_ => setCreateAlertModalIsOpen(_ => true)}
+      />
+      <AlertsFooter className={Cn.make(["sm:hidden"])} />
+    </Contexts_Buy>
+  </Contexts.AccountSubscriptionDialog>
 }

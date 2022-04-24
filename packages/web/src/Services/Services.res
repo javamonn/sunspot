@@ -6,3 +6,4 @@ module Format = Services_Format
 module URL = Services_URL
 module Ipfs = Services_Ipfs
 module TelescopeManual = Services_TelescopeManual
+module Next = Services_Next

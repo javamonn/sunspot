@@ -241,8 +241,11 @@ let makeSteps = (
 }
 
 @react.component
-let make = (~onCreated, ~params) => {
+let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {openDialog: openAccountSubscriptionDialog} = React.useContext(
+    Contexts_AccountSubscriptionDialog_Context.context,
+  )
   let (validationError, setValidationError) = React.useState(_ => None)
   let (isDialogOpen, setIsDialogOpen) = React.useState(_ => true)
   let (activeStepIdx, setActiveStepIdx) = React.useState(() => 0)
@@ -766,14 +769,40 @@ let make = (~onCreated, ~params) => {
       })
     | Some("select destination") => setActiveStepIdx(idx => idx + 1)
     | Some("configure alert") =>
-      let validationResult = AlertModal.validate(alertRuleValue)
-      setValidationError(_ => validationResult)
-      switch validationResult {
+      switch AlertModal_Validate.execute(
+        ~accountSubscriptionType,
+        ~alertCount,
+        ~updatingValue=None,
+        ~value=alertRuleValue,
+      ) {
       | None =>
+        setValidationError(_ => None)
         let _ = handleCreateAlertRule()
-      | Some(_) => ()
+      | Some(AlertModal_Validate.InvalidInput(s)) => setValidationError(_ => Some(s))
+      | Some(AccountSubscriptionRequired({message, requiredAccountSubscriptionType})) =>
+        let _ =
+          message->React.string->Js.Option.some->openAccountSubscriptionDialog
+          |> Js.Promise.then_(newSubscriptionType => {
+            switch (requiredAccountSubscriptionType, newSubscriptionType) {
+            | (#TELESCOPE, Some(#TELESCOPE))
+            | (#OBSERVATORY, Some(#OBSERVATORY))
+            | (#TELESCOPE, Some(#OBSERVATORY)) =>
+              let _ = handleCreateAlertRule()
+            | _ => setValidationError(_ => Some(message))
+            }
+            Js.Promise.resolve()
+          })
+          |> Js.Promise.catch(error => {
+            Services.Logger.promiseError(
+              "Containers_OAuthIntegration handleActionClicked",
+              "error",
+              error,
+            )
+            let _ = setValidationError(_ => Some(message))
+            Js.Promise.resolve()
+          })
       }
-    | _ => ()
+    | _ => raise(InvalidState)
     }
   }
 

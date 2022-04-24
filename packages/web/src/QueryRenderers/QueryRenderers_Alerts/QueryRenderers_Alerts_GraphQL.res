@@ -1,5 +1,9 @@
 module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
   `
+  fragment AccountSubscription on AccountSubscription {
+    ttl
+    type
+  }
   fragment AlertRule on AlertRule {
     id 
     eventType
@@ -142,6 +146,9 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     $slackIntegrationsInput: SlackIntegrationsByAccountAddressInput!,
     $twitterIntegrationsInput: TwitterIntegrationsByAccountAddressInput!
   ) {
+    accountSubscription: getAccountSubscription(accountAddress: $accountAddress) {
+      ...AccountSubscription
+    }
     alertRules: alertRulesByAccountAddress(accountAddress: $accountAddress, limit: $limit, nextToken: $nextToken) {
       items {
         ...AlertRule

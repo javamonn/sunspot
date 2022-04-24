@@ -96,9 +96,7 @@ let default = (props: props): React.element => {
           autoConnect={true}
           provider={infuraProvider}
           webSocketProvider={infuraWebSocketProvider}>
-          <Contexts.Auth>
-            <Contexts.Apollo> <Contexts_Buy> {elem} </Contexts_Buy> </Contexts.Apollo>
-          </Contexts.Auth>
+          <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
         </Externals.Wagmi.Provider>
       </Contexts.Snackbar>
     </MaterialUi.ThemeProvider>
