@@ -21,28 +21,27 @@ let handleActivateEvent = _ => {
 let handlePushEvent = pushEvent => {
   switch pushEvent->PushEvent.data->PushEvent.json->PushEventData.decode {
   | Ok(pushEventData) =>
+    let tag =
+      pushEventData
+      ->PushEventData.options
+      ->Js.Json.decodeObject
+      ->Belt.Option.flatMap(o => o->Js.Dict.get("tag"))
+      ->Belt.Option.flatMap(Js.Json.decodeString)
+      ->Belt.Option.getWithDefault("")
+
     Services.Logger.logWithData(
       "ServiceWorker",
       "handle event push",
-      Js.Dict.fromArray([
-        (
-          "tag",
-          pushEventData
-          ->PushEventData.options
-          ->Js.Json.decodeObject
-          ->Belt.Option.flatMap(o => o->Js.Dict.get("tag"))
-          ->Belt.Option.flatMap(Js.Json.decodeString)
-          ->Belt.Option.getWithDefault("")
-          ->Js.Json.string,
-        ),
-      ])->Js.Json.object_,
+      Js.Dict.fromArray([("tag", Js.Json.string(tag))])->Js.Json.object_,
     )
 
-    let isExpired = {
-      let sentAt = pushEventData->PushEventData.sentAt->Belt.Option.getWithDefault(Js.Date.now())
+    let isExpired =
+      tag !== "marketing" && {
+          let sentAt =
+            pushEventData->PushEventData.sentAt->Belt.Option.getWithDefault(Js.Date.now())
 
-      sentAt <= Js.Date.now() -. 1000.0 *. 60.0 *. 5.0
-    }
+          sentAt <= Js.Date.now() -. 1000.0 *. 60.0 *. 5.0
+        }
 
     if !isExpired {
       PushEvent.waitUntil(
