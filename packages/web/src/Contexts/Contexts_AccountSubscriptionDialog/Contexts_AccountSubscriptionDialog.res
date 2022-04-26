@@ -95,9 +95,30 @@ let make = (~children, ~accountSubscription) => {
             ~message=React.string("account upgrade transaction rejected."),
             (),
           )
+          Services.Logger.log("account subscription", "transaction rejected")
           setPendingPurchase(_ => None)
-        | {error: Some(e)} => setPendingPurchase(_ => None)
-        | _ => ()
+          let _ =
+            purchaseDeferred.current->Belt.Option.forEach(deferred =>
+              deferred->Externals.PDefer.resolve(None)
+            )
+          purchaseDeferred.current = None
+        | {error: Some(e)} =>
+          setPendingPurchase(_ => None)
+          let _ =
+            purchaseDeferred.current->Belt.Option.forEach(deferred =>
+              deferred->Externals.PDefer.resolve(None)
+            )
+          purchaseDeferred.current = None
+          Services.Logger.logWithData(
+            "account subscription",
+            "transaction error",
+            [("error", e->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->Js.Json.string)]
+            ->Js.Dict.fromArray
+            ->Js.Json.object_,
+          )
+        | _ =>
+          Services.Logger.log("account subscription", "transaction sent")
+          ()
         }
         Js.Promise.resolve()
       })
@@ -106,6 +127,13 @@ let make = (~children, ~accountSubscription) => {
           "Contexts_AccountSubscriptionDialog handleClickPurchase",
           "error",
           error,
+        )
+        Services.Logger.logWithData(
+          "account subscription",
+          "transaction error",
+          [("error", error->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->Js.Json.string)]
+          ->Js.Dict.fromArray
+          ->Js.Json.object_,
         )
         openSnackbar(
           ~type_=Contexts_Snackbar.TypeError,
@@ -128,6 +156,21 @@ let make = (~children, ~accountSubscription) => {
   }, (authentication, pendingPurchase))
 
   let handleClickPurchase = type_ => {
+    Services.Logger.logWithData(
+      "account subscription",
+      "click purchase",
+      [
+        (
+          "type",
+          switch type_ {
+          | #TELESCOPE => Js.Json.string("telescope")
+          | #OBSERVATORY => Js.Json.string("observatory")
+          },
+        ),
+      ]
+      ->Js.Dict.fromArray
+      ->Js.Json.object_,
+    )
     let _ = setPendingPurchase(_ => Some(type_))
     let _ = signIn()
   }
@@ -139,6 +182,7 @@ let make = (~children, ~accountSubscription) => {
         Authenticated({jwt: {accountAddress}}),
         Some(accountSubscriptionType),
       ) if !updateAccountSubscriptionMutationResult.loading =>
+      Services.Logger.log("account subscription", "transaction confirmed")
       let _ = updateAccountSubscriptionMutation(
         ~refetchQueries=[String("AlertRulesAndOAuthIntegrationsByAccountAddress")],
         {
@@ -149,6 +193,7 @@ let make = (~children, ~accountSubscription) => {
       ) |> Js.Promise.then_(result => {
         switch result {
         | Ok(_) =>
+          Services.Logger.log("account subscription", "account upgraded")
           openSnackbar(
             ~type_=Contexts_Snackbar.TypeSuccess,
             ~duration=8000,
@@ -171,6 +216,13 @@ let make = (~children, ~accountSubscription) => {
             "Contexts_AccountSubscriptionDialog handleClickPurchase",
             "error",
             error,
+          )
+          Services.Logger.logWithData(
+            "account subscription",
+            "upgrade error",
+            [("error", error->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->Js.Json.string)]
+            ->Js.Dict.fromArray
+            ->Js.Json.object_,
           )
           openSnackbar(
             ~type_=Contexts_Snackbar.TypeError,
@@ -204,6 +256,7 @@ let make = (~children, ~accountSubscription) => {
 
   let handleClose = _ =>
     if !Js.Option.isSome(pendingPurchase) {
+      Services.Logger.log("account subscription", "close dialog")
       setDialogState(dialogState =>
         switch dialogState {
         | Open(h) => Closed(h)
@@ -224,6 +277,7 @@ let make = (~children, ~accountSubscription) => {
     }
 
   let handleOpenDialog = header => {
+    Services.Logger.log("account subscription", "open dialog")
     let deferred = Externals.PDefer.make()
     purchaseDeferred.current = Some(deferred)
     setDialogState(_ => Open(header))
