@@ -755,7 +755,7 @@ let make = () => {
             destinationOptions={integrationOptions}
             accountAddress={accountAddress}
             accountSubscriptionType={accountSubscription->Belt.Option.map(({type_}) => type_)}
-            alertCount={alertRuleItems->Belt.Array.length}
+            alertCount={enabledAlertCount}
           />
         </>
       | _ => React.null
