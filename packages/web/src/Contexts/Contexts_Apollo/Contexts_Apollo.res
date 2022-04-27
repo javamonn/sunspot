@@ -19,9 +19,10 @@ let make = (~children) => {
   let _ = React.useEffect1(() => {
     switch (previousAuthentication.current, authentication) {
     | (_, Contexts_Auth.Authenticated(_))
-    | (Authenticated(_), Unauthenticated_ConnectRequired(_))
-    | (Authenticated(_), Unauthenticated_AuthenticationChallengeRequired(_)) =>
-      let _ = setClient(_ => makeClient())
+    | (Authenticated(_), _) =>
+      let newClient = makeClient()
+      let _ = setClient(_ => newClient)
+      Contexts_Apollo_Client.inst.contents = newClient
     | _ => ()
     }
     previousAuthentication.current = authentication
