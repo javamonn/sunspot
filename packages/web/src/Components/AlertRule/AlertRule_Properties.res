@@ -159,7 +159,7 @@ module Options = {
               </MaterialUi.Typography>
             </MaterialUi.AccordionSummary>
             <MaterialUi.AccordionDetails>
-              <ul className={Cn.make(["flex", "flex-1", "flex-wrap"])}>
+              <ul className={Cn.make(["flex", "flex-1", "flex-wrap", "font-mono"])}>
                 {aggreggateAttribute
                 ->Option.values
                 ->Belt.Array.mapWithIndex((idx, attributeValue) => {
@@ -185,26 +185,35 @@ module Options = {
 
                   <li
                     key={displayValue}
-                    className={CnRe.on(
-                      Cn.make(["mr-3", "mb-3"]),
-                      Belt.Array.length(aggreggateAttribute->Option.values) - 1 != idx,
-                    )}>
-                    <MaterialUi.Chip
-                      variant={valueIdx->Js.Option.isSome ? #Default : #Outlined}
-                      color=#Primary
-                      label={React.string(displayValue)}
-                      clickable={true}
-                      onClick={_ => {
-                        let value = {
-                          Value.traitType: aggreggateAttribute->Option.traitType,
-                          value: attributeValue,
-                        }
-                        switch valueIdx {
-                        | Some(_) => onRemoveValueAttribute(value)
-                        | None => onAddValueAttribute(value)
-                        }
-                      }}
-                    />
+                    className={Cn.make([
+                      "border",
+                      "border-darkPrimary",
+                      "rounded-full",
+                      "px-4",
+                      "py-1",
+                      "cursor-pointer",
+                      "text-xs",
+                      "mb-3",
+                      CnRe.on(
+                        Cn.make(["mr-3"]),
+                        Belt.Array.length(aggreggateAttribute->Option.values) - 1 != idx,
+                      ),
+                      CnRe.on(
+                        Cn.make(["bg-darkPrimary", "text-lightPrimary"]),
+                        Js.Option.isSome(valueIdx),
+                      ),
+                    ])}
+                    onClick={_ => {
+                      let value = {
+                        Value.traitType: aggreggateAttribute->Option.traitType,
+                        value: attributeValue,
+                      }
+                      switch valueIdx {
+                      | Some(_) => onRemoveValueAttribute(value)
+                      | None => onAddValueAttribute(value)
+                      }
+                    }}>
+                    {React.string(displayValue)}
                   </li>
                 })
                 ->React.array}
