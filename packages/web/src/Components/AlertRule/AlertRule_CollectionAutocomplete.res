@@ -32,11 +32,17 @@ let make = (~value, ~onChange) => {
   let (
     executeCollectionNamePrefixQuery,
     collectionNamePrefixQueryResult,
-  ) = Query_OpenSeaCollectionsByNamePrefix.useLazy()
+  ) = Query_OpenSeaCollectionsByNamePrefix.useLazy(
+    ~fetchPolicy=ApolloClient__React_Hooks_UseLazyQuery.WatchQueryFetchPolicy.NoCache,
+    (),
+  )
   let (
     executeContractAddressQuery,
     contractAddressQueryResult,
-  ) = Query_OpenSeaCollectionByContractAddress.useLazy()
+  ) = Query_OpenSeaCollectionByContractAddress.useLazy(
+    ~fetchPolicy=ApolloClient__React_Hooks_UseLazyQuery.WatchQueryFetchPolicy.NoCache,
+    (),
+  )
 
   let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
       let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42

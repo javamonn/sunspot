@@ -33,7 +33,10 @@ let make = (
   let (
     executeCollectionAggregateAttributesQuery,
     collectionAggregateAttributesResult,
-  ) = Query_OpenSeaCollectionAggregateAttributes.useLazy()
+  ) = Query_OpenSeaCollectionAggregateAttributes.useLazy(
+    ~fetchPolicy=ApolloClient__React_Hooks_UseLazyQuery.WatchQueryFetchPolicy.NoCache,
+    (),
+  )
   let (
     isCreateTwitterIntegrationDialogOpen,
     setIsCreateTwitterIntegrationDialogOpen,
