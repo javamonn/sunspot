@@ -17,7 +17,7 @@ module Provider = {
     ~autoConnect: bool=?,
     ~connectors: chainIdParam => array<Connector.t>=?,
     ~provider: chainIdParam => Externals_Ethers.Provider.t,
-    ~webSocketProvider: chainIdParam => Externals_Ethers.Provider.t,
+    ~webSocketProvider: chainIdParam => Externals_Ethers.Provider.t=?,
     ~children: React.element,
   ) => React.element = "Provider"
 }

@@ -70,9 +70,6 @@ let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.chainIdParam) => {
 let infuraProvider = ({chainId}: Externals.Wagmi.Provider.chainIdParam) =>
   Externals.Ethers.Provider.makeInfuraProvider(chainId, Config.infuraId)
 
-let infuraWebSocketProvider = ({chainId}: Externals.Wagmi.Provider.chainIdParam) =>
-  Externals.Ethers.Provider.makeInfuraWebSocketProvider(chainId, Config.infuraId)
-
 let default = (props: props): React.element => {
   let {component, pageProps} = props
   let elem = React.createElement(component, pageProps)
@@ -92,10 +89,7 @@ let default = (props: props): React.element => {
     <MaterialUi.ThemeProvider theme={theme}>
       <Contexts.Snackbar>
         <Externals.Wagmi.Provider
-          connectors={wagmiConnector}
-          autoConnect={true}
-          provider={infuraProvider}
-          webSocketProvider={infuraWebSocketProvider}>
+          connectors={wagmiConnector} autoConnect={true} provider={infuraProvider}>
           <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
         </Externals.Wagmi.Provider>
       </Contexts.Snackbar>
