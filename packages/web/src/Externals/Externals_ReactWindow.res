@@ -6,7 +6,7 @@ module FixedSizeList = {
     ~itemSize: float,
     ~width: float,
     ~itemData: 'a,
-    ~onItemsRenderered: {
+    ~onItemsRendered: {
       "overscanStartIndex": int,
       "overscanStopIndex": int,
       "visibleStartIndex": int,

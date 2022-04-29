@@ -3,13 +3,14 @@ let itemSize = 100.0
 
 module Item = {
   @react.component
-  let make = (~data, ~index, ~style) => {
-    let item = data->Belt.Array.get(index)->Belt.Option.getExn
-
-    <div style={style}>
-      {item->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->React.string}
-    </div>
-  }
+  let make = (~data, ~index, ~style) =>
+    switch data->Belt.Array.get(index) {
+    | Some(item) =>
+      <div style={style}>
+        {item->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->React.string}
+      </div>
+    | None => <div style={style}> {React.string("loading...")} </div>
+    }
 }
 
 @react.component
@@ -80,8 +81,8 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
       <Externals.ReactWindowInfiniteLoader.InfiniteLoader
         itemCount={itemCount}
         isItemLoaded={handleIsItemLoaded}
-        threshold={windowItemCount * 2}
-        minimumBatchSize={windowItemCount * 2}
+        threshold={15}
+        minimumBatchSize={20}
         loadMoreItems={onLoadMoreItems}>
         {props =>
           <Externals.ReactWindow.FixedSizeList
@@ -90,7 +91,7 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
             itemSize={itemSize}
             itemCount={itemCount}
             itemData={items}
-            onItemsRenderered={props["onItemsRenderered"]}
+            onItemsRendered={props["onItemsRendered"]}
             ref={props["ref"]}>
             {Item.make}
           </Externals.ReactWindow.FixedSizeList>}
