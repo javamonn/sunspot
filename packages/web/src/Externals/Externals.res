@@ -23,3 +23,4 @@ module OpenSea = Externals_OpenSea
 module DateFns = Externals_DateFns
 module ReactImageLightbox = Externals_ReactImageLightbox
 module ReactWindow = Externals_ReactWindow
+module ReactWindowInfiniteLoader = Externals_ReactWindowInfiniteLoader

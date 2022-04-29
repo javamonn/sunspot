@@ -13,7 +13,7 @@ module Item = {
 }
 
 @react.component
-let make = (~alertRuleSatisfiedEvents) => {
+let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
   let measurementElem = React.useRef(Js.Nullable.null)
   let (listSize, setListSize) = React.useState(_ => None)
   let (windowSize, setWindowSize) = React.useState(_ => {width: 0.0, height: 0.0})
@@ -62,19 +62,40 @@ let make = (~alertRuleSatisfiedEvents) => {
     None
   }, [windowSize])
 
+  let handleIsItemLoaded = idx => items->Belt.Array.get(idx)->Js.Option.isSome
+
   <>
     <div ref={measurementElem->ReactDOM.Ref.domRef} className={Cn.make(["absolute", "inset-0"])} />
     {listSize
-    ->Belt.Option.map(({width, height}) =>
-      <Externals.ReactWindow.FixedSizeList
-        height={height}
-        width={width}
-        itemSize={itemSize}
-        itemCount={alertRuleSatisfiedEvents->Belt.Array.length->Belt.Float.fromInt}
-        itemData={alertRuleSatisfiedEvents}>
-        {Item.make}
-      </Externals.ReactWindow.FixedSizeList>
-    )
+    ->Belt.Option.map(({width, height}) => {
+      let windowItemCount = Js.Math.ceil_int(height /. itemSize)
+      let itemCount = {
+        let windowBuffer = 6
+        let windowBufferItemCount = windowItemCount * windowBuffer
+        let realizedItemCount = items->Belt.Array.length
+
+        hasMoreItems ? realizedItemCount + windowBufferItemCount : realizedItemCount
+      }
+
+      <Externals.ReactWindowInfiniteLoader.InfiniteLoader
+        itemCount={itemCount}
+        isItemLoaded={handleIsItemLoaded}
+        threshold={windowItemCount * 2}
+        minimumBatchSize={windowItemCount * 2}
+        loadMoreItems={onLoadMoreItems}>
+        {props =>
+          <Externals.ReactWindow.FixedSizeList
+            height={height}
+            width={width}
+            itemSize={itemSize}
+            itemCount={itemCount}
+            itemData={items}
+            onItemsRenderered={props["onItemsRenderered"]}
+            ref={props["ref"]}>
+            {Item.make}
+          </Externals.ReactWindow.FixedSizeList>}
+      </Externals.ReactWindowInfiniteLoader.InfiniteLoader>
+    })
     ->Belt.Option.getWithDefault(React.null)}
   </>
 }
