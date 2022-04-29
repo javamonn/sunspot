@@ -29,7 +29,7 @@ let makeVariables = (~accountAddress, ~nextToken=?, ()) => {
 module Subscription_OnCreateAlertRuleSatisfiedEvent = %graphql(`
   subscription OnCreateAlertRuleSatisfiedEvent($accountAddress: String!) {
     onCreateAlertRuleSatisfiedEvent(accountAddress: $accountAddress) {
-      id
+      ...Events_AlertRuleSatisfiedEvent
     }
   }
 `)

@@ -24,6 +24,23 @@ let make = () => {
           ~subscription=module(
             QueryRenderers_Events_GraphQL.Subscription_OnCreateAlertRuleSatisfiedEvent
           ),
+          ~updateQuery=(
+            previous,
+            {subscriptionData: {data: {onCreateAlertRuleSatisfiedEvent}}},
+          ): QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents.t => {
+            alertRuleSatisfiedEvents: Some({
+              __typename: "ModelAlertRuleSatisfiedEventConnection",
+              nextToken: previous.alertRuleSatisfiedEvents->Belt.Option.flatMap(a => a.nextToken),
+              items: Some(
+                Belt.Array.concat(
+                  [onCreateAlertRuleSatisfiedEvent],
+                  previous.alertRuleSatisfiedEvents
+                  ->Belt.Option.flatMap(alertRuleSatisfiedEvents => alertRuleSatisfiedEvents.items)
+                  ->Belt.Option.getWithDefault([]),
+                ),
+              ),
+            }),
+          },
           ~onError=error => {
             Services.Logger.logWithData(
               "QueryRenderers_Events",
@@ -52,7 +69,11 @@ let make = () => {
     )
   }, [eventsQuery.data->Js.Option.isSome])
 
-  <span>
-    {eventsQuery.data->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->React.string}
-  </span>
+  let alertRuleSatisfiedEvents = switch eventsQuery {
+  | {data: Some({alertRuleSatisfiedEvents: Some({items: Some(items)})})} =>
+    items->Belt.Array.keepMap(i => i)
+  | _ => []
+  }
+
+  <EventsList alertRuleSatisfiedEvents={alertRuleSatisfiedEvents} />
 }
