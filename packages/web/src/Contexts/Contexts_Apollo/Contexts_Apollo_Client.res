@@ -71,6 +71,9 @@ let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
   )
 }
 
-let inst = ref(
-  make(~apiKey=?Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncApiKeyGet, ()),
+let unauthenticatedInst = make(
+  ~apiKey=?Config.awsAmplifyConfig->Externals.AWSAmplify.Config.appSyncApiKeyGet,
+  (),
 )
+
+let inst = ref(unauthenticatedInst)

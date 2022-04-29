@@ -112,8 +112,8 @@ let getInitialAuthenticationState = account =>
   })
   ->Belt.Option.getWithDefault(Unauthenticated_ConnectRequired)
 
-let refreshCredentials = jwt =>
-  Contexts_Apollo_Client.inst.contents.mutate(
+let refreshCredentials = jwt => {
+  Contexts_Apollo_Client.unauthenticatedInst.mutate(
     ~mutation=module(Mutation_AuthenticationCredentialsRefresh),
     {input: {jwt: jwt}},
   ) |> Js.Promise.then_(result => {
@@ -149,9 +149,10 @@ let refreshCredentials = jwt =>
       Js.Promise.reject(UnableToRefreshCredentials)
     }
   })
+}
 
 let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~signMessage, ()) =>
-  Contexts_Apollo_Client.inst.contents.mutate(
+  Contexts_Apollo_Client.unauthenticatedInst.mutate(
     ~mutation=module(Mutation_AuthenticationChallengeCreate),
     {input: {address: address}},
   )
@@ -188,7 +189,7 @@ let handleAuthenticationChallenge = (~address, ~waitForMetamaskClose=false, ~sig
     }
   )
   |> Js.Promise.then_(signedMessage =>
-    Contexts_Apollo_Client.inst.contents.mutate(
+    Contexts_Apollo_Client.unauthenticatedInst.mutate(
       ~mutation=module(Mutation_AuthenticationChallengeVerify),
       {input: {address: address, signedMessage: signedMessage}},
     )
