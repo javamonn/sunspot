@@ -7,7 +7,7 @@ module InfiniteLoader = {
     ~loadMoreItems: (int, int) => Js.Promise.t<unit>,
     ~minimumBatchSize: int,
     ~children: {
-      "onItemsRenderered": {
+      "onItemsRendered": {
         "overscanStartIndex": int,
         "overscanStopIndex": int,
         "visibleStartIndex": int,
@@ -15,5 +15,5 @@ module InfiniteLoader = {
       } => unit,
       "ref": React.Ref.t<'a>,
     } => React.element,
-  ) => React.element = "InfiniteLoader"
+  ) => React.element = "default"
 }

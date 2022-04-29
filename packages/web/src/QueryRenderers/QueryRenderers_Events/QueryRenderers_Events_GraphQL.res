@@ -2,6 +2,7 @@ module Events_AlertRuleSatisfiedEvent = %graphql(`
   fragment Events_AlertRuleSatisfiedEvent on AlertRuleSatisfiedEvent {
     id
     accountAddress
+    createdAt
     openSeaOrder {
       id 
     }
@@ -19,8 +20,8 @@ module Query_ListAlertRuleSatisfiedEvents = %graphql(`
   }
 `)
 
-let makeVariables = (~accountAddress, ~nextToken=?, ()) => {
-  Query_ListAlertRuleSatisfiedEvents.limit: 100,
+let makeVariables = (~accountAddress, ~limit=50, ~nextToken=?, ()) => {
+  Query_ListAlertRuleSatisfiedEvents.limit: limit,
   accountAddress: accountAddress,
   sortDirection: #DESC,
   nextToken: nextToken,
