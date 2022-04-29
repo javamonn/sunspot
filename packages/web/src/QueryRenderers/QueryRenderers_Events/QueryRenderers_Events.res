@@ -2,9 +2,12 @@
 let make = () => {
   let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
   let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
-  let eventsQueryUnsubscribe = React.useRef(None)
 
-  let eventsQuery = QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents.use(
+  let {
+    data,
+    subscribeToMore,
+    fetchMore,
+  } = QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents.use(
     ~skip=switch authentication {
     | Authenticated(_) if !isQuickbuyTxPending => false
     | _ => true
@@ -17,10 +20,11 @@ let make = () => {
   )
 
   let _ = React.useEffect1(() => {
+    let eventsQueryUnsubscribe = ref(None)
     switch authentication {
-    | Authenticated({jwt: {accountAddress}}) if eventsQuery.data->Js.Option.isSome =>
-      eventsQueryUnsubscribe.current = Some(
-        eventsQuery.subscribeToMore(
+    | Authenticated({jwt: {accountAddress}}) if data->Js.Option.isSome =>
+      eventsQueryUnsubscribe.contents = Some(
+        subscribeToMore(
           ~subscription=module(
             QueryRenderers_Events_GraphQL.Subscription_OnCreateAlertRuleSatisfiedEvent
           ),
@@ -63,17 +67,27 @@ let make = () => {
 
     Some(
       () => {
-        eventsQueryUnsubscribe.current->Belt.Option.forEach(cb => cb())
-        eventsQueryUnsubscribe.current = None
+        eventsQueryUnsubscribe.contents->Belt.Option.forEach(cb => cb())
+        eventsQueryUnsubscribe.contents = None
       },
     )
-  }, [eventsQuery.data->Js.Option.isSome])
+  }, [data->Js.Option.isSome])
 
-  let alertRuleSatisfiedEvents = switch eventsQuery {
-  | {data: Some({alertRuleSatisfiedEvents: Some({items: Some(items)})})} =>
+  let handleLoadMoreItems = (startIdx, endIdx) => {
+    fetchMore(
+
+    )
+  }
+
+  let items = switch data {
+  | Some({alertRuleSatisfiedEvents: Some({items: Some(items)})}) =>
     items->Belt.Array.keepMap(i => i)
   | _ => []
   }
+  let hasMoreItems = switch data {
+  | Some({alertRuleSatisfiedEvents: Some({nextToken})}) => Js.Option.isSome(nextToken)
+  | _ => false
+  }
 
-  <EventsList alertRuleSatisfiedEvents={alertRuleSatisfiedEvents} />
+  <EventsList items={items} hasMoreItems={hasMoreItems} onLoadMoreItems={handleLoadMoreItems} />
 }
