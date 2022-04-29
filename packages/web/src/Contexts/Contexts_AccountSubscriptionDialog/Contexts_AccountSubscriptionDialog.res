@@ -108,6 +108,18 @@ let make = (~children, ~accountSubscription) => {
             purchaseDeferred.current->Belt.Option.forEach(deferred =>
               deferred->Externals.PDefer.resolve(None)
             )
+          let message = Obj.magic(e)["message"]
+          let displayMessage = if Js.String2.startsWith(message, "insufficient funds") {
+            "insufficient funds to upgrade account."
+          } else {
+            message
+          }
+          openSnackbar(
+            ~type_=Contexts_Snackbar.TypeError,
+            ~duration=8000,
+            ~message=React.string(displayMessage),
+            (),
+          )
           purchaseDeferred.current = None
           Services.Logger.logWithData(
             "account subscription",
