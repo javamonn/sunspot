@@ -15,8 +15,20 @@ module Location = {
   @val @scope("location") external origin: string = "origin"
 }
 
+module EventTarget = {
+  type t
+
+  external unsafeAsEventTarget: 'a => t = "%identity"
+  @send external addEventListener: (t, string, Dom.event => unit) => unit = "addEventListener"
+  @send external removeEventListener: (t, string, Dom.event => unit) => unit = "removeEventListener"
+}
+
 module Window = {
   @val @scope("window") external open_: string => unit = "open"
+  @val external inst: Dom.window = "window"
+
+  @get external innerWidth: Dom.window => float = "innerWidth"
+  @get external innerHeight: Dom.window => float = "innerHeight"
 }
 
 module URL = {
@@ -34,4 +46,13 @@ module URLSearchParams = {
 
   @new external make: string => t = "URLSearchParams"
   @send external get: (t, string) => option<string> = "get"
+}
+
+module Element = {
+  @deriving(accessors)
+  type domRect = {
+    width: float,
+    height: float,
+  }
+  @send external getBoundingClientRect: Dom.element => domRect = "getBoundingClientRect"
 }
