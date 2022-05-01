@@ -36,7 +36,7 @@ let plans = [
 @react.component
 let make = (
   ~accountSubscription: option<
-    QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AccountSubscription.t,
+    Query_AccountSubscription.GraphQL.AccountSubscription.t,
   >=?,
   ~isOpen,
   ~onClose,

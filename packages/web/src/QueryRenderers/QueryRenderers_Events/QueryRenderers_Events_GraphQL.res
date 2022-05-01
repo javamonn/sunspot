@@ -3,8 +3,12 @@ module Events_AlertRuleSatisfiedEvent = %graphql(`
     id
     accountAddress
     createdAt
-    openSeaOrder {
-      id 
+    context {
+      ... on AlertRuleSatisfiedEvent_ListingContext {
+        openSeaOrder {
+          id 
+        }
+      }
     }
   }
 `)

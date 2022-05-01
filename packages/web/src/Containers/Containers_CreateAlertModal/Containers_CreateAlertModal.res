@@ -339,32 +339,15 @@ let handleCreateAlertRule = (
       data
       ->Belt.Option.flatMap(({alertRule}) => alertRule)
       ->Belt.Option.forEach(alertRule => {
-        let (
-          newItems,
-          discordIntegrations,
-          slackIntegrations,
-          twitterIntegrations,
-          accountSubscription,
-        ) = switch readQuery(
+        let newItems = switch readQuery(
           ~query=module(
             QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
           ),
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         ) {
-        | Some(Ok({
-            alertRules: Some({items: Some(items)}),
-            discordIntegrations,
-            slackIntegrations,
-            twitterIntegrations,
-            accountSubscription,
-          })) => (
-            Belt.Array.concat([Some(alertRule)], items),
-            discordIntegrations,
-            slackIntegrations,
-            twitterIntegrations,
-            accountSubscription,
-          )
-        | _ => ([Some(alertRule)], None, None, None, None)
+        | Some(Ok({alertRules: Some({items: Some(items)})})) =>
+          Belt.Array.concat([Some(alertRule)], items)
+        | _ => [Some(alertRule)]
         }
 
         let _ = writeQuery(
@@ -377,10 +360,6 @@ let handleCreateAlertRule = (
               nextToken: None,
               items: Some(newItems),
             }),
-            discordIntegrations: discordIntegrations,
-            slackIntegrations: slackIntegrations,
-            twitterIntegrations: twitterIntegrations,
-            accountSubscription: accountSubscription,
           },
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         )
@@ -396,8 +375,8 @@ let handleCreateAlertRule = (
 let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~alertCount) => {
   let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
   let (value, setValue) = React.useState(() => AlertModal.Value.empty())
-  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
-  let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
+  let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
 
   let handleExited = () => {
     setValue(_ => AlertModal.Value.empty())
@@ -422,7 +401,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~a
           onClose()
           openSnackbar(
             ~message=React.string("alert created."),
-            ~type_=Contexts.Snackbar.TypeSuccess,
+            ~type_=Contexts_Snackbar.TypeSuccess,
             ~duration=4000,
             (),
           )
@@ -433,7 +412,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~a
           ~message=React.string(
             "browser push notification permission has been denied. enable permission or select an alternate destination.",
           ),
-          ~type_=Contexts.Snackbar.TypeError,
+          ~type_=Contexts_Snackbar.TypeError,
           ~duration=8000,
           (),
         )
@@ -450,7 +429,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~a
             </a>
             {React.string("if the issue persists.")}
           </>,
-          ~type_=Contexts.Snackbar.TypeError,
+          ~type_=Contexts_Snackbar.TypeError,
           ~duration=8000,
           (),
         )
@@ -462,7 +441,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~a
     signIn()
     |> Js.Promise.then_(authentication => {
       let _ = switch authentication {
-      | Contexts.Auth.Authenticated({jwt: {accountAddress}}) =>
+      | Contexts_Auth.Authenticated({jwt: {accountAddress}}) =>
         let _ = handleCreate(~accountAddress)
       | _ => ()
       }

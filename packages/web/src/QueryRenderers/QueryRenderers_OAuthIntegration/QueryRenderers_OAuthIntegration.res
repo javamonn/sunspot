@@ -2,7 +2,7 @@ open QueryRenderers_OAuthIntegration_GraphQL
 
 @react.component
 let make = (~onCreated, ~params) => {
-  let {authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let query = Query_OAuthIntegration.use(
     ~skip=switch authentication {
     | Authenticated(_) => false

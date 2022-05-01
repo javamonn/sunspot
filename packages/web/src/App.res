@@ -40,17 +40,6 @@ Services.Logger.initialize()
 let wagmiConnector = ({chainId}: Externals.Wagmi.Provider.chainIdParam) => {
   open Externals.Wagmi
 
-  let rpcUrl =
-    defaultChains
-    ->Belt.Array.getBy(chain => id(chain) === chainId)
-    ->Belt.Option.flatMap(chain => chain->rpcUrls->Belt.Array.get(0))
-    ->Belt.Option.getWithDefault(
-      chain
-      ->Js.Dict.get("mainnet")
-      ->Belt.Option.flatMap(chain => chain->rpcUrls->Belt.Array.get(0))
-      ->Belt.Option.getExn,
-    )
-
   [
     makeInjectedConnector({
       chains: defaultChains,
@@ -73,6 +62,7 @@ let infuraProvider = ({chainId}: Externals.Wagmi.Provider.chainIdParam) =>
 let default = (props: props): React.element => {
   let {component, pageProps} = props
   let elem = React.createElement(component, pageProps)
+  let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
 
   <>
     <Externals.Next.Head>
@@ -87,12 +77,29 @@ let default = (props: props): React.element => {
       <link rel="manifest" href="/manifest.json" />
     </Externals.Next.Head>
     <MaterialUi.ThemeProvider theme={theme}>
-      <Contexts.Snackbar>
+      <Contexts_Snackbar>
         <Externals.Wagmi.Provider
           connectors={wagmiConnector} autoConnect={true} provider={infuraProvider}>
-          <Contexts.Auth> <Contexts.Apollo> {elem} </Contexts.Apollo> </Contexts.Auth>
+          <Contexts_Auth>
+            <Contexts_Apollo>
+              <Contexts_AccountSubscriptionDialog>
+                <Contexts_AlertCreateAndUpdateDialog>
+                  <Contexts_Buy>
+                    {switch router.pathname {
+                    | "/events"
+                    | "/alerts" =>
+                      <Layouts.PageWithHeader>
+                        <QueryRenderers.Header> {elem} </QueryRenderers.Header>
+                      </Layouts.PageWithHeader>
+                    | _ => elem
+                    }}
+                  </Contexts_Buy>
+                </Contexts_AlertCreateAndUpdateDialog>
+              </Contexts_AccountSubscriptionDialog>
+            </Contexts_Apollo>
+          </Contexts_Auth>
         </Externals.Wagmi.Provider>
-      </Contexts.Snackbar>
+      </Contexts_Snackbar>
     </MaterialUi.ThemeProvider>
   </>
 }

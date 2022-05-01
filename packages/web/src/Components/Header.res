@@ -1,13 +1,14 @@
 @react.component
 let make = (
-  ~authentication: Contexts.Auth.authentication,
-  ~isLoading,
+  ~authentication: Contexts_Auth.authentication,
+  ~isLoadingAccountSubscription,
   ~accountSubscription,
   ~onConnectWalletClicked,
   ~onWalletButtonClicked,
   ~onCreateAlertClicked,
 ) => {
   let {state: {connecting}} = Externals.Wagmi.UseContext.use()
+  let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
@@ -17,11 +18,54 @@ let make = (
     let _ = openAccountSubscriptionDialog(None)
   }
 
-  <header className={Cn.make(["flex", "flex-row", "justify-between", "items-center", "sm:px-4"])}>
-    <h1 className={Cn.make(["font-mono", "text-darkPrimary", "font-bold", "leading-none"])}>
-      <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
-      <span className={Cn.make(["sm:hidden"])}> {React.string(" / alerts")} </span>
-    </h1>
+  let makeToggleButtonClasses = selected =>
+    MaterialUi_Lab.ToggleButton.Classes.make(
+      ~root=Cn.make(["px-8", "text-sm", "leading-none", "py-2"]),
+      ~label=Cn.make([
+        "lowercase",
+        "font-bold",
+        selected ? "text-darkPrimary" : "text-darkSecondary",
+      ]),
+      ~selected=Cn.make(["bg-darkBorder"]),
+      (),
+    )
+
+  <header
+    className={Cn.make(["flex", "flex-row", "justify-between", "items-center", "sm:px-4", "mt-4"])}>
+    <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+      <h1
+        className={Cn.make([
+          "font-mono",
+          "text-darkPrimary",
+          "font-bold",
+          "italic",
+          "text-lg",
+          "leading-none",
+        ])}>
+        <Externals.Next.Link href="/"> {React.string("sunspot")} </Externals.Next.Link>
+      </h1>
+      <MaterialUi_Lab.ToggleButtonGroup
+        size=#Small
+        exclusive={true}
+        orientation=#Horizontal
+        classes={MaterialUi_Lab.ToggleButtonGroup.Classes.make(~root=Cn.make(["ml-10"]), ())}>
+        <MaterialUi_Lab.ToggleButton
+          value={MaterialUi_Types.Any("left")}
+          selected={router.pathname === "/alerts"}
+          size=#Small
+          style={ReactDOM.Style.make(~height="36px", ())}
+          classes={makeToggleButtonClasses(router.pathname === "/alerts")}>
+          {React.string("alerts")}
+        </MaterialUi_Lab.ToggleButton>
+        <MaterialUi_Lab.ToggleButton
+          selected={router.pathname === "/events"}
+          value={MaterialUi_Types.Any("right")}
+          size=#Small
+          classes={makeToggleButtonClasses(router.pathname === "/events")}>
+          {React.string("events")}
+        </MaterialUi_Lab.ToggleButton>
+      </MaterialUi_Lab.ToggleButtonGroup>
+    </div>
     <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center"])}>
       <MaterialUi.Button
         onClick={_ => {
@@ -42,7 +86,7 @@ let make = (
       | _ if connecting => <LoadingButton />
       | Some({address}) => <>
           {switch accountSubscription {
-          | None if !isLoading =>
+          | None if !isLoadingAccountSubscription =>
             <MaterialUi.Button
               variant=#Outlined
               onClick={handleUpgradeAccess}
