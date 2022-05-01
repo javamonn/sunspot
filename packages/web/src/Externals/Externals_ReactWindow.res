@@ -6,13 +6,14 @@ module FixedSizeList = {
     ~itemSize: float,
     ~width: float,
     ~itemData: 'a,
+    ~itemKey: (int, 'a) => string,
     ~onItemsRendered: {
       "overscanStartIndex": int,
       "overscanStopIndex": int,
       "visibleStartIndex": int,
       "visibleStopIndex": int,
     } => unit,
-    ~children: {"data": array<'a>, "index": int, "style": ReactDOM.style} => React.element,
+    ~children: {"data": 'a, "index": int, "style": ReactDOM.style} => React.element,
     ~ref: React.Ref.t<'a>,
   ) => React.element = "FixedSizeList"
 }

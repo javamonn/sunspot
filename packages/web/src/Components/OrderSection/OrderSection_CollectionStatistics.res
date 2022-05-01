@@ -1,9 +1,7 @@
 let eventsScatterplotHours = 4.0
 
 @react.component
-let make = (
-  ~collection: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaAsset.t_collection,
-) => {
+let make = (~collectionSlug) => {
   let (isLightboxOpen, setIsLightboxOpen) = React.useState(_ => false)
   let eventsScatterplotSrc = {
     let endCreatedAtMinuteTime =
@@ -12,7 +10,6 @@ let make = (
 
     let start = startCreatedAtMinuteTime->Belt.Float.toInt->Belt.Int.toString
     let end = endCreatedAtMinuteTime->Belt.Float.toInt->Belt.Int.toString
-    let collectionSlug = collection.slug
 
     `https://dpldouen3w8e7.cloudfront.net/production/events-scatterplot?collectionSlug=${collectionSlug}&startCreatedAtMinuteTime=${start}&endCreatedAtMinuteTime=${end}`
   }

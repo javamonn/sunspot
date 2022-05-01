@@ -92,27 +92,21 @@ let make = () => {
           (),
         ),
         ~updateQuery=(previous, {fetchMoreResult}) => {
-          let updated = {
-            QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents.alertRuleSatisfiedEvents: Some({
-              __typename: "ModelAlertRuleSatisfiedEventConnection",
-              nextToken: fetchMoreResult
+          QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents.alertRuleSatisfiedEvents: Some({
+            __typename: "ModelAlertRuleSatisfiedEventConnection",
+            nextToken: fetchMoreResult
+            ->Belt.Option.flatMap(r => r.alertRuleSatisfiedEvents)
+            ->Belt.Option.flatMap(r => r.nextToken),
+            items: Belt.Array.concat(
+              previous.alertRuleSatisfiedEvents
+              ->Belt.Option.flatMap(a => a.items)
+              ->Belt.Option.getWithDefault([]),
+              fetchMoreResult
               ->Belt.Option.flatMap(r => r.alertRuleSatisfiedEvents)
-              ->Belt.Option.flatMap(r => r.nextToken),
-              items: Belt.Array.concat(
-                previous.alertRuleSatisfiedEvents
-                ->Belt.Option.flatMap(a => a.items)
-                ->Belt.Option.getWithDefault([]),
-                fetchMoreResult
-                ->Belt.Option.flatMap(r => r.alertRuleSatisfiedEvents)
-                ->Belt.Option.flatMap(r => r.items)
-                ->Belt.Option.getWithDefault([]),
-              )->Js.Option.some,
-            }),
-          }
-
-          Js.log4("updateQuery", previous, fetchMoreResult, updated)
-
-          updated
+              ->Belt.Option.flatMap(r => r.items)
+              ->Belt.Option.getWithDefault([]),
+            )->Js.Option.some,
+          }),
         },
         (),
       ) |> Js.Promise.then_(result => {
@@ -135,7 +129,13 @@ let make = () => {
 
   let items = switch data {
   | Some({alertRuleSatisfiedEvents: Some({items: Some(items)})}) =>
-    items->Belt.Array.keepMap(i => i)
+    items->Belt.Array.keepMap(item =>
+      switch item {
+      | Some({eventsListItem_AlertRuleSatisfiedEvent}) =>
+        Some(eventsListItem_AlertRuleSatisfiedEvent)
+      | None => None
+      }
+    )
   | _ => []
   }
   let hasMoreItems = switch data {

@@ -653,6 +653,5 @@ let make = () => {
       className={Cn.make(["hidden", "sm:block", "absolute", "bottom-0", "right-0", "mb-4", "mr-4"])}
       onClick={_ => openCreateAlertModal()}
     />
-    <AlertsFooter className={Cn.make(["sm:hidden"])} />
   </>
 }

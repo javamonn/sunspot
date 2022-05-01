@@ -1,13 +1,43 @@
-type activeState = {
-  asset: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaAsset.t,
-  metadata: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrderMetadataAsset.t,
-}
+exception InvalidOrder
+
+module OrderSection_AssetMetadata_OpenSeaOrder = OrderSection_AssetMetadata.Fragment_OrderSection_AssetMetadata_OpenSeaOrder
+module OpenSeaAssetMedia_OpenSeaAsset = OpenSeaAssetMedia.Fragment_OpenSeaAssetMedia_OpenSeaAsset
+
+module Fragment_OrderSection_AssetDetail_OpenSeaOrder = %graphql(`
+  fragment OrderSection_AssetDetail_OpenSeaOrder on OpenSeaOrder {
+    asset {
+      name
+      tokenId
+      collectionSlug
+      permalink
+      collection {
+        slug
+        imageUrl
+        name
+      }
+      attributes {
+        ... on OpenSeaAssetNumberAttribute {
+          traitType
+          displayType
+          numberValue: value
+          maxValue
+        }
+        ... on OpenSeaAssetStringAttribute {
+          traitType
+          displayType
+          stringValue: value
+          maxValue
+        }
+      }
+      ...OpenSeaAssetMedia_OpenSeaAsset
+    }
+    ...OrderSection_AssetMetadata_OpenSeaOrder
+  }
+`)
 
 @react.component
-let make = (
-  ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
-) => {
-  let (isLightboxOpen, setIsLightboxOpen) = React.useState(_ => false)
+let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => {
+  let (lightboxSrc, setLightboxSrc) = React.useState(_ => None)
   let handleClick = destination => {
     Services.Logger.logWithData(
       "buy",
@@ -16,70 +46,13 @@ let make = (
     )
   }
 
-  let ({asset: {collection} as asset, metadata}, _setActive) = React.useState(() => {
-    let result = switch openSeaOrderFragment {
-    | {asset: Some(asset), metadata: {asset: Some(assetMetadata)}} =>
-      Some({
-        asset: asset,
-        metadata: assetMetadata,
-      })
-    | {assetBundle: Some({assets}), metadata: {bundle: Some({assets: assetMetadatas})}} =>
-      switch (assets->Belt.Array.get(0), assetMetadatas->Belt.Array.get(0)) {
-      | (Some(asset), Some(assetMetadata)) =>
-        Some({
-          asset: asset,
-          metadata: assetMetadata,
-        })
-      | _ => None
-      }
-    | _ => None
-    }
-    result->Belt.Option.getExn
-  })
-
-  let media = switch asset {
-  | {imageUrl: Some(uri)}
-  | {imagePreviewUrl: Some(uri)}
-  | {imageThumbnailUrl: Some(uri)} =>
-    let uris =
-      [asset.imageUrl, asset.imagePreviewUrl, asset.imageThumbnailUrl]->Belt.Array.keepMap(i => i)
-    let fallbackUri = uris->Belt.Array.getBy(candidate => candidate !== uri)
-
-    Js.log(uris)
-
-    let imageSrc = Services.URL.resolveMedia(~uri, ~fallbackUri?, ())
-    <>
-      <img
-        className={Cn.make(["rounded", "cursor-pointer"])}
-        src={imageSrc}
-        onClick={_ => {
-          setIsLightboxOpen(_ => true)
-        }}
-      />
-      {isLightboxOpen
-        ? <Externals.ReactImageLightbox
-            mainSrc={imageSrc}
-            onCloseRequest={() => setIsLightboxOpen(_ => false)}
-            imagePadding={30}
-            reactModalStyle={{
-              "overlay": {
-                "zIndex": "1500",
-              },
-            }}
-          />
-        : React.null}
-    </>
-  | {animationUrl: Some(animationUrl)} =>
-    <video
-      controls={true}
-      muted={true}
-      autoPlay={true}
-      className={Cn.make(["rounded"])}
-      src={Services.Ipfs.isIpfsUri(animationUrl)
-        ? `https://ipfs.io${Services.Ipfs.getNormalizedCidPath(animationUrl)}`
-        : animationUrl}
-    />
-  | _ => <div className={Cn.make(["rounded", "bg-gray-100"])} />
+  let (asset, collection, openSeaAssetMedia_OpenSeaAsset) = switch openSeaOrder {
+  | {asset: Some({openSeaAssetMedia_OpenSeaAsset, collection: Some(collection)} as asset)} => (
+      asset,
+      collection,
+      openSeaAssetMedia_OpenSeaAsset,
+    )
+  | _ => raise(InvalidOrder)
   }
 
   <>
@@ -93,7 +66,26 @@ let make = (
           "sm:flex-col",
           "sm:space-x-0",
         ])}>
-        <div className={Cn.make(["flex-1", "sm:order-last", "sm:mt-4"])}> {media} </div>
+        <div className={Cn.make(["flex-1", "sm:order-last", "sm:mt-4"])}>
+          <OpenSeaAssetMedia
+            openSeaAsset={openSeaAssetMedia_OpenSeaAsset}
+            onClick={src => setLightboxSrc(_ => Some(src))}
+          />
+          {switch lightboxSrc {
+          | Some(src) =>
+            <Externals.ReactImageLightbox
+              mainSrc={src}
+              onCloseRequest={() => setLightboxSrc(_ => None)}
+              imagePadding={30}
+              reactModalStyle={{
+                "overlay": {
+                  "zIndex": "1500",
+                },
+              }}
+            />
+          | None => React.null
+          }}
+        </div>
         <div className={Cn.make(["flex-1", "justify-end", "flex", "flex-col"])}>
           <a href={asset.permalink} onClick={_ => handleClick("asset")} target="_blank">
             <MaterialUi.Button
@@ -120,47 +112,40 @@ let make = (
               />
             </MaterialUi.Button>
           </a>
-          {collection
-          ->Belt.Option.map(collection =>
-            <a
-              href={Services.URL.collectionUrl(collection.slug)}
-              onClick={_ => handleClick("collection")}
-              target="_blank">
-              <MaterialUi.Button
-                variant=#Text
-                classes={MaterialUi.Button.Classes.make(
-                  ~root=Cn.make(["normal-case", "mt-2"]),
-                  (),
-                )}>
-                <div className={Cn.make(["flex-row", "flex", "items-center"])}>
-                  {collection.imageUrl
-                  ->Belt.Option.map(imageUrl =>
-                    <MaterialUi.Avatar
-                      classes={MaterialUi.Avatar.Classes.make(
-                        ~root=Cn.make(["w-8", "h-8", "sm:w-6", "sm:h-6"]),
-                        (),
-                      )}>
-                      <img src={imageUrl} />
-                    </MaterialUi.Avatar>
-                  )
-                  ->Belt.Option.getWithDefault(React.null)}
-                  <h2
-                    className={Cn.make([
-                      "font-mono",
-                      "text-lg",
-                      "text-darkSecondary",
-                      "ml-2",
-                      "leading-none",
-                      "text-left",
-                      "sm:text-base",
-                    ])}>
-                    {collection.name->Belt.Option.getWithDefault(collection.slug)->React.string}
-                  </h2>
-                </div>
-              </MaterialUi.Button>
-            </a>
-          )
-          ->Belt.Option.getWithDefault(React.null)}
+          <a
+            href={Services.URL.collectionUrl(collection.slug)}
+            onClick={_ => handleClick("collection")}
+            target="_blank">
+            <MaterialUi.Button
+              variant=#Text
+              classes={MaterialUi.Button.Classes.make(~root=Cn.make(["normal-case", "mt-2"]), ())}>
+              <div className={Cn.make(["flex-row", "flex", "items-center"])}>
+                {collection.imageUrl
+                ->Belt.Option.map(imageUrl =>
+                  <MaterialUi.Avatar
+                    classes={MaterialUi.Avatar.Classes.make(
+                      ~root=Cn.make(["w-8", "h-8", "sm:w-6", "sm:h-6"]),
+                      (),
+                    )}>
+                    <img src={imageUrl} />
+                  </MaterialUi.Avatar>
+                )
+                ->Belt.Option.getWithDefault(React.null)}
+                <h2
+                  className={Cn.make([
+                    "font-mono",
+                    "text-lg",
+                    "text-darkSecondary",
+                    "ml-2",
+                    "leading-none",
+                    "text-left",
+                    "sm:text-base",
+                  ])}>
+                  {collection.name->Belt.Option.getWithDefault(collection.slug)->React.string}
+                </h2>
+              </div>
+            </MaterialUi.Button>
+          </a>
         </div>
       </div>
     </div>
@@ -242,9 +227,9 @@ let make = (
       </div>
     )
     ->Belt.Option.getWithDefault(React.null)}
-    <OrderSection_AssetMetadata openSeaOrderFragment={openSeaOrderFragment} asset={asset} />
-    {asset.collection
-    ->Belt.Option.map(collection => <OrderSection_CollectionStatistics collection={collection} />)
-    ->Belt.Option.getWithDefault(React.null)}
+    <OrderSection_AssetMetadata
+      openSeaOrder={openSeaOrder.orderSection_AssetMetadata_OpenSeaOrder}
+    />
+    <OrderSection_CollectionStatistics collectionSlug={collection.slug} />
   </>
 }

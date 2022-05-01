@@ -1,16 +1,20 @@
 type rect = {width: float, height: float}
-let itemSize = 100.0
+let itemSize = Config.isBrowser()
+  ? {
+      let remUnit = Externals.Raw.getRemUnit()
+
+      11.0 *. remUnit +. 1.0 *. remUnit
+    }
+  : 176.0 +. 16.0
 
 module Item = {
   @react.component
   let make = (~data, ~index, ~style) =>
-    switch data->Belt.Array.get(index) {
-    | Some(item) =>
-      <div style={style}>
-        {item->Js.Json.stringifyAny->Belt.Option.getWithDefault("")->React.string}
-      </div>
-    | None => <div style={style}> {React.string("loading...")} </div>
-    }
+    <EventsListItem
+      onAssetMediaClick={data["onAssetMediaClick"]}
+      alertRuleSatisfiedEvent={data["alertRuleSatisfiedEvents"]->Belt.Array.get(index)}
+      style={style}
+    />
 }
 
 @react.component
@@ -63,7 +67,18 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
     None
   }, [windowSize])
 
+  let handleItemKey = (idx, data) =>
+    data["alertRuleSatisfiedEvents"]
+    ->Belt.Array.get(idx)
+    ->Belt.Option.map((
+      alertRuleSatisfiedEvent: EventsListItem.Fragment_EventsListItem_AlertRuleSatisfiedEvent.t,
+    ) => alertRuleSatisfiedEvent.id)
+    ->Belt.Option.getWithDefault(Belt.Int.toString(idx))
+
   let handleIsItemLoaded = idx => items->Belt.Array.get(idx)->Js.Option.isSome
+  let handleAssetMediaClick = src => {
+    Js.log2("handleAssetMediaClick", src)
+  }
 
   <>
     <div ref={measurementElem->ReactDOM.Ref.domRef} className={Cn.make(["absolute", "inset-0"])} />
@@ -89,8 +104,12 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
             height={height}
             width={width}
             itemSize={itemSize}
+            itemKey={handleItemKey}
             itemCount={itemCount}
-            itemData={items}
+            itemData={{
+              "alertRuleSatisfiedEvents": items,
+              "onAssetMediaClick": handleAssetMediaClick,
+            }}
             onItemsRendered={props["onItemsRendered"]}
             ref={props["ref"]}>
             {Item.make}

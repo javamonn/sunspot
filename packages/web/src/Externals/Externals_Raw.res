@@ -3,3 +3,5 @@ let isBrave: unit => Js.Promise.t<bool> = %raw(
 )
 
 let makeExn: string => Js.Exn.t = %raw("(text) => new Error(text)")
+
+let getRemUnit: unit => float = %raw("() => parseFloat(getComputedStyle(document.documentElement).fontSize)")
