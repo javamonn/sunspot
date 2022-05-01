@@ -149,7 +149,7 @@ module Data = {
     ~telescopeManualAtomicMatchInput: option<
       QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
     >,
-    ~openSeaOrderFragment,
+    ~openSeaOrder,
     ~quickbuy,
     ~telescopeManualContract,
   ) => {
@@ -425,7 +425,7 @@ module Data = {
 
     <OrderSection
       executionState={executionState}
-      openSeaOrderFragment={openSeaOrderFragment}
+      openSeaOrder={openSeaOrder}
       onClickBuy={() => handleClickBuy()}
       quickbuy={quickbuy}
     />
@@ -449,7 +449,7 @@ let make = (~collectionSlug, ~orderId, ~quickbuy, ~telescopeManualContract) => {
       }),
     } =>
     <Data
-      openSeaOrderFragment={orderSection_OpenSeaOrder}
+      openSeaOrder={orderSection_OpenSeaOrder}
       telescopeManualAtomicMatchInput={telescopeManualAtomicMatchInput}
       quickbuy={quickbuy}
       telescopeManualContract={telescopeManualContract}

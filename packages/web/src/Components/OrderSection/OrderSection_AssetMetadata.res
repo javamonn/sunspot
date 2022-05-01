@@ -1,8 +1,20 @@
+module Fragment_OrderSection_AssetMetadata_OpenSeaOrder = %graphql(`
+  fragment OrderSection_AssetMetadata_OpenSeaOrder on OpenSeaOrder {
+    createdTime
+    expirationTime
+
+    asset {
+      tokenId
+      tokenMetadata
+      collection {
+        contractAddress
+      }
+    }
+  }
+`)
+
 @react.component
-let make = (
-  ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
-  ~asset: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaAsset.t,
-) => {
+let make = (~openSeaOrder: Fragment_OrderSection_AssetMetadata_OpenSeaOrder.t) => {
   let (now, setNow) = React.useState(_ => Js.Date.now())
   let _ = React.useEffect(_ => {
     let intervalId = Js.Global.setInterval(() => {
@@ -23,8 +35,12 @@ let make = (
     )
   }
 
+  let {expirationTime, createdTime, asset} = openSeaOrder
+  let {tokenId, tokenMetadata, collection} = Belt.Option.getExn(asset)
+  let {contractAddress} = Belt.Option.getExn(collection)
+
   let items = [
-    openSeaOrderFragment.createdTime
+    createdTime
     ->Js.Json.decodeNumber
     ->Belt.Option.map(createdTime => (
       "listing time",
@@ -35,7 +51,7 @@ let make = (
       ),
       None,
     )),
-    openSeaOrderFragment.expirationTime
+    expirationTime
     ->Js.Json.decodeNumber
     ->Belt.Option.map(expirationTime => (
       "expiration time",
@@ -46,15 +62,15 @@ let make = (
       ),
       None,
     )),
-    asset.collection->Belt.Option.map(collection => (
+    Some((
       "contract address",
-      Services.Format.address(collection.contractAddress),
-      Some(Services.URL.etherscanAddress(collection.contractAddress)),
+      Services.Format.address(contractAddress),
+      Some(Services.URL.etherscanAddress(contractAddress)),
     )),
     Some((
       "token id",
-      asset.tokenId,
-      asset.tokenMetadata->Belt.Option.map(tokenMetadata => {
+      tokenId,
+      tokenMetadata->Belt.Option.map(tokenMetadata => {
         Services.Ipfs.isIpfsUri(tokenMetadata)
           ? `https://ipfs.io${Services.Ipfs.getNormalizedCidPath(tokenMetadata)}`
           : tokenMetadata

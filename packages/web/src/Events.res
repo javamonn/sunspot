@@ -1,6 +1,6 @@
 @react.component
 let default = () => {
-  <main
+  <section
     className={Cn.make([
       "font-mono",
       "flex",
@@ -9,10 +9,9 @@ let default = () => {
       "overflow-y-hidden",
       "overflow-x-hidden",
       "bg-white",
-      "mx-auto",
-      "relative",
-    ])}
-    style={ReactDOM.Style.make(~maxWidth="100rem", ())}>
+      "px-4",
+      "mt-4"
+    ])}>
     <QueryRenderers_Events />
-  </main>
+  </section>
 }

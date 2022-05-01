@@ -1,15 +1,9 @@
+module EventsListItem_AlertRuleSatisfiedEvent = EventsListItem.Fragment_EventsListItem_AlertRuleSatisfiedEvent
+
 module Events_AlertRuleSatisfiedEvent = %graphql(`
   fragment Events_AlertRuleSatisfiedEvent on AlertRuleSatisfiedEvent {
     id
-    accountAddress
-    createdAt
-    context {
-      ... on AlertRuleSatisfiedEvent_ListingContext {
-        openSeaOrder {
-          id 
-        }
-      }
-    }
+    ...EventsListItem_AlertRuleSatisfiedEvent
   }
 `)
 

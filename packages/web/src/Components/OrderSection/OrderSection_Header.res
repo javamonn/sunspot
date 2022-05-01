@@ -1,14 +1,27 @@
+module Fragment_OrderSection_Header_OpenSeaOrder = %graphql(`
+  fragment OrderSection_Header_OpenSeaOrder on OpenSeaOrder {
+    telescopeManualAtomicMatchInput {
+      feeValue
+      wyvernExchangeValue 
+    }
+    paymentTokenContract {
+      imageUrl
+    }
+    basePrice
+  }
+`)
+
 @react.component
 let make = (
   ~onClickBuy,
   ~executionState,
-  ~openSeaOrderFragment: OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder.t,
   ~quickbuy,
+  ~openSeaOrder: Fragment_OrderSection_Header_OpenSeaOrder.t,
 ) => {
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
-  let displayFee = openSeaOrderFragment.telescopeManualAtomicMatchInput->Belt.Option.flatMap(({
+  let displayFee = openSeaOrder.telescopeManualAtomicMatchInput->Belt.Option.flatMap(({
     feeValue,
     wyvernExchangeValue,
   }) => {
@@ -30,7 +43,6 @@ let make = (
   })
 
   let handleDisplayAccountSubscriptionDialog = _ => {
-    Js.log("click")
     let _ = openAccountSubscriptionDialog(
       Some(React.string("upgrade account to reduce quickbuy fee.")),
     )
@@ -55,14 +67,14 @@ let make = (
         <div className={Cn.make(["flex", "items-center", "justify-center", "mr-1"])}>
           <img
             style={ReactDOM.Style.make(~marginTop="6px", ~opacity="60%", ())}
-            src={openSeaOrderFragment.paymentTokenContract.imageUrl}
+            src={openSeaOrder.paymentTokenContract.imageUrl}
             className={Cn.make(["h-5", "mr-1"])}
           />
         </div>
         <div className={Cn.make(["flex", "justify-center", "items-center"])}>
           <div className={Cn.make(["flex", "flex-row", "items-end", "font-mono"])}>
             <span className={Cn.make(["font-bold", "text-4xl", "block", "mr-3", "leading-none"])}>
-              {openSeaOrderFragment.basePrice
+              {openSeaOrder.basePrice
               ->Services.PaymentToken.parseTokenPrice(
                 Services.PaymentToken.ethPaymentToken.decimals,
               )

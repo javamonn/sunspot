@@ -1,4 +1,4 @@
-module OrderSection_OpenSeaOrder = OrderSection_GraphQL.Fragment_OrderSection_OpenSeaOrder.OrderSection_OpenSeaOrder
+module OrderSection_OpenSeaOrder = OrderSection.Fragment_OrderSection_OpenSeaOrder
 
 module Query_OpenSeaOrder = %graphql(`
   query OpenSeaOrder($collectionSlug: String!, $id: AWSTimestamp!) {
