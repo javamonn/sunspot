@@ -37,7 +37,7 @@ let make = (~children) => {
     {data: useAccountData}: Externals.Wagmi.UseAccount.result,
     _,
   ) = Externals.Wagmi.UseAccount.use()
-  let {authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let queryParams = router.asPath->Services.Next.parseQuery
   let buyParams = switch (
     queryParams->Belt.Option.flatMap(q =>

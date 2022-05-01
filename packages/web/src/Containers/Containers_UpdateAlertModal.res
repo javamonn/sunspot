@@ -380,42 +380,22 @@ let handleDeleteAlertRule = (
       data
       ->Belt.Option.flatMap(({alertRule}) => alertRule)
       ->Belt.Option.forEach(alertRule => {
-        let (
-          newItems,
-          discordIntegrations,
-          slackIntegrations,
-          twitterIntegrations,
-          accountSubscription,
-        ) = switch readQuery(
+        let newItems = switch readQuery(
           ~query=module(
             QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
           ),
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         ) {
-        | Some(Ok({
-            alertRules: Some({items: Some(items)}),
-            discordIntegrations,
-            slackIntegrations,
-            twitterIntegrations,
-            accountSubscription,
-          })) =>
-          let newItems =
-            items
-            ->Belt.Array.keep(item =>
-              switch item {
-              | Some(item) => item.id != alertRule.id
-              | None => false
-              }
-            )
-            ->Js.Option.some
-          (
-            newItems,
-            discordIntegrations,
-            slackIntegrations,
-            twitterIntegrations,
-            accountSubscription,
+        | Some(Ok({alertRules: Some({items: Some(items)})})) =>
+          items
+          ->Belt.Array.keep(item =>
+            switch item {
+            | Some(item) => item.id != alertRule.id
+            | None => false
+            }
           )
-        | _ => (None, None, None, None, None)
+          ->Js.Option.some
+        | _ => None
         }
 
         newItems->Belt.Option.forEach(newItems => {
@@ -429,10 +409,6 @@ let handleDeleteAlertRule = (
                 nextToken: None,
                 items: Some(newItems),
               }),
-              discordIntegrations: discordIntegrations,
-              slackIntegrations: slackIntegrations,
-              twitterIntegrations: twitterIntegrations,
-              accountSubscription: accountSubscription,
             },
             QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
           )
@@ -460,7 +436,7 @@ let make = (
   let (updateAlertRuleMutation, _) = Mutation_UpdateAlertRule.use()
   let (deleteAlertRuleMutation, _) = Mutation_DeleteAlertRule.use()
   let (newValue, setNewValue) = React.useState(_ => value)
-  let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
   let _ = React.useEffect1(_ => {
     setNewValue(_ => value)
     None
@@ -487,7 +463,7 @@ let make = (
             onClose()
             openSnackbar(
               ~message=React.string("alert updated."),
-              ~type_=Contexts.Snackbar.TypeSuccess,
+              ~type_=Contexts_Snackbar.TypeSuccess,
               ~duration=4000,
               (),
             )
@@ -498,7 +474,7 @@ let make = (
             ~message=React.string(
               "browser push notification permission has been denied. enable permission or select an alternate destination.",
             ),
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~duration=8000,
             (),
           )
@@ -515,7 +491,7 @@ let make = (
               </a>
               {React.string("if the issue persists.")}
             </>,
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~duration=8000,
             (),
           )
@@ -541,7 +517,7 @@ let make = (
           onClose()
           openSnackbar(
             ~message=React.string("alert deleted."),
-            ~type_=Contexts.Snackbar.TypeSuccess,
+            ~type_=Contexts_Snackbar.TypeSuccess,
             ~duration=4000,
             (),
           )

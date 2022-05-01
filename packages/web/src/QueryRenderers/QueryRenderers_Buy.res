@@ -2,14 +2,14 @@ module Loading = {
   @react.component
   let make = (~invalidRedirect=false) => {
     let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
-    let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
+    let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
 
     let _ = React.useEffect1(() => {
       if invalidRedirect {
         Services.Logger.log("buy", "invalid order redirect")
         Externals.Next.Router.replace(router, "/alerts")
         openSnackbar(
-          ~type_=Contexts.Snackbar.TypeError,
+          ~type_=Contexts_Snackbar.TypeError,
           ~message=React.string("invalid order."),
           ~duration=5000,
           (),
@@ -153,8 +153,8 @@ module Data = {
     ~quickbuy,
     ~telescopeManualContract,
   ) => {
-    let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
-    let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+    let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
+    let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
     let {setIsQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(
       Contexts_Buy_Context.context,
     )
@@ -180,7 +180,7 @@ module Data = {
 
     let _ = React.useEffect1(() => {
       let _ = switch authentication {
-      | Contexts.Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
+      | Contexts_Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
         let _ = signIn()
       | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection_Types.Buy)
       | _ => ()
@@ -209,7 +209,7 @@ module Data = {
             ->Js.Json.object_,
           )
           openSnackbar(
-            ~type_=Contexts.Snackbar.TypeSuccess,
+            ~type_=Contexts_Snackbar.TypeSuccess,
             ~message=React.string("transaction confirmed."),
             (),
           )
@@ -222,7 +222,7 @@ module Data = {
             error,
           )
           openSnackbar(
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~message=React.string("transaction failed."),
             (),
           )
@@ -246,7 +246,7 @@ module Data = {
             ->Js.Json.object_,
           )
           openSnackbar(
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~message=React.string("transaction reverted."),
             (),
           )
@@ -346,7 +346,7 @@ module Data = {
         | (_, Some(dataMessage)) if Js.String2.startsWith(dataMessage, "execution reverted") =>
           let _ = Services.Logger.log("buy", "invalid order")
           openSnackbar(
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~message=React.string("invalid order."),
             (),
           )
@@ -359,7 +359,7 @@ module Data = {
           ) =>
           let _ = Services.Logger.log("buy", "failed to authorize transaction")
           openSnackbar(
-            ~type_=Contexts.Snackbar.TypeError,
+            ~type_=Contexts_Snackbar.TypeError,
             ~message=React.string("order authorization cancelled."),
             (),
           )
@@ -371,7 +371,7 @@ module Data = {
             }
           )
         | (Some(message), _) =>
-          openSnackbar(~type_=Contexts.Snackbar.TypeError, ~message=React.string(message), ())
+          openSnackbar(~type_=Contexts_Snackbar.TypeError, ~message=React.string(message), ())
           setExecutionState(executionState =>
             switch executionState {
             | TransactionFailed(_) | TransactionConfirmed(_) => executionState

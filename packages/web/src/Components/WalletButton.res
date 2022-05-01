@@ -1,9 +1,9 @@
 @react.component
 let make = (
   ~address,
-  ~authentication: Contexts.Auth.authentication,
+  ~authentication: Contexts_Auth.authentication,
   ~accountSubscription: option<
-    QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AccountSubscription.t,
+    Query_AccountSubscription.GraphQL.AccountSubscription.t,
   >,
   ~onWalletButtonClicked,
 ) => {

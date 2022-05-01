@@ -1,104 +1,49 @@
 open QueryRenderers_Alerts_GraphQL
 
-type updateAlertModalState =
-  | UpdateAlertModalOpen(AlertModal.Value.t)
-  | UpdateAlertModalClosing(AlertModal.Value.t)
-  | UpdateAlertModalClosed
-
 @react.component
 let make = () => {
-  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
+  let {
+    openUpdateAlertModal,
+    openCreateAlertModal,
+  }: Contexts_AlertCreateAndUpdateDialog_Context.t = React.useContext(
+    Contexts_AlertCreateAndUpdateDialog_Context.context,
+  )
+
   let alertRulesQuery = Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress.use(
     ~skip=switch authentication {
     | Authenticated(_) if !isQuickbuyTxPending => false
     | _ => true
     },
     switch authentication {
-    | Authenticated({jwt: {accountAddress}}) => makeVariables(~accountAddress)
-    | _ => makeVariables(~accountAddress="")
+    | Authenticated({jwt: {accountAddress}}) =>
+      QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress)
+    | _ => QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress="")
     },
   )
-  let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
-  let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
+  let integrationsQuery = Query_IntegrationsByAccountAddress.GraphQL.Query_IntegrationsByAccountAddress.use(
+    ~skip=switch authentication {
+    | Authenticated(_) if !isQuickbuyTxPending => false
+    | _ => true
+    },
+    switch authentication {
+    | Authenticated({jwt: {accountAddress}}) =>
+      Query_IntegrationsByAccountAddress.makeVariables(~accountAddress)
+    | _ => Query_IntegrationsByAccountAddress.makeVariables(~accountAddress="")
+    },
+  )
+
+  let integrationOptions =
+    integrationsQuery.data
+    ->Belt.Option.map(Query_IntegrationsByAccountAddress.toAlertRuleDestinationOptions)
+    ->Belt.Option.getWithDefault([])
 
   let alertRuleItems = switch alertRulesQuery {
   | {data: Some({alertRules: Some({items: Some(items)})})} =>
     items->Belt.Array.keepMap(item => item)
   | _ => []
   }
-  let discordIntegrationOptions = switch alertRulesQuery {
-  | {data: Some({discordIntegrations: Some({items: Some(discordItems)})})} =>
-    discordItems
-    ->Belt.Array.keepMap(item =>
-      item->Belt.Option.map(item =>
-        item.channels->Belt.Array.map(channel => {
-          AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
-            clientId: item.clientId->Belt.Option.getWithDefault(Config.discord1ClientId),
-            channelId: channel.id,
-            channelName: channel.name,
-            guildId: item.guildId,
-            guildName: item.name,
-            guildIconUrl: item.iconUrl,
-            roles: item.roles->Belt.Array.map(r => {
-              AlertRule_Destination.Types.DiscordAlertDestination.name: r.name,
-              id: r.id,
-            }),
-          })
-        })
-      )
-    )
-    ->Belt.Array.concatMany
-  | _ => []
-  }
-  let slackIntegrationOptions = switch alertRulesQuery {
-  | {data: Some({slackIntegrations: Some({items: Some(slackItems)})})} =>
-    slackItems->Belt.Array.keepMap(item =>
-      item->Belt.Option.map(item => AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
-        teamName: item.teamName,
-        channelName: item.channelName,
-        channelId: item.channelId,
-        incomingWebhookUrl: item.incomingWebhookUrl,
-      }))
-    )
-  | _ => []
-  }
-  let twitterIntegrationOptions = switch alertRulesQuery {
-  | {data: Some({twitterIntegrations: Some({items: Some(twitterItems)})})} =>
-    twitterItems->Belt.Array.keepMap(item =>
-      item->Belt.Option.flatMap(item =>
-        item.user->Belt.Option.map(
-          user => AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({
-            userId: user.id,
-            username: user.username,
-            profileImageUrl: user.profileImageUrl,
-            accessToken: item.accessToken->Belt.Option.map(accessToken => {
-              AlertRule_Destination.Types.accessToken: accessToken.accessToken,
-              refreshToken: accessToken.refreshToken,
-              scope: accessToken.scope,
-              expiresAt: accessToken.expiresAt,
-              tokenType: accessToken.tokenType,
-            }),
-            userAuthenticationToken: item.userAuthenticationToken->Belt.Option.map(
-              userAuthenticationToken => {
-                AlertRule_Destination.Types.apiKey: userAuthenticationToken.apiKey,
-                apiSecret: userAuthenticationToken.apiSecret,
-                userAccessToken: userAuthenticationToken.userAccessToken,
-                userAccessSecret: userAuthenticationToken.userAccessSecret,
-              },
-            ),
-          }),
-        )
-      )
-    )
-  | _ => []
-  }
-
-  let integrationOptions = Belt.Array.concatMany([
-    discordIntegrationOptions,
-    slackIntegrationOptions,
-    twitterIntegrationOptions,
-  ])
 
   let tableRows =
     alertRuleItems
@@ -281,7 +226,7 @@ let make = () => {
           iconUrl: None,
         })
       | #DiscordAlertDestination({guildId, channelId}) =>
-        discordIntegrationOptions
+        integrationOptions
         ->Belt.Array.getBy(opt =>
           switch opt {
           | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
@@ -307,7 +252,7 @@ let make = () => {
           iconUrl: guildIconUrl->Belt.Option.getWithDefault("/discord-icon.svg")->Js.Option.some,
         })
       | #TwitterAlertDestination({userId}) =>
-        twitterIntegrationOptions
+        integrationOptions
         ->Belt.Array.getBy(opt =>
           switch opt {
           | AlertRule_Destination.Types.Option.TwitterAlertDestinationOption({userId: optUserId})
@@ -330,7 +275,7 @@ let make = () => {
           iconUrl: Some(profileImageUrl),
         })
       | #SlackAlertDestination({channelId}) =>
-        slackIntegrationOptions
+        integrationOptions
         ->Belt.Array.getBy(opt =>
           switch opt {
           | AlertRule_Destination.Types.Option.SlackAlertDestinationOption({
@@ -368,10 +313,6 @@ let make = () => {
         destination: destination,
       }
     })
-
-  let handleWalletButtonClicked = _ => {
-    let _ = signIn()
-  }
 
   let handleRowClick = row =>
     alertRuleItems
@@ -570,7 +511,7 @@ let make = () => {
             guildId: guildId,
             channelId: channelId,
             // use roles from the integration as they will be most up to date
-            roles: discordIntegrationOptions
+            roles: integrationOptions
             ->Belt.Array.getBy(opt =>
               switch opt {
               | AlertRule_Destination.Types.Option.DiscordAlertDestinationOption({
@@ -689,12 +630,8 @@ let make = () => {
         ~disabled,
       )
 
-      setUpdateAlertModal(_ => UpdateAlertModalOpen(alertModalValue))
+      openUpdateAlertModal(alertModalValue)
     })
-  let accountSubscription = switch alertRulesQuery {
-  | {data: Some({accountSubscription})} => accountSubscription
-  | _ => None
-  }
 
   let isLoading = switch (alertRulesQuery, authentication) {
   | ({loading: true}, _)
@@ -705,74 +642,17 @@ let make = () => {
   | _ => false
   }
 
-  let enabledAlertCount =
-    alertRuleItems
-    ->Belt.Array.keep(alertRule => !(alertRule.disabled->Belt.Option.getWithDefault(false)))
-    ->Belt.Array.length
-
-  <Contexts.AccountSubscriptionDialog accountSubscription={accountSubscription}>
-    <Contexts_Buy>
-      <AlertsHeader
-        authentication
-        onConnectWalletClicked={handleWalletButtonClicked}
-        onWalletButtonClicked={handleWalletButtonClicked}
-        onCreateAlertClicked={_ => setCreateAlertModalIsOpen(_ => true)}
-        accountSubscription={accountSubscription}
-        isLoading={isLoading}
-      />
-      <AlertsTable
-        isLoading={isLoading}
-        rows={tableRows}
-        onRowClick={handleRowClick}
-        onCreateAlertClick={_ => setCreateAlertModalIsOpen(_ => true)}
-      />
-      <Containers.CreateAlertModal
-        isOpen={createAlertModalIsOpen}
-        onClose={_ => setCreateAlertModalIsOpen(_ => false)}
-        destinationOptions={integrationOptions}
-        accountSubscriptionType={accountSubscription->Belt.Option.map(({type_}) => type_)}
-        alertCount={enabledAlertCount}
-      />
-      {switch authentication {
-      | Authenticated({jwt: {accountAddress}}) => <>
-          <Containers.UpdateAlertModal
-            isOpen={switch updateAlertModal {
-            | UpdateAlertModalOpen(_) => true
-            | _ => false
-            }}
-            value=?{switch updateAlertModal {
-            | UpdateAlertModalOpen(v) | UpdateAlertModalClosing(v) => Some(v)
-            | _ => None
-            }}
-            onExited={_ => setUpdateAlertModal(_ => UpdateAlertModalClosed)}
-            onClose={_ =>
-              setUpdateAlertModal(alertModalValue =>
-                switch alertModalValue {
-                | UpdateAlertModalOpen(v) => UpdateAlertModalClosing(v)
-                | _ => alertModalValue
-                }
-              )}
-            destinationOptions={integrationOptions}
-            accountAddress={accountAddress}
-            accountSubscriptionType={accountSubscription->Belt.Option.map(({type_}) => type_)}
-            alertCount={enabledAlertCount}
-          />
-        </>
-      | _ => React.null
-      }}
-      <CreateAlertFAB
-        className={Cn.make([
-          "hidden",
-          "sm:block",
-          "absolute",
-          "bottom-0",
-          "right-0",
-          "mb-4",
-          "mr-4",
-        ])}
-        onClick={_ => setCreateAlertModalIsOpen(_ => true)}
-      />
-      <AlertsFooter className={Cn.make(["sm:hidden"])} />
-    </Contexts_Buy>
-  </Contexts.AccountSubscriptionDialog>
+  <>
+    <AlertsTable
+      isLoading={isLoading}
+      rows={tableRows}
+      onRowClick={handleRowClick}
+      onCreateAlertClick={_ => openCreateAlertModal()}
+    />
+    <CreateAlertFAB
+      className={Cn.make(["hidden", "sm:block", "absolute", "bottom-0", "right-0", "mb-4", "mr-4"])}
+      onClick={_ => openCreateAlertModal()}
+    />
+    <AlertsFooter className={Cn.make(["sm:hidden"])} />
+  </>
 }

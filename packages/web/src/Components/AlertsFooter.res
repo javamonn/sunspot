@@ -1,6 +1,6 @@
 @react.component
 let make = (~className=?) => {
-  let {openSnackbar}: Contexts.Snackbar.t = React.useContext(Contexts.Snackbar.context)
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
 
   let handleClickDiscord = () => Externals.Webapi.Window.open_(Config.discordGuildInviteUrl)
   let handleClickTwitter = () => Externals.Webapi.Window.open_(Config.twitterUrl)

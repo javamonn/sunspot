@@ -1,4 +1,5 @@
-module TwitterIntegration = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.TwitterIntegration
+module TwitterIntegration = Query_IntegrationsByAccountAddress.GraphQL.TwitterIntegration 
+
 module Mutation_CreateTwitterIntegration = %graphql(`
   mutation CreateTwitterIntegration($input: CreateTwitterIntegrationInput!) {
     twitterIntegration: createTwitterIntegration(input: $input) {
@@ -33,42 +34,34 @@ let make = (~isOpen, ~onClose) => {
         ~update=({writeQuery, readQuery}, {data}) => {
           data->Belt.Option.forEach(({twitterIntegration}) => {
             let (
-              alertRules,
               discordIntegrations,
               slackIntegrations,
-              accountSubscription,
               newTwitterIntegrationItems,
             ) = switch readQuery(
               ~query=module(
-                QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
+                Query_IntegrationsByAccountAddress.GraphQL.Query_IntegrationsByAccountAddress
               ),
-              QueryRenderers_Alerts_GraphQL.makeVariables(
+              Query_IntegrationsByAccountAddress.makeVariables(
                 ~accountAddress=twitterIntegration.accountAddress,
               ),
             ) {
             | Some(Ok({
-                alertRules,
                 discordIntegrations,
                 slackIntegrations,
-                accountSubscription,
                 twitterIntegrations: Some({items: Some(items)}),
               })) => (
-                alertRules,
                 discordIntegrations,
                 slackIntegrations,
-                accountSubscription,
                 Belt.Array.concat([Some(twitterIntegration)], items),
               )
-            | _ => (None, None, None, None, [Some(twitterIntegration)])
+            | _ => (None, None, [Some(twitterIntegration)])
             }
 
             let _ = writeQuery(
               ~query=module(
-                QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AlertRulesAndOAuthIntegrationsByAccountAddress
+                Query_IntegrationsByAccountAddress.GraphQL.Query_IntegrationsByAccountAddress 
               ),
               ~data={
-                alertRules: alertRules,
-                accountSubscription: accountSubscription,
                 discordIntegrations: discordIntegrations,
                 slackIntegrations: slackIntegrations,
                 twitterIntegrations: Some({
@@ -76,7 +69,7 @@ let make = (~isOpen, ~onClose) => {
                   items: Some(newTwitterIntegrationItems),
                 }),
               },
-              QueryRenderers_Alerts_GraphQL.makeVariables(
+              Query_IntegrationsByAccountAddress.makeVariables(
                 ~accountAddress=twitterIntegration.accountAddress,
               ),
             )

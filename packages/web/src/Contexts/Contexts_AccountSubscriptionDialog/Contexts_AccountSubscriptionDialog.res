@@ -9,8 +9,7 @@ module ContextProvider = {
 
   let make = React.Context.provider(Contexts_AccountSubscriptionDialog_Context.context)
 }
-
-module AccountSubscription = QueryRenderers_Alerts_GraphQL.Query_AlertRulesAndOAuthIntegrationsByAccountAddress.AccountSubscription
+module AccountSubscription = Query_AccountSubscription.GraphQL.AccountSubscription
 module Mutation_UpdateAccountSubscription = %graphql(`
   mutation UpdateAccountSubscription($input: UpdateAccountSubscriptionInput!) {
     accountSubscription: updateAccountSubscription(input: $input) {
@@ -24,17 +23,28 @@ type dialogState =
   | Open(option<React.element>)
 
 @react.component
-let make = (~children, ~accountSubscription) => {
+let make = (~children) => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
+  let {authentication, signIn}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
+
+  let accountSubscriptionQuery = Query_AccountSubscription.GraphQL.Query_AccountSubscription.use(
+    ~skip=switch authentication {
+    | Authenticated(_) => false
+    | _ => true
+    },
+    switch authentication {
+    | Authenticated({jwt: {accountAddress}}) => {accountAddress: accountAddress}
+    | _ => {accountAddress: ""}
+    },
+  )
+
   let prompt =
     router.asPath
     ->Services.Next.parseQuery
     ->Belt.Option.flatMap(q =>
       q->Externals.Webapi.URLSearchParams.get("prompt-account-subscription")
     )
-
-  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
-  let {authentication, signIn}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let (dialogState, setDialogState) = React.useState(_ =>
     switch prompt {
     | Some("ACCOUNT_SUBSCRIPTION_MIGRATION_IMPACTED") =>
@@ -295,6 +305,9 @@ let make = (~children, ~accountSubscription) => {
     setDialogState(_ => Open(header))
     deferred->Externals.PDefer.promise
   }
+
+  let accountSubscription =
+    accountSubscriptionQuery.data->Belt.Option.flatMap(d => d.accountSubscription)
 
   <ContextProvider
     value={{

@@ -1,6 +1,6 @@
 @react.component
 let make = () => {
-  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
   let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
 
@@ -84,7 +84,6 @@ let make = () => {
         Authenticated({jwt: {accountAddress}}),
         Some({alertRuleSatisfiedEvents: Some({nextToken: Some(nextToken)})}),
       ) =>
-      Js.log("fetchMore")
       fetchMore(
         ~variables=QueryRenderers_Events_GraphQL.makeVariables(
           ~accountAddress,

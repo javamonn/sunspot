@@ -66,7 +66,7 @@ let makeSteps = (
       {
         OAuthIntegrationDialog.label: "connect wallet",
         actionLabel: switch authentication {
-        | Contexts.Auth.Authenticated(_) => "connect account"
+        | Contexts_Auth.Authenticated(_) => "connect account"
         | _ => "connect wallet"
         },
         element: connectWalletElement,
@@ -97,7 +97,7 @@ let makeSteps = (
       {
         OAuthIntegrationDialog.label: "connect wallet",
         actionLabel: switch authentication {
-        | Contexts.Auth.Authenticated(_) => "connect account"
+        | Contexts_Auth.Authenticated(_) => "connect account"
         | _ => "connect wallet"
         },
         element: connectWalletElement,
@@ -242,7 +242,7 @@ let makeSteps = (
 
 @react.component
 let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
-  let {signIn, authentication}: Contexts.Auth.t = React.useContext(Contexts.Auth.context)
+  let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
@@ -466,7 +466,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
       signIn()
       |> Js.Promise.then_(authentication => {
         switch authentication {
-        | Contexts.Auth.Authenticated(_) => executeMutation()
+        | Contexts_Auth.Authenticated(_) => executeMutation()
         | _ => Js.Promise.reject(SignInFailed)
         }
       })
