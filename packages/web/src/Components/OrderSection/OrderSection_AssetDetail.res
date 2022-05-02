@@ -41,7 +41,13 @@ let make = (
   | {imageUrl: Some(uri)}
   | {imagePreviewUrl: Some(uri)}
   | {imageThumbnailUrl: Some(uri)} =>
-    let imageSrc = Services.URL.resolveMedia(~uri, ())
+    let uris =
+      [asset.imageUrl, asset.imagePreviewUrl, asset.imageThumbnailUrl]->Belt.Array.keepMap(i => i)
+    let fallbackUri = uris->Belt.Array.getBy(candidate => candidate !== uri)
+
+    Js.log(uris)
+
+    let imageSrc = Services.URL.resolveMedia(~uri, ~fallbackUri?, ())
     <>
       <img
         className={Cn.make(["rounded", "cursor-pointer"])}
