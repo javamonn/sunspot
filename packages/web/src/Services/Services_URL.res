@@ -16,4 +16,4 @@ let resolveMedia = (~uri, ~fallbackUri=?, ~cloudfrontEnabled=true, ()) => {
   `${host}/production/resolve-media?${query}`
 }
 
-let collectionUrl = slug => `https://opensea.io/collection/${slug}`
+let collectionUrl = slug => `https//opensea.io/collection/${slug}`

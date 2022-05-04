@@ -1,4 +1,4 @@
-module EventsListItem_AlertRuleSatisfiedEvent = EventsListItem.Fragment_EventsListItem_AlertRuleSatisfiedEvent
+module EventsListItem_AlertRuleSatisfiedEvent = EventsListItem_GraphQL.Fragment_EventsListItem_AlertRuleSatisfiedEvent
 
 module Events_AlertRuleSatisfiedEvent = %graphql(`
   fragment Events_AlertRuleSatisfiedEvent on AlertRuleSatisfiedEvent {

@@ -51,7 +51,12 @@ module Contract = {
 module Utils = {
   @scope("utils") @module("ethers") external parseUnits: string => BigNumber.t = "parseUnits"
   @scope("utils") @module("ethers")
+  external parseUnitsWithDecimals: (string, int) => BigNumber.t = "parseUnits"
+
+  @scope("utils") @module("ethers")
   external formatUnits: (BigNumber.t, string) => string = "formatUnits"
+  @scope("utils") @module("ethers")
+  external formatUnitsWithDecimals: (BigNumber.t, int) => string = "formatUnits"
 }
 
 module TransactionReceipt = {

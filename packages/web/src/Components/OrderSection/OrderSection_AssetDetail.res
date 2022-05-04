@@ -19,13 +19,15 @@ module Fragment_OrderSection_AssetDetail_OpenSeaOrder = %graphql(`
         ... on OpenSeaAssetNumberAttribute {
           traitType
           displayType
-          numberValue: value
+          numberValue
+          numberValueAlias: value
           maxValue
         }
         ... on OpenSeaAssetStringAttribute {
           traitType
           displayType
-          stringValue: value
+          stringValue
+          stringValueAlias: value
           maxValue
         }
       }
@@ -155,14 +157,23 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => 
         {attributes
         ->Belt.Array.keepMap(attribute =>
           switch attribute {
-          | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+          | #OpenSeaAssetNumberAttribute({traitType, numberValue: Some(numberValue)})
+          | #OpenSeaAssetNumberAttribute({traitType, numberValueAlias: Some(numberValue)}) =>
             Some(
               Services.OpenSea.URL.NumberTrait({
                 name: traitType,
                 value: numberValue,
               }),
             )
-          | #OpenSeaAssetStringAttribute({traitType, stringValue})
+          | #OpenSeaAssetStringAttribute({traitType, stringValue: Some(stringValue)})
+            if Js.String2.length(stringValue) > 0 =>
+            Some(
+              Services.OpenSea.URL.StringTrait({
+                name: traitType,
+                value: stringValue,
+              }),
+            )
+          | #OpenSeaAssetStringAttribute({traitType, stringValueAlias: Some(stringValue)})
             if Js.String2.length(stringValue) > 0 =>
             Some(
               Services.OpenSea.URL.StringTrait({
@@ -174,54 +185,7 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => 
           }
         )
         ->Belt.Array.map(trait => {
-          let traitUrl = Services.OpenSea.URL.makeAssetsUrl(
-            ~collectionSlug=asset.collectionSlug,
-            ~traitsFilter=[trait],
-            ~eventType=#LISTING,
-            ~sortBy=#PRICE,
-            ~sortAscending=true,
-            (),
-          )
-
-          <a href={traitUrl} target="_blank" className={Cn.make(["flex"])}>
-            <MaterialUi.Button
-              fullWidth={true}
-              size=#Small
-              variant=#Outlined
-              classes={MaterialUi.Button.Classes.make(
-                ~label=Cn.make(["flex", "flex-col", "p-2"]),
-                (),
-              )}>
-              <span
-                className={Cn.make([
-                  "text-darkSecondary",
-                  "lowercase",
-                  "font-semibold",
-                  "text-center",
-                  "text-sm",
-                  "leading-none",
-                  "mb-1",
-                ])}>
-                {switch trait {
-                | StringTrait({name}) | NumberTrait({name}) => React.string(name)
-                }}
-              </span>
-              <span
-                className={Cn.make([
-                  "text-darkPrimary",
-                  "font-bold",
-                  "text-center",
-                  "text-sm",
-                  "normal-case",
-                  "leading-none",
-                ])}>
-                {switch trait {
-                | StringTrait({value}) => React.string(value)
-                | NumberTrait({value}) => value->Belt.Float.toString->React.string
-                }}
-              </span>
-            </MaterialUi.Button>
-          </a>
+          <OpenSeaAssetAttibute collectionSlug={asset.collectionSlug} trait={trait} />
         })
         ->React.array}
       </div>

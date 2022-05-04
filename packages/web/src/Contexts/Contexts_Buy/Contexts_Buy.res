@@ -62,7 +62,7 @@ let make = (~children) => {
     setIsBuyModalOpen(_ => false)
   }
   let handleBuyModalClosed = _ => {
-    Externals.Next.Router.replaceWithParams(router, "/alerts", None, {shallow: true}) // clear query params
+    Externals.Next.Router.replaceWithParams(router, router.pathname, None, {shallow: true}) // clear query params
   }
 
   let _ = React.useEffect1(() => {
