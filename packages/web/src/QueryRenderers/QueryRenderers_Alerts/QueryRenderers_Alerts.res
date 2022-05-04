@@ -60,7 +60,7 @@ let make = () => {
         item.eventFilters
         ->Belt.Array.keepMap(eventFilter =>
           switch eventFilter {
-          | #AlertQuantityEventFilter({direction, numberValue: value}) =>
+          | #AlertQuantityEventFilter({direction, numberValue: Some(value)}) =>
             let modifier = switch direction {
             | #ALERT_ABOVE => ">"
             | #ALERT_BELOW => "<"
@@ -68,18 +68,15 @@ let make = () => {
             | #FutureAddedValue(v) => v
             }
             Some([AlertsTable.QuantityRule({modifier: modifier, value: Belt.Int.toString(value)})])
-          | #AlertPriceThresholdEventFilter(eventFilter) =>
-            let modifier = switch eventFilter.direction {
+          | #AlertPriceThresholdEventFilter({direction, value: Some(value), paymentToken}) =>
+            let modifier = switch direction {
             | #ALERT_ABOVE => ">"
             | #ALERT_BELOW => "<"
             | #ALERT_EQUAL => "="
             | #FutureAddedValue(v) => v
             }
             let formattedPrice =
-              Services.PaymentToken.parseTokenPrice(
-                eventFilter.value,
-                eventFilter.paymentToken.decimals,
-              )
+              Services.PaymentToken.parseTokenPrice(value, paymentToken.decimals)
               ->Belt.Option.map(Belt.Float.toString)
               ->Belt.Option.getExn
 
@@ -88,16 +85,16 @@ let make = () => {
             attributes
             ->Belt.Array.keepMap(attribute =>
               switch attribute {
-              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue: Some(numberValue)}) =>
                 Some(
                   AlertsTable.PropertyRule({
                     traitType: traitType,
                     displayValue: Belt.Float.toString(numberValue),
                   }),
                 )
-              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+              | #OpenSeaAssetStringAttribute({traitType, stringValue: Some(stringValue)}) =>
                 Some(AlertsTable.PropertyRule({traitType: traitType, displayValue: stringValue}))
-              | #FutureAddedValue(_) => None
+              | #FutureAddedValue(_) | _ => None
               }
             )
             ->Js.Option.some
@@ -139,7 +136,7 @@ let make = () => {
 
             Some([AlertsTable.RelativeChangeRule(`${displayType} ${displayValue}${displayTime}`)])
 
-          | #FutureAddedValue(_) => None
+          | #FutureAddedValue(_) | _ => None
           }
         )
         ->Belt.Array.concatMany
@@ -162,12 +159,12 @@ let make = () => {
         )
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
-          | #AlertPriceThresholdEventFilter(eventFilter) =>
+          | #AlertPriceThresholdEventFilter({value: Some(value), paymentToken, direction}) =>
             Services.PaymentToken.parseTokenPrice(
-              eventFilter.value,
-              eventFilter.paymentToken.decimals,
+              value,
+              paymentToken.decimals,
             )->Belt.Option.flatMap(price =>
-              switch eventFilter.direction {
+              switch direction {
               | #ALERT_ABOVE => Some(Services.OpenSea.URL.Min(price))
               | #ALERT_BELOW => Some(Services.OpenSea.URL.Max(price))
               | #ALERT_EQUAL => Some(Services.OpenSea.URL.Eq(price))
@@ -183,11 +180,11 @@ let make = () => {
           | #AlertAttributesEventFilter({attributes}) =>
             attributes->Belt.Array.keepMap(attribute =>
               switch attribute {
-              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue: Some(numberValue)}) =>
                 Some(Services.OpenSea.URL.NumberTrait({name: traitType, value: numberValue}))
-              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+              | #OpenSeaAssetStringAttribute({traitType, stringValue: Some(stringValue)}) =>
                 Some(Services.OpenSea.URL.StringTrait({name: traitType, value: stringValue}))
-              | #FutureAddedValue(_) => None
+              | #FutureAddedValue(_) | _ => None
               }
             )
           | _ => []
@@ -328,17 +325,17 @@ let make = () => {
         )
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
-          | #AlertPriceThresholdEventFilter(eventFilter) =>
+          | #AlertPriceThresholdEventFilter({ direction, value: Some(value), paymentToken }) =>
             AlertRule_Price.makeRule(
-              ~modifier=switch eventFilter.direction {
+              ~modifier=switch direction {
               | #ALERT_ABOVE => ">"
               | #ALERT_BELOW => "<"
               | #ALERT_EQUAL => "="
               | #FutureAddedValue(v) => v
               },
               ~value=Services.PaymentToken.parseTokenPrice(
-                eventFilter.value,
-                eventFilter.paymentToken.decimals,
+                value,
+                paymentToken.decimals,
               )->Belt.Option.map(Belt.Float.toString),
             )->Js.Option.some
           | _ => None
@@ -443,7 +440,7 @@ let make = () => {
         )
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
-          | #AlertQuantityEventFilter({direction, numberValue: value}) =>
+          | #AlertQuantityEventFilter({direction, numberValue: Some(value)}) =>
             AlertRule_Quantity.Value.make(
               ~modifier=switch direction {
               | #ALERT_ABOVE => ">"
@@ -471,14 +468,14 @@ let make = () => {
             eventFilter.attributes
             ->Belt.Array.keepMap(attribute =>
               switch attribute {
-              | #OpenSeaAssetNumberAttribute({traitType, numberValue}) =>
+              | #OpenSeaAssetNumberAttribute({traitType, numberValue: Some(numberValue)}) =>
                 Some({
                   AlertRule_Properties.Value.value: AlertRule_Properties.NumberValue({
                     value: numberValue,
                   }),
                   traitType: traitType,
                 })
-              | #OpenSeaAssetStringAttribute({traitType, stringValue}) =>
+              | #OpenSeaAssetStringAttribute({traitType, stringValue: Some(stringValue)}) =>
                 Some({
                   AlertRule_Properties.Value.value: AlertRule_Properties.StringValue({
                     value: stringValue,

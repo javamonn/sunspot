@@ -134,6 +134,15 @@ module Filter1 = {
   ) => React.element = "default"
 }
 
+module FilterList = {
+  @react.component @module("@material-ui/icons/FilterList")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}
 module Info = {
   @react.component @module("@material-ui/icons/Info")
   external make: (

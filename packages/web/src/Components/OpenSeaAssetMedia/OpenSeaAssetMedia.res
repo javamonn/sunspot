@@ -14,7 +14,11 @@ let make = (~openSeaAsset: Fragment_OpenSeaAssetMedia_OpenSeaAsset.t, ~className
   | {imagePreviewUrl: Some(uri)}
   | {imageThumbnailUrl: Some(uri)} =>
     let uris =
-      [asset.imageUrl, asset.imagePreviewUrl, asset.imageThumbnailUrl]->Belt.Array.keepMap(i => i)
+      [
+        openSeaAsset.imageUrl,
+        openSeaAsset.imagePreviewUrl,
+        openSeaAsset.imageThumbnailUrl,
+      ]->Belt.Array.keepMap(i => i)
     let fallbackUri = uris->Belt.Array.getBy(candidate => candidate !== uri)
     let imageSrc = Services.URL.resolveMedia(~uri, ~fallbackUri?, ())
     <img
@@ -22,6 +26,7 @@ let make = (~openSeaAsset: Fragment_OpenSeaAssetMedia_OpenSeaAsset.t, ~className
         "rounded",
         "cursor-pointer",
         "object-contain",
+        "bg-gray-200",
         className->Belt.Option.getWithDefault(""),
       ])}
       src={imageSrc}

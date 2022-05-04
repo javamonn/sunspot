@@ -13,6 +13,7 @@ module FixedSizeList = {
       "visibleStartIndex": int,
       "visibleStopIndex": int,
     } => unit,
+    ~className: string,
     ~children: {"data": 'a, "index": int, "style": ReactDOM.style} => React.element,
     ~ref: React.Ref.t<'a>,
   ) => React.element = "FixedSizeList"
