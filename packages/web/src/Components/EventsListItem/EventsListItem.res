@@ -5,25 +5,19 @@ let make = (
   >,
   ~style,
   ~onAssetMediaClick,
-  ~onClick,
+  ~onBuy,
   ~now,
 ) => {
   switch alertRuleSatisfiedEvent {
-  | Some(
-      {
-        alertRule,
-        context: #AlertRuleSatisfiedEvent_ListingContext(context),
-      } as alertRuleSatisfiedEvent,
-    ) =>
+  | Some({alertRule, context: #AlertRuleSatisfiedEvent_ListingContext(context)}) =>
     <EventsListItem_ListingContextItem
       alertRule={alertRule}
       context={context}
       onAssetMediaClick={onAssetMediaClick}
-      onClick={() => onClick(~quickbuy=false, ~alertRuleSatisfiedEvent)}
-      onBuyClick={() => onClick(~quickbuy=true, ~alertRuleSatisfiedEvent)}
+      onBuy={onBuy}
       style={style}
       now={now}
     />
-  | _ => <li style={style}> {React.string("loading...")} </li>
+  | _ => <EventsListItem_Loading style={style} /> 
   }
 }

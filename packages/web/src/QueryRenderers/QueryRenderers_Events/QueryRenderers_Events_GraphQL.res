@@ -3,6 +3,22 @@ module EventsListItem_AlertRuleSatisfiedEvent = EventsListItem_GraphQL.Fragment_
 module Events_AlertRuleSatisfiedEvent = %graphql(`
   fragment Events_AlertRuleSatisfiedEvent on AlertRuleSatisfiedEvent {
     id
+    alertRule {
+      quickbuy
+    }
+    context {
+      ... on AlertRuleSatisfiedEvent_ListingContext {
+        openSeaOrder {
+          id
+          asset {
+            collection {
+              slug
+            }
+          }
+        }
+      }
+    }
+
     ...EventsListItem_AlertRuleSatisfiedEvent
   }
 `)
