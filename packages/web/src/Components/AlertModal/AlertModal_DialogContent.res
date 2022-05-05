@@ -103,9 +103,7 @@ let make = (
     switch collectionAggregateAttributesResult {
     | Executed({data: Some({collection: Some({attributes})})}) =>
       let collectionAggregateAttributes = attributes->Belt.Array.map(aggreggateAttribute => {
-        AlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
-        count: aggreggateAttribute.count,
-        values: aggreggateAttribute.values->Belt.Array.keepMap(value =>
+        let values = aggreggateAttribute.values->Belt.Array.keepMap(value =>
           switch value {
           | #OpenSeaCollectionAttributeNumberValue({numberValue}) =>
             Some(AlertRule_Properties.NumberValue({value: numberValue}))
@@ -113,7 +111,22 @@ let make = (
             Some(AlertRule_Properties.StringValue({value: stringValue}))
           | #FutureAddedValue(_) => None
           }
-        ),
+        )
+
+        let isNumberTrait = values->Js.Array2.every(value =>
+          switch value {
+          | NumberValue(_) => true
+          | _ => false
+          }
+        )
+
+        {
+          AlertRule_Properties.Option.traitType: aggreggateAttribute.traitType,
+          count: aggreggateAttribute.count,
+          values: isNumberTrait
+            ? Belt.Array.concat([AlertRule_Properties.StringValue({value: "any value"})], values)
+            : values,
+        }
       })
       (false, collectionAggregateAttributes)
     | Executed({loading: true}) => (true, [])
