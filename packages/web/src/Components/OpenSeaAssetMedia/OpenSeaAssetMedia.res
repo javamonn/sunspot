@@ -30,7 +30,10 @@ let make = (~openSeaAsset: Fragment_OpenSeaAssetMedia_OpenSeaAsset.t, ~className
         className->Belt.Option.getWithDefault(""),
       ])}
       src={imageSrc}
-      onClick={_ => onClick(imageSrc)}
+      onClick={ev => {
+        let _ = ev->ReactEvent.Mouse.stopPropagation
+        onClick(imageSrc)
+      }}
     />
   | {animationUrl: Some(animationUrl)} =>
     <video

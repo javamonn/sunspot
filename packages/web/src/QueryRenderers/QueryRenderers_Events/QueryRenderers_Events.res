@@ -9,6 +9,7 @@ let make = () => {
 
   let eventsQueryQueue = React.useRef(None)
   let (isEventsFeedPaused, setIsEventsFeedPaused) = React.useState(_ => false)
+  let (lightboxSrc, setLightboxSrc) = React.useState(_ => None)
 
   let {
     data,
@@ -185,7 +186,7 @@ let make = () => {
       eventsQueryQueue.current = Some([])
       setIsEventsFeedPaused(_ => true)
     | (Some(backlogItems), Some(_), Authenticated({jwt: {accountAddress}}))
-      if !isPaused && !isBuyModalOpen =>
+      if !isPaused && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc) =>
       let variables = QueryRenderers_Events_GraphQL.makeVariables(~accountAddress, ())
       let existingData = switch client.readQuery(
         ~query=module(QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents),
@@ -227,13 +228,15 @@ let make = () => {
     }
   }
 
-  let _ = React.useEffect1(() => {
-    if isBuyModalOpen {
-      handleEventsQueryPausedChanged(!Config.isBreakpointMd())
+  let handleAssetMediaClick = src => setLightboxSrc(_ => Some(src))
+
+  let _ = React.useEffect2(() => {
+    if (isBuyModalOpen || Js.Option.isSome(lightboxSrc)) && !Config.isBreakpointMd() {
+      handleEventsQueryPausedChanged(true)
     }
 
     None
-  }, [isBuyModalOpen])
+  }, (isBuyModalOpen, Js.Option.isSome(lightboxSrc)))
 
   let items = switch data {
   | Some({alertRuleSatisfiedEvents: Some({items: Some(items)})}) =>
@@ -255,12 +258,27 @@ let make = () => {
   }
 
   <>
+    {lightboxSrc
+    ->Belt.Option.map(src =>
+      <Externals.ReactImageLightbox
+        mainSrc={src}
+        onCloseRequest={() => setLightboxSrc(_ => None)}
+        imagePadding={30}
+        reactModalStyle={{
+          "overlay": {
+            "zIndex": "1500",
+          },
+        }}
+      />
+    )
+    ->Belt.Option.getWithDefault(React.null)}
     <EventsList
       items={items}
       hasMoreItems={hasMoreItems}
       onLoadMoreItems={handleLoadMoreItems}
       onEventsQueryPausedChanged={handleEventsQueryPausedChanged}
       onBuy={handleBuy}
+      onAssetMediaClick={handleAssetMediaClick}
     />
     <MaterialUi.Snackbar
       anchorOrigin={MaterialUi.Snackbar.AnchorOrigin.make(
@@ -268,7 +286,7 @@ let make = () => {
         ~vertical=MaterialUi.Snackbar.Vertical.bottom,
         (),
       )}
-      _open={isEventsFeedPaused && !isBuyModalOpen}>
+      _open={isEventsFeedPaused && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc)}>
       <MaterialUi_Lab.Alert
         color=#Warning
         severity=#Warning
