@@ -10,7 +10,7 @@ let default = () => {
       "overflow-x-hidden",
       "bg-white",
       "mt-4",
-      "relative"
+      "relative",
     ])}>
     <QueryRenderers_Events />
   </section>

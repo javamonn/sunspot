@@ -12,7 +12,7 @@ module RelativeChangeRule = {
 module Price = {
   @react.component
   let make = (~rule) => {
-    <MaterialUi.Typography color=#TextPrimary variant=#Body2>
+    <MaterialUi.Typography color=#TextPrimary variant=#Body2 classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
       {React.string("price ")}
       {React.string(rule.modifier)}
       {React.string(` Ξ`)}

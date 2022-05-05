@@ -7,6 +7,7 @@ let default = () => {
       "font-mono",
       "flex",
       "flex-col",
+      "flex-1",
       "overflow-y-auto",
       "bg-white",
     ])}>

@@ -1,18 +1,52 @@
 type rect = {width: float, height: float}
-let itemSize = Config.isBrowser()
-  ? {
-      let remUnit = Externals.Raw.getRemUnit()
+type listSize = {
+  rect: rect,
+  itemSize: float,
+}
 
-      8.0 *. remUnit +. 1.0 *. remUnit
-    }
-  : 128.0 +. 16.0
+module Empty = {
+  @react.component
+  let make = () => {
+    let {
+      openCreateAlertModal,
+    }: Contexts_AlertCreateAndUpdateDialog_Context.t = React.useContext(
+      Contexts_AlertCreateAndUpdateDialog_Context.context,
+    )
+
+    <div
+      className={Cn.make([
+        "flex",
+        "flex-col",
+        "items-center",
+        "justify-start",
+        "flex-1",
+        "mt-12",
+        "sm:mt-0",
+      ])}>
+      <MaterialUi.Button
+        onClick={_ => openCreateAlertModal()}
+        variant=#Outlined
+        classes={MaterialUi.Button.Classes.make(
+          ~label=Cn.make(["lowercase", "py-2", "px-2", "text-darkSecondary"]),
+          (),
+        )}>
+        {React.string("create an alert to get started.")}
+      </MaterialUi.Button>
+      <h2 className={Cn.make(["text-sm", "mt-8", "text-darkSecondary"])}>
+        {React.string(
+          "sales, listing, floor price, and sales volume change events that satisfy your alerts will appear here.",
+        )}
+      </h2>
+    </div>
+  }
+}
 
 module Item = {
   @react.component
   let make = (~data, ~index, ~style) =>
     <EventsListItem
       onAssetMediaClick={data["onAssetMediaClick"]}
-      onClick={data["onClick"]}
+      onBuy={data["onBuy"]}
       alertRuleSatisfiedEvent={data["alertRuleSatisfiedEvents"]->Belt.Array.get(index)}
       now={data["now"]}
       style={style}
@@ -20,8 +54,7 @@ module Item = {
 }
 
 @react.component
-let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
-  let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
+let make = (~items, ~hasMoreItems, ~onLoadMoreItems, ~onEventsQueryPausedChanged, ~onBuy) => {
   let measurementElem = React.useRef(Js.Nullable.null)
   let (listSize, setListSize) = React.useState(_ => None)
   let (windowSize, setWindowSize) = React.useState(_ => {width: 0.0, height: 0.0})
@@ -68,8 +101,16 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
           Externals.Webapi.Element.width: width,
           height,
         } = Externals.Webapi.Element.getBoundingClientRect(elem)
+        let remUnit = Externals.Raw.getRemUnit()
 
-        Some({width: width, height: height})
+        let itemSize =
+          width > 500.0 /* * xs breakpoint * */
+            ? 8.0 *. remUnit +. 1.0 *. remUnit
+            : 6.0 *. remUnit +. 1.0 *. remUnit
+        Some({
+          rect: {width: width, height: height},
+          itemSize: itemSize,
+        })
       })
     })
 
@@ -89,43 +130,16 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
     Js.log2("handleAssetMediaClick", src)
   }
 
-  let handleClick = (
-    ~quickbuy,
-    ~alertRuleSatisfiedEvent: EventsListItem_GraphQL.Fragment_EventsListItem_AlertRuleSatisfiedEvent.t,
-  ) =>
-    switch alertRuleSatisfiedEvent {
-    | {
-        context: #AlertRuleSatisfiedEvent_ListingContext({
-          openSeaOrder: {id, asset: Some({collection: Some({slug})})},
-        }),
-      } =>
-      let query =
-        [
-          Some(("orderId", id->Obj.magic->Belt.Float.toString)),
-          Some(("orderCollectionSlug", slug)),
-          quickbuy ? Some(("orderQuickbuy", "true")) : None,
-        ]
-        ->Belt.Array.keepMap(param =>
-          param->Belt.Option.map(((key, value)) => `${key}=${Js.Global.encodeURIComponent(value)}`)
-        )
-        ->Belt.Array.joinWith("&", i => i)
-
-      Externals.Next.Router.replaceWithParams(
-        router,
-        `${router.pathname}?${query}`,
-        None,
-        {shallow: true},
-      )
-    | _ => ()
-    }
-
-  <>
+  <div
+    className={Cn.make(["flex", "flex-1"])}
+    onMouseEnter={_ => onEventsQueryPausedChanged(true)}
+    onMouseLeave={_ => onEventsQueryPausedChanged(false)}>
     <div
       ref={measurementElem->ReactDOM.Ref.domRef}
       className={Cn.make(["absolute", "inset-0", "overflow-y-scroll"])}
     />
     {listSize
-    ->Belt.Option.map(({width, height}) => {
+    ->Belt.Option.map(({rect: {width, height}, itemSize}) => {
       let windowItemCount = Js.Math.ceil_int(height /. itemSize)
       let itemCount = {
         let windowBuffer = 6
@@ -140,27 +154,29 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems) => {
         isItemLoaded={handleIsItemLoaded}
         threshold={15}
         minimumBatchSize={20}
-        loadMoreItems={onLoadMoreItems}>
+        loadMoreItems={(_, _) => onLoadMoreItems()}>
         {props =>
-          <Externals.ReactWindow.FixedSizeList
-            height={height}
-            width={width}
-            itemSize={itemSize}
-            itemKey={handleItemKey}
-            itemCount={itemCount}
-            itemData={{
-              "alertRuleSatisfiedEvents": items,
-              "onAssetMediaClick": handleAssetMediaClick,
-              "onClick": handleClick,
-              "now": now,
-            }}
-            onItemsRendered={props["onItemsRendered"]}
-            ref={props["ref"]}
-            className={Cn.make([])}>
-            {Item.make}
-          </Externals.ReactWindow.FixedSizeList>}
+          Belt.Array.length(items) === 0 && !hasMoreItems
+            ? <Empty />
+            : <Externals.ReactWindow.FixedSizeList
+                height={height}
+                width={width}
+                itemSize={itemSize}
+                itemKey={handleItemKey}
+                itemCount={itemCount}
+                itemData={{
+                  "alertRuleSatisfiedEvents": items,
+                  "onAssetMediaClick": handleAssetMediaClick,
+                  "onBuy": onBuy,
+                  "now": now,
+                }}
+                onItemsRendered={props["onItemsRendered"]}
+                ref={props["ref"]}
+                className={Cn.make([])}>
+                {Item.make}
+              </Externals.ReactWindow.FixedSizeList>}
       </Externals.ReactWindowInfiniteLoader.InfiniteLoader>
     })
     ->Belt.Option.getWithDefault(React.null)}
-  </>
+  </div>
 }

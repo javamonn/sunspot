@@ -70,8 +70,8 @@ let make = (~openSeaAsset: Fragment_EventsListItem_Attributes_OpenSeaAsset.t, ~c
     ->Belt.Option.getWithDefault([])
 
   if attributes->Belt.Array.length > 0 {
-    <div className={Cn.make(["flex", "flex-row", "items-center", "flex-2"])}>
-      <div className={Cn.make(["w-40", "flex-shrink-0"])}>
+    <div className={Cn.make(["flex", "flex-row", "flex-2"])}>
+      <div className={Cn.make(["w-40", "flex-shrink-0", "pt-3"])}>
         <Externals.MaterialUi_Icons.LabelOutlined
           style={ReactDOM.Style.make(~opacity="0.42", ~height="16px", ())}
         />

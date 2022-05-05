@@ -28,7 +28,7 @@ let make = (~value, ~onChange) =>
       </MaterialUi.Typography>
       <MaterialUi.FormHelperText>
         {React.string(
-          "automatically prompt a transaction to buy the asset when an alert is clicked.",
+          "automatically prompt a transaction to buy the asset when viewing the events feed or an alert is clicked.",
         )}
       </MaterialUi.FormHelperText>
     </div>

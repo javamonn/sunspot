@@ -175,6 +175,11 @@ let make = (~rows, ~onRowClick, ~onCreateAlertClick, ~isLoading) => <>
             )}>
             {React.string("create an alert to get started.")}
           </MaterialUi.Button>
+          <h2 className={Cn.make(["text-sm", "mt-8", "text-darkSecondary"])}>
+            {React.string(
+              "alerts notify you when listing, sales, floor price, or sales volume change events occur.",
+            )}
+          </h2>
         </div>
       : React.null}
     <AlertsFooter className={Cn.make(["hidden", "sm:block", "sm:border-t-0"])} />
