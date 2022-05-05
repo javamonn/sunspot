@@ -7,9 +7,7 @@ type listSize = {
 module Empty = {
   @react.component
   let make = () => {
-    let {
-      openCreateAlertModal,
-    }: Contexts_AlertCreateAndUpdateDialog_Context.t = React.useContext(
+    let {openCreateAlertModal}: Contexts_AlertCreateAndUpdateDialog_Context.t = React.useContext(
       Contexts_AlertCreateAndUpdateDialog_Context.context,
     )
 
@@ -54,7 +52,14 @@ module Item = {
 }
 
 @react.component
-let make = (~items, ~hasMoreItems, ~onLoadMoreItems, ~onEventsQueryPausedChanged, ~onBuy) => {
+let make = (
+  ~items,
+  ~hasMoreItems,
+  ~onLoadMoreItems,
+  ~onEventsQueryPausedChanged,
+  ~onBuy,
+  ~onAssetMediaClick,
+) => {
   let measurementElem = React.useRef(Js.Nullable.null)
   let (listSize, setListSize) = React.useState(_ => None)
   let (windowSize, setWindowSize) = React.useState(_ => {width: 0.0, height: 0.0})
@@ -166,7 +171,7 @@ let make = (~items, ~hasMoreItems, ~onLoadMoreItems, ~onEventsQueryPausedChanged
                 itemCount={itemCount}
                 itemData={{
                   "alertRuleSatisfiedEvents": items,
-                  "onAssetMediaClick": handleAssetMediaClick,
+                  "onAssetMediaClick": onAssetMediaClick,
                   "onBuy": onBuy,
                   "now": now,
                 }}

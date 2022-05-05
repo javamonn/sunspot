@@ -14,6 +14,7 @@ let make = (~className=?) => {
           "flex-row",
           "items-center",
           "font-mono",
+          "mr-2",
           className->Belt.Option.getWithDefault(""),
         ])}>
         <Externals.MaterialUi_Icons.Info
