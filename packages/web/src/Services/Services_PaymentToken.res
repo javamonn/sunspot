@@ -5,6 +5,7 @@ type t = {
   name: string,
   symbol: string,
   usdPrice: option<string>,
+  imageUrl: option<string>,
 }
 
 let ethPaymentToken = {
@@ -13,6 +14,7 @@ let ethPaymentToken = {
   name: "Ether",
   symbol: "ETH",
   usdPrice: None,
+  imageUrl: Some("https://openseauserdata.com/files/6f8e2979d428180222796ff4a33ab929.svg"),
 }
 
 let formatPrice = (tokenPrice, paymentToken) =>

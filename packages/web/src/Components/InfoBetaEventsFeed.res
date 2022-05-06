@@ -23,7 +23,7 @@ let make = (~className=?) => {
         <span className={Cn.make(["text-xs", "text-darkSecondary", "leading-none"])}>
           {React.string("events feed is in ")}
           <span className={Cn.make(["font-bold"])}> {React.string("beta")} </span>
-          {React.string(", only listing events are currently visible.")}
+          {React.string(", only listing and sale events are currently visible.")}
         </span>
       </div>
     : React.null

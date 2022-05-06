@@ -18,6 +18,15 @@ let make = (
       style={style}
       now={now}
     />
-  | _ => <EventsListItem_Loading style={style} /> 
+  | Some({alertRule, context: #AlertRuleSatisfiedEvent_SaleContext(context)}) =>
+    <EventsListItem_SaleContextItem
+      alertRule={alertRule}
+      context={context}
+      onAssetMediaClick={onAssetMediaClick}
+      onBuy={onBuy}
+      style={style}
+      now={now}
+    />
+  | _ => <EventsListItem_Loading style={style} />
   }
 }

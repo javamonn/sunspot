@@ -253,6 +253,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
               decimals: Services.PaymentToken.decimals(Services.PaymentToken.ethPaymentToken),
               name: Services.PaymentToken.name(Services.PaymentToken.ethPaymentToken),
               symbol: Services.PaymentToken.symbol(Services.PaymentToken.ethPaymentToken),
+              imageUrl: Services.PaymentToken.imageUrl(Services.PaymentToken.ethPaymentToken),
             },
           }),
           alertAttributesEventFilter: None,

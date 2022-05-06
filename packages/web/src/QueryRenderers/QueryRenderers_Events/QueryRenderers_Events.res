@@ -247,6 +247,11 @@ let make = () => {
             {context: #AlertRuleSatisfiedEvent_ListingContext(_)} as event,
         }) =>
         Some(event)
+      | Some({
+          eventsListItem_AlertRuleSatisfiedEvent:
+            {context: #AlertRuleSatisfiedEvent_SaleContext(_)} as event,
+        }) =>
+        Some(event)
       | _ => None
       }
     )
