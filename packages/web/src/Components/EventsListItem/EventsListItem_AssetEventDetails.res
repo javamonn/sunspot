@@ -37,21 +37,21 @@ let make = (
 
   <div
     className={Cn.make([
-      "px-3",
+      "p-3",
       "border-t",
       "border-b",
       "border-r",
       "border-solid",
       "border-darkBorder",
       "rounded",
-      "py-3",
       "flex-1",
       "grid",
       "xs:flex",
+      "overflow-hidden"
     ])}
     style={ReactDOM.Style.make(~gridTemplateColumns="1fr 2fr", ())}>
-    <div className={Cn.make(["flex", "flex-col", "justify-between", "flex-1"])}>
-      <div className={Cn.make(["flex", "flex-col"])}>
+    <div className={Cn.make(["flex", "flex-col", "justify-between", "flex-1", "overflow-hidden"])}>
+      <div className={Cn.make(["flex", "flex-col", "flex-1"])}>
         <h2
           className={Cn.make([
             "text-darkPrimary",
@@ -85,6 +85,8 @@ let make = (
             "hidden",
             "xs:block",
             "leading-none",
+            "whitespace-pre",
+            "truncate",
             "mb-1",
           ])}>
           {assetName->Belt.Option.getWithDefault(`#${assetTokenId}`)->React.string}

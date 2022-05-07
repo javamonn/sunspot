@@ -7,9 +7,30 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
       id
       createdAt
       alertRule {
+        eventType
         ...EventsListItem_EventFilters_AlertRulePartial
       }
       context {
+        ... on AlertRuleSatisfiedEvent_MacroRelativeChangeContext {
+          changeDirection
+          absoluteChangeValue
+          relativeChangePercent
+          targetEndAtMinuteTime
+          anchorEndAtMinuteTime
+          paymentToken {
+            decimals
+            symbol
+            imageUrl
+          }
+          collection {
+            imageUrl
+            name
+            slug
+          }
+          collectionFloorPrice
+          timeBucket
+          targetCount
+        }
         ... on AlertRuleSatisfiedEvent_ListingContext {
           __typename
           openSeaOrder {

@@ -35,6 +35,5 @@ let make = (~className=?) => {
         <img src="/github-icon.svg" className={Cn.make(["w-5", "h-5", "opacity-50"])} />
       </MaterialUi.IconButton>
     </div>
-    <InfoBetaEventsFeed />
   </footer>
 }

@@ -231,8 +231,12 @@ let make = () => {
   let handleAssetMediaClick = src => setLightboxSrc(_ => Some(src))
 
   let _ = React.useEffect2(() => {
-    if (isBuyModalOpen || Js.Option.isSome(lightboxSrc)) && !Config.isBreakpointMd() {
+    if (isBuyModalOpen || Js.Option.isSome(lightboxSrc)) {
       handleEventsQueryPausedChanged(true)
+    }
+
+    if (Config.isBreakpointMd() && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc)) {
+      handleEventsQueryPausedChanged(false)
     }
 
     None
@@ -250,6 +254,11 @@ let make = () => {
       | Some({
           eventsListItem_AlertRuleSatisfiedEvent:
             {context: #AlertRuleSatisfiedEvent_SaleContext(_)} as event,
+        }) =>
+        Some(event)
+      | Some({
+          eventsListItem_AlertRuleSatisfiedEvent:
+            {context: #AlertRuleSatisfiedEvent_MacroRelativeChangeContext(_)} as event,
         }) =>
         Some(event)
       | _ => None
