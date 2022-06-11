@@ -33,10 +33,6 @@ let default = () =>
             {React.string("discord")}
           </a>
           {React.string(", ")}
-          <a className={Cn.make(["underline"])} href={Config.twitterOAuthUrl} target="_blank">
-            {React.string("twitter")}
-          </a>
-          {React.string(", ")}
           <a className={Cn.make(["underline"])} href={Config.slackOAuthUrl} target="_blank">
             {React.string("slack")}
           </a>
