@@ -56,6 +56,31 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
             totalPrice
           }
         }
+        ... on AlertRuleSatisfiedEvent_OpenSeaEventListingContext {
+          __typename
+          openSeaEvent {
+            id
+            createdDate
+            asset {
+              ...OpenSeaAssetMedia_OpenSeaAsset
+              ...EventsListItem_Attributes_OpenSeaAsset
+              permalink
+              name
+              tokenId
+              collection {
+                imageUrl
+                name
+                slug
+              }
+            }
+            paymentToken {
+              decimals
+              symbol
+              imageUrl
+            }
+            startingPrice
+          }
+        }
       }
     }
   `)

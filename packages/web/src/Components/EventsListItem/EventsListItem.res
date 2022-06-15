@@ -22,6 +22,18 @@ let make = (
       now={now}
     />
   | Some({
+      alertRule: {eventsListItem_EventFilters_AlertRulePartial},
+      context: Some(#AlertRuleSatisfiedEvent_OpenSeaEventListingContext(context)),
+    }) =>
+    <EventsListItem_OpenSeaEventListingContextItem
+      alertRule={eventsListItem_EventFilters_AlertRulePartial}
+      context={context}
+      onAssetMediaClick={onAssetMediaClick}
+      onBuy={onBuy}
+      style={style}
+      now={now}
+    />
+  | Some({
       alertRule,
       context: Some(#AlertRuleSatisfiedEvent_MacroRelativeChangeContext(context)),
     }) =>

@@ -238,6 +238,11 @@ let make = () => {
         Some(event)
       | {
           eventsListItem_AlertRuleSatisfiedEvent:
+            {context: Some(#AlertRuleSatisfiedEvent_OpenSeaEventListingContext(_))} as event,
+        } =>
+        Some(event)
+      | {
+          eventsListItem_AlertRuleSatisfiedEvent:
             {context: Some(#AlertRuleSatisfiedEvent_MacroRelativeChangeContext(_))} as event,
         } =>
         Some(event)
@@ -250,8 +255,6 @@ let make = () => {
   | Some({alertRuleSatisfiedEvents: Some({nextToken})}) => Js.Option.isSome(nextToken)
   | _ => loading || !called
   }
-
-  Js.log2("items", items)
 
   <>
     {lightboxSrc
