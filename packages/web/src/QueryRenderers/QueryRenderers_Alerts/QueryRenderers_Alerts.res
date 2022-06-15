@@ -40,8 +40,7 @@ let make = () => {
     ->Belt.Option.getWithDefault([])
 
   let alertRuleItems = switch alertRulesQuery {
-  | {data: Some({alertRules: Some({items: Some(items)})})} =>
-    items->Belt.Array.keepMap(item => item)
+  | {data: Some({alertRules: Some({items})})} => items
   | _ => []
   }
 
@@ -325,7 +324,7 @@ let make = () => {
         )
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
-          | #AlertPriceThresholdEventFilter({ direction, value: Some(value), paymentToken }) =>
+          | #AlertPriceThresholdEventFilter({direction, value: Some(value), paymentToken}) =>
             AlertRule_Price.makeRule(
               ~modifier=switch direction {
               | #ALERT_ABOVE => ">"

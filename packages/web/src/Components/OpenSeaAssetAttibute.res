@@ -1,5 +1,17 @@
+let percentFormatter = {
+  open Externals_Webapi.Intl.NumberFormat
+  make("en-US", params(~style="percent", ~maximumSignificantDigits=4))
+}
+
 @react.component
-let make = (~trait, ~collectionSlug, ~nameClassName=?, ~valueClassName=?, ~labelClassName=?) => {
+let make = (
+  ~trait,
+  ~collectionSlug,
+  ~frequency=?,
+  ~nameClassName=?,
+  ~valueClassName=?,
+  ~labelClassName=?,
+) => {
   let traitUrl = Services.OpenSea.URL.makeAssetsUrl(
     ~collectionSlug,
     ~traitsFilter=[trait],
@@ -51,6 +63,12 @@ let make = (~trait, ~collectionSlug, ~nameClassName=?, ~valueClassName=?, ~label
         {switch trait {
         | StringTrait({value}) => React.string(value)
         | NumberTrait({value}) => value->Belt.Float.toString->React.string
+        }}
+        {switch frequency {
+        | Some(frequency) =>
+          let formatted = Externals_Webapi.Intl.NumberFormat.format_(percentFormatter, frequency)
+          React.string(` (${formatted})`)
+        | None => React.null
         }}
       </span>
     </MaterialUi.Button>

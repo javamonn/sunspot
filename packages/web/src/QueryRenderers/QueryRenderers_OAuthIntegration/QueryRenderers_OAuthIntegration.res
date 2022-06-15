@@ -15,11 +15,11 @@ let make = (~onCreated, ~params) => {
   )
 
   let alertCount = switch query {
-  | {data: Some({alertRules: Some({items: Some(items)})})} =>
+  | {data: Some({alertRules: Some({items})})} =>
     items
     ->Belt.Array.keepMap(a =>
       switch a {
-      | Some({disabled: None}) => a
+      | {disabled: None} => Some(a)
       | _ => None
       }
     )

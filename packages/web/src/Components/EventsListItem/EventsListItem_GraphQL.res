@@ -31,29 +31,6 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
           timeBucket
           targetCount
         }
-        ... on AlertRuleSatisfiedEvent_ListingContext {
-          __typename
-          openSeaOrder {
-            id
-            createdTime
-            asset {
-              ...OpenSeaAssetMedia_OpenSeaAsset
-              ...EventsListItem_Attributes_OpenSeaAsset
-              name
-              tokenId
-              collection {
-                imageUrl
-                name
-                slug
-              }
-            }
-            paymentTokenContract {
-              imageUrl
-              decimals
-            }
-            currentPrice 
-          }
-        }
         ... on AlertRuleSatisfiedEvent_SaleContext {
           __typename
           openSeaEvent {

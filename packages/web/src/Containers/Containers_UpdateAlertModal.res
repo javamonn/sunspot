@@ -387,15 +387,8 @@ let handleDeleteAlertRule = (
           ),
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         ) {
-        | Some(Ok({alertRules: Some({items: Some(items)})})) =>
-          items
-          ->Belt.Array.keep(item =>
-            switch item {
-            | Some(item) => item.id != alertRule.id
-            | None => false
-            }
-          )
-          ->Js.Option.some
+        | Some(Ok({alertRules: Some({items})})) =>
+          items->Belt.Array.keep(item => item.id != alertRule.id)->Js.Option.some
         | _ => None
         }
 
@@ -408,7 +401,7 @@ let handleDeleteAlertRule = (
               alertRules: Some({
                 __typename: "ModelAlertRuleConnection",
                 nextToken: None,
-                items: Some(newItems),
+                items: newItems,
               }),
             },
             QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),

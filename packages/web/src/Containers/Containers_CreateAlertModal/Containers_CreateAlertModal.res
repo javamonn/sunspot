@@ -346,9 +346,8 @@ let handleCreateAlertRule = (
           ),
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),
         ) {
-        | Some(Ok({alertRules: Some({items: Some(items)})})) =>
-          Belt.Array.concat([Some(alertRule)], items)
-        | _ => [Some(alertRule)]
+        | Some(Ok({alertRules: Some({items})})) => Belt.Array.concat([alertRule], items)
+        | _ => [alertRule]
         }
 
         let _ = writeQuery(
@@ -359,7 +358,7 @@ let handleCreateAlertRule = (
             alertRules: Some({
               __typename: "ModelAlertRuleConnection",
               nextToken: None,
-              items: Some(newItems),
+              items: newItems,
             }),
           },
           QueryRenderers_Alerts_GraphQL.makeVariables(~accountAddress),

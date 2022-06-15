@@ -54,18 +54,7 @@ let make = () => {
 
   let handleQuickbuyIfEnabled = (
     alertRuleSatisfiedEvent: option<QueryRenderers_Events_GraphQL.Events_AlertRuleSatisfiedEvent.t>,
-  ) =>
-    switch alertRuleSatisfiedEvent {
-    | Some({
-        alertRule: {quickbuy: true},
-        context: #AlertRuleSatisfiedEvent_ListingContext({
-          openSeaOrder: {id, asset: Some({collection: Some({slug})})},
-        }),
-      }) =>
-      handleBuy(~orderId=id, ~orderCollectionSlug=slug, ~quickbuy=true)
-      true
-    | _ => false
-    }
+  ) => false
 
   let _ = React.useEffect1(() => {
     let eventsQueryUnsubscribe = ref(None)
@@ -95,15 +84,13 @@ let make = () => {
                   nextToken: previous.alertRuleSatisfiedEvents->Belt.Option.flatMap(a =>
                     a.nextToken
                   ),
-                  items: Some(
-                    Belt.Array.concat(
-                      [onCreateAlertRuleSatisfiedEvent],
-                      previous.alertRuleSatisfiedEvents
-                      ->Belt.Option.flatMap(alertRuleSatisfiedEvents =>
-                        alertRuleSatisfiedEvents.items
-                      )
-                      ->Belt.Option.getWithDefault([]),
-                    ),
+                  items: Belt.Array.concat(
+                    onCreateAlertRuleSatisfiedEvent
+                    ->Belt.Option.map(e => [e])
+                    ->Belt.Option.getWithDefault([]),
+                    previous.alertRuleSatisfiedEvents
+                    ->Belt.Option.map(alertRuleSatisfiedEvents => alertRuleSatisfiedEvents.items)
+                    ->Belt.Option.getWithDefault([]),
                   ),
                 }),
               }
@@ -152,13 +139,13 @@ let make = () => {
             ->Belt.Option.flatMap(r => r.nextToken),
             items: Belt.Array.concat(
               previous.alertRuleSatisfiedEvents
-              ->Belt.Option.flatMap(a => a.items)
+              ->Belt.Option.map(a => a.items)
               ->Belt.Option.getWithDefault([]),
               fetchMoreResult
               ->Belt.Option.flatMap(r => r.alertRuleSatisfiedEvents)
-              ->Belt.Option.flatMap(r => r.items)
+              ->Belt.Option.map(r => r.items)
               ->Belt.Option.getWithDefault([]),
-            )->Js.Option.some,
+            ),
           }),
         },
         (),
@@ -206,9 +193,7 @@ let make = () => {
       existingData->Belt.Option.forEach(existingData => {
         let newData = {
           ...existingData,
-          items: Some(
-            Belt.Array.concat(backlogItems, existingData.items->Belt.Option.getWithDefault([])),
-          ),
+          items: Belt.Array.concat(backlogItems->Belt.Array.keepMap(i => i), existingData.items),
         }
 
         client.writeQuery(
@@ -231,11 +216,11 @@ let make = () => {
   let handleAssetMediaClick = src => setLightboxSrc(_ => Some(src))
 
   let _ = React.useEffect2(() => {
-    if (isBuyModalOpen || Js.Option.isSome(lightboxSrc)) {
+    if isBuyModalOpen || Js.Option.isSome(lightboxSrc) {
       handleEventsQueryPausedChanged(true)
     }
 
-    if (Config.isBreakpointMd() && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc)) {
+    if Config.isBreakpointMd() && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc) {
       handleEventsQueryPausedChanged(false)
     }
 
@@ -243,23 +228,18 @@ let make = () => {
   }, (isBuyModalOpen, Js.Option.isSome(lightboxSrc)))
 
   let items = switch data {
-  | Some({alertRuleSatisfiedEvents: Some({items: Some(items)})}) =>
+  | Some({alertRuleSatisfiedEvents: Some({items})}) =>
     items->Belt.Array.keepMap(item =>
       switch item {
-      | Some({
+      | {
           eventsListItem_AlertRuleSatisfiedEvent:
-            {context: #AlertRuleSatisfiedEvent_ListingContext(_)} as event,
-        }) =>
+            {context: Some(#AlertRuleSatisfiedEvent_SaleContext(_))} as event,
+        } =>
         Some(event)
-      | Some({
+      | {
           eventsListItem_AlertRuleSatisfiedEvent:
-            {context: #AlertRuleSatisfiedEvent_SaleContext(_)} as event,
-        }) =>
-        Some(event)
-      | Some({
-          eventsListItem_AlertRuleSatisfiedEvent:
-            {context: #AlertRuleSatisfiedEvent_MacroRelativeChangeContext(_)} as event,
-        }) =>
+            {context: Some(#AlertRuleSatisfiedEvent_MacroRelativeChangeContext(_))} as event,
+        } =>
         Some(event)
       | _ => None
       }
@@ -270,6 +250,8 @@ let make = () => {
   | Some({alertRuleSatisfiedEvents: Some({nextToken})}) => Js.Option.isSome(nextToken)
   | _ => loading || !called
   }
+
+  Js.log2("items", items)
 
   <>
     {lightboxSrc

@@ -9,16 +9,10 @@ let make = (
   ~now,
 ) => {
   switch alertRuleSatisfiedEvent {
-  | Some({alertRule: { eventsListItem_EventFilters_AlertRulePartial }, context: #AlertRuleSatisfiedEvent_ListingContext(context)}) =>
-    <EventsListItem_ListingContextItem
-      alertRule={eventsListItem_EventFilters_AlertRulePartial}
-      context={context}
-      onAssetMediaClick={onAssetMediaClick}
-      onBuy={onBuy}
-      style={style}
-      now={now}
-    />
-  | Some({alertRule: { eventsListItem_EventFilters_AlertRulePartial }, context: #AlertRuleSatisfiedEvent_SaleContext(context)}) =>
+  | Some({
+      alertRule: {eventsListItem_EventFilters_AlertRulePartial},
+      context: Some(#AlertRuleSatisfiedEvent_SaleContext(context)),
+    }) =>
     <EventsListItem_SaleContextItem
       alertRule={eventsListItem_EventFilters_AlertRulePartial}
       context={context}
@@ -27,7 +21,10 @@ let make = (
       style={style}
       now={now}
     />
-  | Some({alertRule, context: #AlertRuleSatisfiedEvent_MacroRelativeChangeContext(context)}) =>
+  | Some({
+      alertRule,
+      context: Some(#AlertRuleSatisfiedEvent_MacroRelativeChangeContext(context)),
+    }) =>
     <EventsListItem_MacroRelativeChangeContextItem
       alertRule={alertRule}
       context={context}

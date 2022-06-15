@@ -56,3 +56,18 @@ module Element = {
   }
   @send external getBoundingClientRect: Dom.element => domRect = "getBoundingClientRect"
 }
+
+module Intl = {
+  module NumberFormat = {
+    type t
+
+    @deriving(abstract)
+    type params = {
+      style: string,
+      maximumSignificantDigits: int,
+    }
+    @scope("Intl") @new external make: (string, params) => t = "NumberFormat"
+
+    @send external format_: (t, float) => string = "format"
+  }
+}
