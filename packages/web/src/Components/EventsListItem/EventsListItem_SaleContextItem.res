@@ -5,7 +5,6 @@ let make = (
   ~now,
   ~style,
   ~onAssetMediaClick,
-  ~onBuy,
 ) =>
   switch context {
   | {

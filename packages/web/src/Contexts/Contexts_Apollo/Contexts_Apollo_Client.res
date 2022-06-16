@@ -67,7 +67,18 @@ let make = (~credentials=?, ~apiKey=?, ~refreshCredentials=?, ()) => {
   let authOptions = makeAuthOptions(~credentials?, ~apiKey?, ~refreshCredentials?, ())
 
   make(
-    ~cache=Cache.InMemoryCache.make(),
+    ~cache=Cache.InMemoryCache.make(
+      ~typePolicies=[
+        (
+          "OpenSeaCollection",
+          Cache.InMemoryCache.TypePolicy.make(
+            ~keyFields=ApolloClient__Cache_InMemory_Policies.KeyArgs.KeySpecifier(["slug"]),
+            (),
+          ),
+        ),
+      ],
+      (),
+    ),
     ~connectToDevTools=true,
     ~defaultOptions=DefaultOptions.make(
       ~mutate=DefaultMutateOptions.make(~awaitRefetchQueries=true, ~errorPolicy=All, ()),

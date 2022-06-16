@@ -1,11 +1,12 @@
 exception InvalidOrder
 
-module OrderSection_AssetMetadata_OpenSeaOrder = OrderSection_AssetMetadata.Fragment_OrderSection_AssetMetadata_OpenSeaOrder
+module OrderSection_AssetMetadata_OpenSeaEvent = OrderSection_AssetMetadata.Fragment_OrderSection_AssetMetadata_OpenSeaEvent
 module OpenSeaAssetMedia_OpenSeaAsset = OpenSeaAssetMedia.Fragment_OpenSeaAssetMedia_OpenSeaAsset
 
-module Fragment_OrderSection_AssetDetail_OpenSeaOrder = %graphql(`
-  fragment OrderSection_AssetDetail_OpenSeaOrder on OpenSeaOrder {
+module Fragment_OrderSection_AssetDetail_OpenSeaEvent = %graphql(`
+  fragment OrderSection_AssetDetail_OpenSeaEvent on OpenSeaEvent {
     asset {
+      id
       name
       tokenId
       collectionSlug
@@ -33,12 +34,12 @@ module Fragment_OrderSection_AssetDetail_OpenSeaOrder = %graphql(`
       }
       ...OpenSeaAssetMedia_OpenSeaAsset
     }
-    ...OrderSection_AssetMetadata_OpenSeaOrder
+    ...OrderSection_AssetMetadata_OpenSeaEvent
   }
 `)
 
 @react.component
-let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => {
+let make = (~openSeaEvent: Fragment_OrderSection_AssetDetail_OpenSeaEvent.t) => {
   let (lightboxSrc, setLightboxSrc) = React.useState(_ => None)
   let handleClick = destination => {
     Services.Logger.logWithData(
@@ -48,7 +49,7 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => 
     )
   }
 
-  let (asset, collection, openSeaAssetMedia_OpenSeaAsset) = switch openSeaOrder {
+  let (asset, collection, openSeaAssetMedia_OpenSeaAsset) = switch openSeaEvent {
   | {asset: Some({openSeaAssetMedia_OpenSeaAsset, collection: Some(collection)} as asset)} => (
       asset,
       collection,
@@ -192,7 +193,7 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetDetail_OpenSeaOrder.t) => 
     )
     ->Belt.Option.getWithDefault(React.null)}
     <OrderSection_AssetMetadata
-      openSeaOrder={openSeaOrder.orderSection_AssetMetadata_OpenSeaOrder}
+      openSeaEvent={openSeaEvent.orderSection_AssetMetadata_OpenSeaEvent}
     />
     <OrderSection_CollectionStatistics collectionSlug={collection.slug} />
   </>

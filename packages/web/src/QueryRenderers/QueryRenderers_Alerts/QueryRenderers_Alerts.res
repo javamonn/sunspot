@@ -3,7 +3,9 @@ open QueryRenderers_Alerts_GraphQL
 @react.component
 let make = () => {
   let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
-  let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
+  let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
+    Contexts_OpenSeaEventDialog_Context.context,
+  )
   let {
     openUpdateAlertModal,
     openCreateAlertModal,

@@ -1,11 +1,11 @@
 type t = {
-  isBuyModalOpen: bool,
+  isOpen: bool,
   isQuickbuyTxPending: bool,
   setIsQuickbuyTxPending: bool => unit,
 }
 
 let context = React.createContext({
-  isBuyModalOpen: false,
+  isOpen: false,
   isQuickbuyTxPending: false,
   setIsQuickbuyTxPending: _ => (),
 })

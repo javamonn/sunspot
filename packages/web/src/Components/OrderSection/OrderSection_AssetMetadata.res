@@ -1,12 +1,13 @@
-module Fragment_OrderSection_AssetMetadata_OpenSeaOrder = %graphql(`
-  fragment OrderSection_AssetMetadata_OpenSeaOrder on OpenSeaOrder {
-    createdTime
-    expirationTime
+module Fragment_OrderSection_AssetMetadata_OpenSeaEvent = %graphql(`
+  fragment OrderSection_AssetMetadata_OpenSeaEvent on OpenSeaEvent {
+    createdDate
 
     asset {
+      id
       tokenId
       tokenMetadata
       collection {
+        slug
         contractAddress
       }
     }
@@ -14,7 +15,7 @@ module Fragment_OrderSection_AssetMetadata_OpenSeaOrder = %graphql(`
 `)
 
 @react.component
-let make = (~openSeaOrder: Fragment_OrderSection_AssetMetadata_OpenSeaOrder.t) => {
+let make = (~openSeaEvent: Fragment_OrderSection_AssetMetadata_OpenSeaEvent.t) => {
   let (now, setNow) = React.useState(_ => Js.Date.now())
   let _ = React.useEffect(_ => {
     let intervalId = Js.Global.setInterval(() => {
@@ -35,39 +36,26 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetMetadata_OpenSeaOrder.t) =
     )
   }
 
-  let {expirationTime, createdTime, asset} = openSeaOrder
+  let {createdDate, asset} = openSeaEvent
   let {tokenId, tokenMetadata, collection} = Belt.Option.getExn(asset)
   let {contractAddress} = Belt.Option.getExn(collection)
 
   let items = [
-    createdTime
-    ->Js.Json.decodeNumber
-    ->Belt.Option.map(createdTime => (
+    (
       "listing time",
       Externals.DateFns.formatDistanceStrict(
-        createdTime *. 1000.0,
+        (createdDate ++ "Z")->Js.Date.fromString->Js.Date.valueOf,
         now,
         Externals.DateFns.formatDistanceStrictOptions(~addSuffix=true, ()),
       ),
       None,
-    )),
-    expirationTime
-    ->Js.Json.decodeNumber
-    ->Belt.Option.map(expirationTime => (
-      "expiration time",
-      Externals.DateFns.formatDistanceStrict(
-        expirationTime *. 1000.0,
-        now,
-        Externals.DateFns.formatDistanceStrictOptions(~addSuffix=true, ()),
-      ),
-      None,
-    )),
-    Some((
+    ),
+    (
       "contract address",
       Services.Format.address(contractAddress),
       Some(Services.URL.etherscanAddress(contractAddress)),
-    )),
-    Some((
+    ),
+    (
       "token id",
       tokenId,
       tokenMetadata->Belt.Option.map(tokenMetadata => {
@@ -75,8 +63,8 @@ let make = (~openSeaOrder: Fragment_OrderSection_AssetMetadata_OpenSeaOrder.t) =
           ? `https://ipfs.io${Services.Ipfs.getNormalizedCidPath(tokenMetadata)}`
           : tokenMetadata
       }),
-    )),
-  ]->Belt.Array.keepMap(i => i)
+    ),
+  ]
 
   <div className={Cn.make(["grid-cols-2", "grid", "gap-2", "sm:grid-cols-1"])}>
     {items

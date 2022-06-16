@@ -5,13 +5,13 @@ let make = (
   ~now,
   ~style,
   ~onAssetMediaClick,
-  ~onBuy,
+  ~onOpenOpenSeaEventDialog,
 ) =>
   switch context {
   | {
       openSeaEvent: {
         id,
-        asset: Some({collection: Some({slug} as collection)} as asset),
+        asset: Some({collection: Some({slug, contractAddress} as collection)} as asset),
         paymentToken,
         startingPrice: Some(startingPrice),
         createdDate,
@@ -20,7 +20,7 @@ let make = (
     <li
       style={style}
       className={Cn.make(["list-none", "flex", "flex-row", "pb-4", "px-4", "cursor-pointer"])}
-      onClick={_ => Externals.Webapi.Window.open_(asset.permalink)}>
+      onClick={_ => onOpenOpenSeaEventDialog(~id, ~contractAddress, ~quickbuy=false)}>
       <OpenSeaAssetMedia
         onClick={onAssetMediaClick}
         openSeaAsset={asset.openSeaAssetMedia_OpenSeaAsset}

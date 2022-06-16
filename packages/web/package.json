@@ -27,6 +27,7 @@
     "@material-ui/lab": "^4.0.0-alpha.60",
     "@metamask/detect-provider": "^1.2.0",
     "@next/bundle-analyzer": "^12.1.4",
+    "@opensea/seaport-js": "^1.0.1",
     "@reasonml-community/graphql-ppx": "^1.2.2",
     "@rescript/react": "^0.10.3",
     "@sentry/browser": "^6.14.0",

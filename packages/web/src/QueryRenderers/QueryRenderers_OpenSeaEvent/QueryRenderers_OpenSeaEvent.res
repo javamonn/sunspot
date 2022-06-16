@@ -145,24 +145,17 @@ module Loading = {
 
 module Data = {
   @react.component
-  let make = (
-    ~telescopeManualAtomicMatchInput: option<
-      QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
-    >,
-    ~openSeaOrder,
-    ~quickbuy,
-    ~telescopeManualContract,
-  ) => {
+  let make = (~openSeaEvent, ~quickbuy) => {
     let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
     let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
-    let {setIsQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(
-      Contexts_Buy_Context.context,
+    let {setIsQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
+      Contexts_OpenSeaEventDialog_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      switch telescopeManualAtomicMatchInput {
-      | Some(_) if quickbuy => OrderSection_Types.ClientPending
-      | Some(_) => Buy
-      | None => InvalidOrder(None)
+      if quickbuy {
+        OrderSection_Types.ClientPending
+      } else {
+        Buy
       }
     )
     let (waitForTransactionResult, _) = Externals.Wagmi.UseWaitForTransaction.use({
@@ -270,10 +263,9 @@ module Data = {
       None
     }, [executionState])
 
-    let handleExecuteOrder = (
-      ~contract,
-      ~input: QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.t_openSeaOrder_telescopeManualAtomicMatchInput,
-    ) => {
+    let handleExecuteOrder = () => {
+      Js.log("handleExecuteOrder")
+      /**
       setExecutionState(_ => WalletConfirmPending)
 
       let feeValue = input.feeValue->Externals.Ethers.BigNumber.makeFromString
@@ -388,44 +380,16 @@ module Data = {
         }
         Js.Promise.resolve()
       })
+      **/
     }
 
     let handleClickBuy = () => {
-      switch (telescopeManualContract, telescopeManualAtomicMatchInput) {
-      | (Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput)) =>
-        let _ = handleExecuteOrder(
-          ~contract=telescopeManualContract,
-          ~input=telescopeManualAtomicMatchInput,
-        )
-      | _ =>
-        setExecutionState(_ => ClientPending)
-        let _ =
-          signIn()
-          |> Js.Promise.then_(_ => Js.Promise.resolve())
-          |> Js.Promise.catch(_ => {
-            setExecutionState(_ => Buy)
-            Js.Promise.resolve()
-          })
-      }
+      handleExecuteOrder()
     }
-
-    let _ = React.useEffect2(() => {
-      switch (executionState, telescopeManualContract, telescopeManualAtomicMatchInput) {
-      | (ClientPending, Some(telescopeManualContract), Some(telescopeManualAtomicMatchInput))
-        if !didAutoExecuteOrder.current =>
-        didAutoExecuteOrder.current = true
-        let _ = handleExecuteOrder(
-          ~contract=telescopeManualContract,
-          ~input=telescopeManualAtomicMatchInput,
-        )
-      | _ => ()
-      }
-      None
-    }, (executionState, telescopeManualContract))
 
     <OrderSection
       executionState={executionState}
-      openSeaOrder={openSeaOrder}
+      openSeaEvent={openSeaEvent}
       onClickBuy={() => handleClickBuy()}
       quickbuy={quickbuy}
     />
@@ -433,27 +397,18 @@ module Data = {
 }
 
 @react.component
-let make = (~collectionSlug, ~orderId, ~quickbuy, ~telescopeManualContract) => {
+let make = (~contractAddress, ~id, ~quickbuy) => {
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
-  let orderQuery = QueryRenderers_Buy_GraphQL.Query_OpenSeaOrder.use({
-    collectionSlug: collectionSlug,
-    id: Obj.magic(orderId), // schema typed as int but numbers are large enough to want to use float
+  let query = QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.use({
+    contractAddress: contractAddress,
+    id: Obj.magic(id), // schema typed as int but numbers are large enough to want to use float
   })
 
-  switch orderQuery {
+  switch query {
   | _ if invalidRedirect => <Loading invalidRedirect={true} />
   | {loading: true} => <Loading />
-  | {
-      data: Some({
-        openSeaOrder: Some({orderSection_OpenSeaOrder, telescopeManualAtomicMatchInput}),
-      }),
-    } =>
-    <Data
-      openSeaOrder={orderSection_OpenSeaOrder}
-      telescopeManualAtomicMatchInput={telescopeManualAtomicMatchInput}
-      quickbuy={quickbuy}
-      telescopeManualContract={telescopeManualContract}
-    />
+  | {data: Some({openSeaEvent: Some({orderSection_OpenSeaEvent})})} =>
+    <Data openSeaEvent={orderSection_OpenSeaEvent} quickbuy={quickbuy} />
   | _ => <Loading invalidRedirect=true />
   }
 }

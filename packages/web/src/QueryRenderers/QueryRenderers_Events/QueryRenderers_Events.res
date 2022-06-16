@@ -2,8 +2,11 @@
 let make = () => {
   let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
-  let {isQuickbuyTxPending, isBuyModalOpen}: Contexts_Buy_Context.t = React.useContext(
-    Contexts_Buy_Context.context,
+  let {
+    isQuickbuyTxPending,
+    isOpen: isOpenSeaEventDialogOpen,
+  }: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
+    Contexts_OpenSeaEventDialog_Context.context,
   )
   let router = Externals.Next.Router.useRouter()
 
@@ -32,12 +35,12 @@ let make = () => {
     },
   )
 
-  let handleBuy = (~orderId, ~orderCollectionSlug, ~quickbuy) => {
+  let handleOpenOpenSeaEventDialog = (~id, ~contractAddress, ~quickbuy) => {
     let query =
       [
-        Some(("orderId", orderId->Obj.magic->Belt.Float.toString)),
-        Some(("orderCollectionSlug", orderCollectionSlug)),
-        quickbuy ? Some(("orderQuickbuy", "true")) : None,
+        Some(("openSeaEventId", id->Obj.magic->Belt.Float.toString)),
+        Some(("openSeaEventContractAddress", contractAddress)),
+        quickbuy ? Some(("openSeaEventQuickbuy", "true")) : None,
       ]
       ->Belt.Array.keepMap(param =>
         param->Belt.Option.map(((key, value)) => `${key}=${Js.Global.encodeURIComponent(value)}`)
@@ -173,7 +176,7 @@ let make = () => {
       eventsQueryQueue.current = Some([])
       setIsEventsFeedPaused(_ => true)
     | (Some(backlogItems), Some(_), Authenticated({jwt: {accountAddress}}))
-      if !isPaused && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc) =>
+      if !isPaused && !isOpenSeaEventDialogOpen && !Js.Option.isSome(lightboxSrc) =>
       let variables = QueryRenderers_Events_GraphQL.makeVariables(~accountAddress, ())
       let existingData = switch client.readQuery(
         ~query=module(QueryRenderers_Events_GraphQL.Query_ListAlertRuleSatisfiedEvents),
@@ -216,16 +219,16 @@ let make = () => {
   let handleAssetMediaClick = src => setLightboxSrc(_ => Some(src))
 
   let _ = React.useEffect2(() => {
-    if isBuyModalOpen || Js.Option.isSome(lightboxSrc) {
+    if isOpenSeaEventDialogOpen || Js.Option.isSome(lightboxSrc) {
       handleEventsQueryPausedChanged(true)
     }
 
-    if Config.isBreakpointMd() && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc) {
+    if Config.isBreakpointMd() && !isOpenSeaEventDialogOpen && !Js.Option.isSome(lightboxSrc) {
       handleEventsQueryPausedChanged(false)
     }
 
     None
-  }, (isBuyModalOpen, Js.Option.isSome(lightboxSrc)))
+  }, (isOpenSeaEventDialogOpen, Js.Option.isSome(lightboxSrc)))
 
   let items = switch data {
   | Some({alertRuleSatisfiedEvents: Some({items})}) =>
@@ -276,7 +279,7 @@ let make = () => {
       hasMoreItems={hasMoreItems}
       onLoadMoreItems={handleLoadMoreItems}
       onEventsQueryPausedChanged={handleEventsQueryPausedChanged}
-      onBuy={handleBuy}
+      onOpenOpenSeaEventDialog={handleOpenOpenSeaEventDialog}
       onAssetMediaClick={handleAssetMediaClick}
     />
     <MaterialUi.Snackbar
@@ -285,7 +288,7 @@ let make = () => {
         ~vertical=MaterialUi.Snackbar.Vertical.bottom,
         (),
       )}
-      _open={isEventsFeedPaused && !isBuyModalOpen && !Js.Option.isSome(lightboxSrc)}>
+      _open={isEventsFeedPaused && !isOpenSeaEventDialogOpen && !Js.Option.isSome(lightboxSrc)}>
       <MaterialUi_Lab.Alert
         color=#Warning
         severity=#Warning

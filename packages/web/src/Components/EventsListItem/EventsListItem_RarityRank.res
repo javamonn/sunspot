@@ -1,5 +1,6 @@
 module Fragment_EventsListItem_RarityRank_OpenSeaAsset = %graphql(`
   fragment EventsListItem_RarityRank_OpenSeaAsset on OpenSeaAsset {
+    id
     rarityRank
     collection {
       lastCollectionIndexEvent {

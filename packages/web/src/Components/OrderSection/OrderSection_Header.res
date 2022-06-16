@@ -1,13 +1,11 @@
-module Fragment_OrderSection_Header_OpenSeaOrder = %graphql(`
-  fragment OrderSection_Header_OpenSeaOrder on OpenSeaOrder {
-    telescopeManualAtomicMatchInput {
-      feeValue
-      wyvernExchangeValue 
-    }
-    paymentTokenContract {
+module Fragment_OrderSection_Header_OpenSeaEvent = %graphql(`
+  fragment OrderSection_Header_OpenSeaEvent on OpenSeaEvent {
+    paymentToken {
+      id
       imageUrl
+      decimals
     }
-    basePrice
+    startingPrice
   }
 `)
 
@@ -16,11 +14,13 @@ let make = (
   ~onClickBuy,
   ~executionState,
   ~quickbuy,
-  ~openSeaOrder: Fragment_OrderSection_Header_OpenSeaOrder.t,
+  ~openSeaEvent: Fragment_OrderSection_Header_OpenSeaEvent.t,
 ) => {
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
+
+  /**
   let displayFee = openSeaOrder.telescopeManualAtomicMatchInput->Belt.Option.flatMap(({
     feeValue,
     wyvernExchangeValue,
@@ -41,6 +41,8 @@ let make = (
       None
     }
   })
+  **/
+  let displayFee = Some("FIX ME")
 
   let handleDisplayAccountSubscriptionDialog = _ => {
     let _ = openAccountSubscriptionDialog(
@@ -67,16 +69,25 @@ let make = (
         <div className={Cn.make(["flex", "items-center", "justify-center", "mr-1"])}>
           <img
             style={ReactDOM.Style.make(~marginTop="6px", ~opacity="60%", ())}
-            src={openSeaOrder.paymentTokenContract.imageUrl}
+            src={openSeaEvent.paymentToken
+            ->Belt.Option.flatMap(p => p.imageUrl)
+            ->Belt.Option.getWithDefault(
+              Services.PaymentToken.ethPaymentToken.imageUrl->Belt.Option.getExn,
+            )}
             className={Cn.make(["h-5", "mr-1"])}
           />
         </div>
         <div className={Cn.make(["flex", "justify-center", "items-center"])}>
           <div className={Cn.make(["flex", "flex-row", "items-end", "font-mono"])}>
             <span className={Cn.make(["font-bold", "text-4xl", "block", "mr-3", "leading-none"])}>
-              {openSeaOrder.basePrice
-              ->Services.PaymentToken.parseTokenPrice(
-                Services.PaymentToken.ethPaymentToken.decimals,
+              {openSeaEvent.startingPrice
+              ->Belt.Option.flatMap(startingPrice =>
+                Services.PaymentToken.parseTokenPrice(
+                  startingPrice,
+                  openSeaEvent.paymentToken
+                  ->Belt.Option.map(p => p.decimals)
+                  ->Belt.Option.getWithDefault(Services.PaymentToken.ethPaymentToken.decimals),
+                )
               )
               ->Belt.Option.map(Belt.Float.toString)
               ->Belt.Option.getWithDefault("N/A")

@@ -39,6 +39,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
             asset {
               ...OpenSeaAssetMedia_OpenSeaAsset
               ...EventsListItem_Attributes_OpenSeaAsset
+              id
               permalink
               name
               tokenId
@@ -49,6 +50,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
               }
             }
             paymentToken {
+              id
               decimals
               symbol
               imageUrl
@@ -64,6 +66,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
             asset {
               ...OpenSeaAssetMedia_OpenSeaAsset
               ...EventsListItem_Attributes_OpenSeaAsset
+              id
               permalink
               name
               tokenId
@@ -71,6 +74,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
                 imageUrl
                 name
                 slug
+                contractAddress
               }
             }
             paymentToken {

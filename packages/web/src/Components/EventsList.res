@@ -44,7 +44,7 @@ module Item = {
   let make = (~data, ~index, ~style) =>
     <EventsListItem
       onAssetMediaClick={data["onAssetMediaClick"]}
-      onBuy={data["onBuy"]}
+      onOpenOpenSeaEventDialog={data["onOpenOpenSeaEventDialog"]}
       alertRuleSatisfiedEvent={data["alertRuleSatisfiedEvents"]->Belt.Array.get(index)}
       now={data["now"]}
       style={style}
@@ -57,7 +57,7 @@ let make = (
   ~hasMoreItems,
   ~onLoadMoreItems,
   ~onEventsQueryPausedChanged,
-  ~onBuy,
+  ~onOpenOpenSeaEventDialog,
   ~onAssetMediaClick,
 ) => {
   let measurementElem = React.useRef(Js.Nullable.null)
@@ -131,9 +131,6 @@ let make = (
     ->Belt.Option.getWithDefault(Belt.Int.toString(idx))
 
   let handleIsItemLoaded = idx => items->Belt.Array.get(idx)->Js.Option.isSome
-  let handleAssetMediaClick = src => {
-    Js.log2("handleAssetMediaClick", src)
-  }
 
   <div
     className={Cn.make(["flex", "flex-1"])}
@@ -172,7 +169,7 @@ let make = (
                 itemData={{
                   "alertRuleSatisfiedEvents": items,
                   "onAssetMediaClick": onAssetMediaClick,
-                  "onBuy": onBuy,
+                  "onOpenOpenSeaEventDialog": onOpenOpenSeaEventDialog,
                   "now": now,
                 }}
                 onItemsRendered={props["onItemsRendered"]}

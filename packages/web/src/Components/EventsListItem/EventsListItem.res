@@ -5,7 +5,7 @@ let make = (
   >,
   ~style,
   ~onAssetMediaClick,
-  ~onBuy,
+  ~onOpenOpenSeaEventDialog,
   ~now,
 ) => {
   switch alertRuleSatisfiedEvent {
@@ -17,7 +17,6 @@ let make = (
       alertRule={eventsListItem_EventFilters_AlertRulePartial}
       context={context}
       onAssetMediaClick={onAssetMediaClick}
-      onBuy={onBuy}
       style={style}
       now={now}
     />
@@ -29,7 +28,7 @@ let make = (
       alertRule={eventsListItem_EventFilters_AlertRulePartial}
       context={context}
       onAssetMediaClick={onAssetMediaClick}
-      onBuy={onBuy}
+      onOpenOpenSeaEventDialog={onOpenOpenSeaEventDialog}
       style={style}
       now={now}
     />

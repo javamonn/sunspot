@@ -18,7 +18,7 @@ type updateAlertModalState =
 @react.component
 let make = (~children) => {
   let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
-  let {isQuickbuyTxPending}: Contexts_Buy_Context.t = React.useContext(Contexts_Buy_Context.context)
+  let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(Contexts_OpenSeaEventDialog_Context.context)
   let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 

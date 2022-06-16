@@ -84,7 +84,7 @@ let default = (props: props): React.element => {
             <Contexts_Apollo>
               <Contexts_AccountSubscriptionDialog>
                 <Contexts_AlertCreateAndUpdateDialog>
-                  <Contexts_Buy>
+                  <Contexts_OpenSeaEventDialog>
                     {switch router.pathname {
                     | "/events"
                     | "/alerts" =>
@@ -93,7 +93,7 @@ let default = (props: props): React.element => {
                       </Layouts.PageWithHeader>
                     | _ => elem
                     }}
-                  </Contexts_Buy>
+                  </Contexts_OpenSeaEventDialog>
                 </Contexts_AlertCreateAndUpdateDialog>
               </Contexts_AccountSubscriptionDialog>
             </Contexts_Apollo>

@@ -1,5 +1,6 @@
 module Fragment_EventsListItem_Attributes_OpenSeaAsset = %graphql(`
   fragment EventsListItem_Attributes_OpenSeaAsset on OpenSeaAsset {
+    id
     collectionSlug
     collection {
       lastCollectionIndexEvent {

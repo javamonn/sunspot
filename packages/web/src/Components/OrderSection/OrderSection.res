@@ -1,12 +1,12 @@
 %raw(`require('react-image-lightbox/style.css')`)
 
-module OrderSection_AssetDetail_OpenSeaOrder = OrderSection_AssetDetail.Fragment_OrderSection_AssetDetail_OpenSeaOrder
-module OrderSection_Header_OpenSeaOrder = OrderSection_Header.Fragment_OrderSection_Header_OpenSeaOrder
+module OrderSection_AssetDetail_OpenSeaEvent = OrderSection_AssetDetail.Fragment_OrderSection_AssetDetail_OpenSeaEvent
+module OrderSection_Header_OpenSeaEvent = OrderSection_Header.Fragment_OrderSection_Header_OpenSeaEvent
 
-module Fragment_OrderSection_OpenSeaOrder = %graphql(`
-  fragment OrderSection_OpenSeaOrder on OpenSeaOrder {
-    ...OrderSection_AssetDetail_OpenSeaOrder
-    ...OrderSection_Header_OpenSeaOrder
+module Fragment_OrderSection_OpenSeaEvent = %graphql(`
+  fragment OrderSection_OpenSeaEvent on OpenSeaEvent {
+    ...OrderSection_AssetDetail_OpenSeaEvent
+    ...OrderSection_Header_OpenSeaEvent
   }
 `)
 
@@ -15,15 +15,15 @@ let make = (
   ~onClickBuy,
   ~executionState,
   ~quickbuy,
-  ~openSeaOrder: Fragment_OrderSection_OpenSeaOrder.t,
+  ~openSeaEvent: Fragment_OrderSection_OpenSeaEvent.t,
 ) => {
   <>
     <OrderSection_Header
-      openSeaOrder={openSeaOrder.orderSection_Header_OpenSeaOrder}
+      openSeaEvent={openSeaEvent.orderSection_Header_OpenSeaEvent}
       onClickBuy={onClickBuy}
       executionState={executionState}
       quickbuy={quickbuy}
     />
-    <OrderSection_AssetDetail openSeaOrder={openSeaOrder.orderSection_AssetDetail_OpenSeaOrder} />
+    <OrderSection_AssetDetail openSeaEvent={openSeaEvent.orderSection_AssetDetail_OpenSeaEvent} />
   </>
 }
