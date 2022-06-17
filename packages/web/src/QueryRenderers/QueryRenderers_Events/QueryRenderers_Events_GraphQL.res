@@ -6,6 +6,19 @@ module Events_AlertRuleSatisfiedEvent = %graphql(`
     alertRule {
       quickbuy
     }
+    context {
+      ... on AlertRuleSatisfiedEvent_OpenSeaEventListingContext {
+        openSeaEvent {
+          id
+          asset {
+            tokenId
+            collection {
+              contractAddress
+            }
+          }
+        }
+      }
+    }
 
     ...EventsListItem_AlertRuleSatisfiedEvent
   }

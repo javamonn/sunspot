@@ -61,7 +61,7 @@ let make = (
           size=#Small
           onClick={ev => {
             let _ = ev->ReactEvent.Mouse.stopPropagation
-            Externals.Webapi.Window.open_(asset.permalink)
+            onOpenOpenSeaEventDialog(~id, ~contractAddress, ~tokenId, ~quickbuy=true)
           }}
           classes={MaterialUi.Button.Classes.make(
             ~root=Cn.make(["text-base", "text-lightPrimary"]),

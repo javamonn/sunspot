@@ -5,6 +5,7 @@ module Query_OpenSeaEvent = %graphql(`
   query OpenSeaEvent($contractAddress: String!, $id: AWSTimestamp!, $accountAddress: String!, $getSeaportOrderInput: GetSeaportOrderInput!) {
     openSeaEvent: getOpenSeaEvent(contractAddress: $contractAddress, id: $id) {
       id
+      startingPrice
       ...OrderSection_OpenSeaEvent
     }
     seaportOrder: getSeaportOrder(input: $getSeaportOrderInput) {

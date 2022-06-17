@@ -1,6 +1,6 @@
 let handleExecuteOrder = (
   ~useAccountData: option<Externals.Wagmi.UseAccount.data>,
-  ~seaportOrder: option<QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.t_seaportOrder>,
+  ~seaportOrder: option<Services.Seaport.order>,
   ~account: option<QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.t_account>,
   ~setExecutionState,
   ~openSnackbar: (
@@ -10,18 +10,8 @@ let handleExecuteOrder = (
     unit,
   ) => unit,
 ) => {
-  switch (
-    useAccountData,
-    seaportOrder
-    ->Belt.Option.flatMap(({data}) =>
-      try Some(Js.Json.parseExn(data)) catch {
-      | _ => None
-      }
-    )
-    ->Belt.Option.map(Services.Seaport.order_decode),
-    account,
-  ) {
-  | (Some({connector, address}), Some(Ok(seaportOrder)), Some(account)) =>
+  switch (useAccountData, seaportOrder, account) {
+  | (Some({connector, address}), Some(seaportOrder), Some(account)) =>
     setExecutionState(_ => OrderSection_Types.WalletConfirmPending)
 
     let feeAmount = {
@@ -159,6 +149,16 @@ let handleExecuteOrder = (
   | _ => ()
   }
 }
+
+let isSeaportOrderValid = (
+  ~openSeaEvent: QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.t_openSeaEvent,
+  ~seaportOrder: Services.Seaport.order,
+) =>
+  !seaportOrder.cancelled &&
+  !seaportOrder.finalized &&
+  openSeaEvent.startingPrice
+  ->Belt.Option.map(startingPrice => startingPrice === seaportOrder.currentPrice)
+  ->Belt.Option.getWithDefault(false)
 
 module Loading = {
   @react.component
@@ -318,10 +318,11 @@ module Data = {
       Contexts_OpenSeaEventDialog_Context.context,
     )
     let (executionState, setExecutionState) = React.useState(_ =>
-      if quickbuy {
+      switch seaportOrder {
+      | Some(seaportOrder) if quickbuy && isSeaportOrderValid(~openSeaEvent, ~seaportOrder) =>
         OrderSection_Types.ClientPending
-      } else {
-        Buy
+      | Some(seaportOrder) if isSeaportOrderValid(~openSeaEvent, ~seaportOrder) => Buy
+      | _ => InvalidOrder(None)
       }
     )
     let (waitForTransactionResult, _) = Externals.Wagmi.UseWaitForTransaction.use({
@@ -335,17 +336,6 @@ module Data = {
 
       Externals.Wagmi.UseWaitForTransaction.config(~hash?, ~skip=!Js.Option.isSome(hash), ())
     })
-    let didAutoExecuteOrder = React.useRef(false)
-
-    let _ = React.useEffect1(() => {
-      let _ = switch authentication {
-      | Contexts_Auth.Unauthenticated_AuthenticationChallengeRequired(_) if quickbuy =>
-        let _ = signIn()
-      | Unauthenticated_ConnectRequired => setExecutionState(_ => OrderSection_Types.Buy)
-      | _ => ()
-      }
-      None
-    }, [authentication])
 
     let _ = React.useEffect1(() => {
       setExecutionState(executionState =>
@@ -429,18 +419,51 @@ module Data = {
       None
     }, [executionState])
 
+    let _ = React.useEffect3(() => {
+      let _ = switch (executionState, useAccountData, account) {
+      | (ClientPending, Some(_), Some(_)) =>
+        Js.log3("executing client pending order", useAccountData, account)
+        handleExecuteOrder(
+          ~useAccountData,
+          ~seaportOrder,
+          ~account,
+          ~setExecutionState,
+          ~openSnackbar,
+        )
+      | (ClientPending, None, None) =>
+        let _ = signIn() |> Js.Promise.then_(authentication => {
+          /**
+           * if user rejects auth, clear pending client and quickbuy state
+           */
+          let _ = switch authentication {
+          | Contexts_Auth.Unauthenticated_ConnectRequired
+          | Unauthenticated_AuthenticationChallengeRequired(_) =>
+            setExecutionState(_ => Buy)
+          | _ => ()
+          }
+          Js.Promise.resolve()
+        })
+      | _ => ()
+      }
+      None
+    }, (executionState, useAccountData, account))
+
     let handleClickBuy = () =>
-      handleExecuteOrder(
-        ~useAccountData,
-        ~seaportOrder,
-        ~account,
-        ~setExecutionState,
-        ~openSnackbar,
-      )
+      switch (useAccountData, account) {
+      | (Some(_), Some(_)) =>
+        handleExecuteOrder(
+          ~useAccountData,
+          ~seaportOrder,
+          ~account,
+          ~setExecutionState,
+          ~openSnackbar,
+        )
+      | _ => setExecutionState(_ => ClientPending)
+      }
 
     <OrderSection
       executionState={executionState}
-      openSeaEvent={openSeaEvent}
+      openSeaEvent={openSeaEvent.orderSection_OpenSeaEvent}
       account={account->Belt.Option.map(account => account.orderSection_Header_Account)}
       onClickBuy={() => handleClickBuy()}
       quickbuy={quickbuy}
@@ -453,35 +476,44 @@ let make = (~contractAddress, ~id, ~tokenId, ~quickbuy) => {
   let (invalidRedirect, setInvalidRedirect) = React.useState(_ => false)
   let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
 
-  let query = QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.use(
-    ~skip=switch authentication {
-    | Contexts_Auth.InProgress_PromptConnectWallet
-    | InProgress_JWTRefresh(_)
-    | InProgress_PromptAuthenticationChallenge(_)
-    | InProgress_AuthenticationChallenge(_) => true
-    | _ => false
+  let query = QueryRenderers_OpenSeaEvent_GraphQL.Query_OpenSeaEvent.use({
+    contractAddress: contractAddress,
+    id: Obj.magic(id), // schema typed as int but numbers are large enough to want to use float
+    getSeaportOrderInput: {
+      assetContractAddress: contractAddress,
+      tokenId: tokenId,
     },
-    {
-      contractAddress: contractAddress,
-      id: Obj.magic(id), // schema typed as int but numbers are large enough to want to use float
-      getSeaportOrderInput: {
-        assetContractAddress: contractAddress,
-        tokenId: tokenId,
-      },
-      accountAddress: switch authentication {
-      | Authenticated({jwt: {accountAddress}}) => accountAddress
-      | _ => ""
-      },
+    accountAddress: switch authentication {
+    | Authenticated({jwt: {accountAddress}}) => accountAddress
+    | _ => ""
     },
-  )
+  })
 
   switch query {
   | _ if invalidRedirect => <Loading invalidRedirect={true} />
-  | {loading: true} => <Loading />
-  | {data: Some({openSeaEvent: Some({orderSection_OpenSeaEvent}), seaportOrder, account})} =>
+  | {data: Some({openSeaEvent: Some(openSeaEvent), seaportOrder, account})}
+  | {previousData: Some(Ok({openSeaEvent: Some(openSeaEvent), seaportOrder, account}))} =>
+    let parsedSeaportOrder =
+      seaportOrder
+      ->Belt.Option.flatMap(({data}) =>
+        try Some(Js.Json.parseExn(data)) catch {
+        | _ => None
+        }
+      )
+      ->Belt.Option.flatMap(data =>
+        switch Services.Seaport.order_decode(data) {
+        | Ok(o) => Some(o)
+        | _ => None
+        }
+      )
+
     <Data
-      openSeaEvent={orderSection_OpenSeaEvent} quickbuy={quickbuy} seaportOrder account={account}
+      openSeaEvent={openSeaEvent}
+      quickbuy={quickbuy}
+      seaportOrder={parsedSeaportOrder}
+      account={account}
     />
+  | {loading: true} => <Loading />
   | _ => <Loading invalidRedirect=true />
   }
 }

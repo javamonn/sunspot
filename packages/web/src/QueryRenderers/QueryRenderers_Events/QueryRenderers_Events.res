@@ -58,7 +58,18 @@ let make = () => {
 
   let handleQuickbuyIfEnabled = (
     alertRuleSatisfiedEvent: option<QueryRenderers_Events_GraphQL.Events_AlertRuleSatisfiedEvent.t>,
-  ) => false
+  ) =>
+    switch alertRuleSatisfiedEvent {
+    | Some({
+        alertRule: {quickbuy: true},
+        context: Some(#AlertRuleSatisfiedEvent_OpenSeaEventListingContext({
+          openSeaEvent: {id, asset: Some({tokenId, collection: Some({contractAddress})})},
+        })),
+      }) =>
+      handleOpenOpenSeaEventDialog(~id, ~contractAddress, ~tokenId, ~quickbuy=true)
+      true
+    | _ => false
+    }
 
   let _ = React.useEffect1(() => {
     let eventsQueryUnsubscribe = ref(None)
@@ -242,7 +253,11 @@ let make = () => {
         Some(event)
       | {
           eventsListItem_AlertRuleSatisfiedEvent:
-            {context: Some(#AlertRuleSatisfiedEvent_OpenSeaEventListingContext(_))} as event,
+            {
+              context: Some(#AlertRuleSatisfiedEvent_OpenSeaEventListingContext({
+                openSeaEvent: {asset: Some(_)},
+              })),
+            } as event,
         } =>
         Some(event)
       | {
