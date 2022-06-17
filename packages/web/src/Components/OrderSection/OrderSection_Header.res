@@ -9,40 +9,55 @@ module Fragment_OrderSection_Header_OpenSeaEvent = %graphql(`
   }
 `)
 
+module Fragment_OrderSection_Header_Account = %graphql(`
+  fragment OrderSection_Header_Account on Account {
+    address
+    quickbuyFee
+    subscription {
+      accountAddress
+      type_: type  
+    }
+  }
+`)
+
 @react.component
 let make = (
   ~onClickBuy,
   ~executionState,
   ~quickbuy,
   ~openSeaEvent: Fragment_OrderSection_Header_OpenSeaEvent.t,
+  ~account: option<Fragment_OrderSection_Header_Account.t>,
 ) => {
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
 
-  /**
-  let displayFee = openSeaOrder.telescopeManualAtomicMatchInput->Belt.Option.flatMap(({
-    feeValue,
-    wyvernExchangeValue,
-  }) => {
-    open Externals.Ethers.BigNumber
-    let parsedFeeValue = feeValue->makeFromString
+  let displayFee = {
+    let feeBasisPoint = switch (
+      account
+      ->Belt.Option.flatMap(account => account.quickbuyFee)
+      ->Belt.Option.flatMap(Belt.Float.fromString),
+      account
+      ->Belt.Option.flatMap(account => account.subscription)
+      ->Belt.Option.flatMap(({type_}) =>
+        switch type_ {
+        | #OBSERVATORY => Some(0.0)
+        | #TELESCOPE => Some(100.0)
+        | #FutureAddedValue(_) => None
+        }
+      ),
+    ) {
+    | (Some(f1), Some(f2)) => Js.Math.min_float(f1, f2)
+    | (Some(f), _) | (_, Some(f)) => f
+    | _ => Config.defaultQuickbuyFee->Belt.Float.fromString->Belt.Option.getExn
+    }
 
-    if !eq(parsedFeeValue, makeFromString("0")) {
-      let ratio =
-        wyvernExchangeValue
-        ->makeFromString
-        ->mul(makeFromString(Config.bigNumberInverseBasisPoint))
-        ->div(parsedFeeValue->mul(makeFromString(Config.bigNumberInverseBasisPoint)))
-        ->toNumber
-
-      Some(`(+ ${Belt.Float.toString(100.0 /. ratio)}% sunspot fee)`)
+    if feeBasisPoint != 0.0 {
+      Some(`(+ ${Belt.Float.toString(feeBasisPoint /. 100.0)}% sunspot fee)`)
     } else {
       None
     }
-  })
-  **/
-  let displayFee = Some("FIX ME")
+  }
 
   let handleDisplayAccountSubscriptionDialog = _ => {
     let _ = openAccountSubscriptionDialog(

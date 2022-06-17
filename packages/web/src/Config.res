@@ -20,6 +20,9 @@ let adminAddress = "0x446bfBb5185D79dBBFDb77F9CA81c51409C0480b"
 let nullAddress = "0x0000000000000000000000000000000000000000"
 let accountSubscriptionAddress = "0x304cb1846a346637659E85a84011bFf13aDC4D23"
 
+let feeArbiterAddress = "0xedc74441fb21d34766e44ad6d19855d567caa760"
+let defaultQuickbuyFee = "250"
+
 let sentryDsn = "https://46f76de2bfc64d10a89fc90865bb1d47@o1060100.ingest.sentry.io/6049323"
 let amplitudeApiKey = "12b1c3f0609d7a9a382a5359a9f0e97e"
 let infuraId = "d7556e9450a54b58a042dcc5d322e620"

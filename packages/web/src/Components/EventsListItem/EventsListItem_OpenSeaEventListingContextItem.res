@@ -11,7 +11,7 @@ let make = (
   | {
       openSeaEvent: {
         id,
-        asset: Some({collection: Some({slug, contractAddress} as collection)} as asset),
+        asset: Some({tokenId, collection: Some({contractAddress} as collection)} as asset),
         paymentToken,
         startingPrice: Some(startingPrice),
         createdDate,
@@ -20,7 +20,7 @@ let make = (
     <li
       style={style}
       className={Cn.make(["list-none", "flex", "flex-row", "pb-4", "px-4", "cursor-pointer"])}
-      onClick={_ => onOpenOpenSeaEventDialog(~id, ~contractAddress, ~quickbuy=false)}>
+      onClick={_ => onOpenOpenSeaEventDialog(~id, ~contractAddress, ~tokenId, ~quickbuy=false)}>
       <OpenSeaAssetMedia
         onClick={onAssetMediaClick}
         openSeaAsset={asset.openSeaAssetMedia_OpenSeaAsset}

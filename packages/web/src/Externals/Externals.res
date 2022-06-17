@@ -24,3 +24,4 @@ module DateFns = Externals_DateFns
 module ReactImageLightbox = Externals_ReactImageLightbox
 module ReactWindow = Externals_ReactWindow
 module ReactWindowInfiniteLoader = Externals_ReactWindowInfiniteLoader
+module Seaport = Externals_Seaport

@@ -35,11 +35,12 @@ let make = () => {
     },
   )
 
-  let handleOpenOpenSeaEventDialog = (~id, ~contractAddress, ~quickbuy) => {
+  let handleOpenOpenSeaEventDialog = (~id, ~contractAddress, ~tokenId, ~quickbuy) => {
     let query =
       [
         Some(("openSeaEventId", id->Obj.magic->Belt.Float.toString)),
         Some(("openSeaEventContractAddress", contractAddress)),
+        Some(("openSeaEventTokenId", tokenId)),
         quickbuy ? Some(("openSeaEventQuickbuy", "true")) : None,
       ]
       ->Belt.Array.keepMap(param =>

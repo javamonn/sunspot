@@ -14,6 +14,7 @@ module ContextProvider = {
 
 type params = {
   contractAddress: string,
+  tokenId: string,
   id: float,
   quickbuy: bool,
 }
@@ -32,6 +33,9 @@ let make = (~children) => {
       queryParams->Belt.Option.flatMap(q =>
         q->Externals.Webapi.URLSearchParams.get("openSeaEventContractAddress")
       ),
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("openSeaEventTokenId")
+      ),
       queryParams
       ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("openSeaEventId"))
       ->Belt.Option.flatMap(Belt.Float.fromString),
@@ -39,8 +43,8 @@ let make = (~children) => {
       ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("openSeaEventQuickbuy"))
       ->Belt.Option.map(q => q === "true"),
     ) {
-    | (Some(contractAddress), Some(id), Some(quickbuy)) =>
-      Some({contractAddress: contractAddress, id: id, quickbuy: quickbuy})
+    | (Some(contractAddress), Some(tokenId), Some(id), Some(quickbuy)) =>
+      Some({contractAddress: contractAddress, tokenId: tokenId, id: id, quickbuy: quickbuy})
     | _ => None
     }
   }
@@ -60,9 +64,7 @@ let make = (~children) => {
     Services.Logger.logWithData(
       "buy",
       "setIsBuyDrawerOpen",
-      [("isOpen", params->Js.Option.isSome->Js.Json.boolean)]
-      ->Js.Dict.fromArray
-      ->Js.Json.object_,
+      [("isOpen", params->Js.Option.isSome->Js.Json.boolean)]->Js.Dict.fromArray->Js.Json.object_,
     )
     None
   }, [Js.Option.isSome(params)])
@@ -130,9 +132,9 @@ let make = (~children) => {
       <MaterialUi.DialogContent
         classes={MaterialUi.DialogContent.Classes.make(~root=Cn.make(["p-4"]), ())}>
         {switch params {
-        | Some({contractAddress, id, quickbuy}) =>
+        | Some({contractAddress, tokenId, id, quickbuy}) =>
           <QueryRenderers_OpenSeaEvent
-            contractAddress={contractAddress} id={id} quickbuy={quickbuy}
+            contractAddress={contractAddress} tokenId={tokenId} id={id} quickbuy={quickbuy}
           />
         | _ => React.null
         }}

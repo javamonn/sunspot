@@ -26,6 +26,8 @@ module Provider = {
 
 module Signer = {
   type t
+
+  @get external getProvider: t => Externals_Ethereum.t = "provider"
 }
 
 module Interface = {
