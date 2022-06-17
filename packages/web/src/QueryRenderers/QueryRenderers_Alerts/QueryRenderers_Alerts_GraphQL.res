@@ -12,6 +12,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
     quickbuy
     collectionSlug
     collection {
+      slug
       name
       imageUrl
     }
