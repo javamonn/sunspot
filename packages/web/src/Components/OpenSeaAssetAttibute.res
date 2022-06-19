@@ -39,7 +39,6 @@ let make = (
         className={Cn.make([
           "text-darkSecondary",
           "lowercase",
-          "font-semibold",
           "text-center",
           "text-sm",
           "leading-none",
@@ -53,11 +52,11 @@ let make = (
       <span
         className={Cn.make([
           "text-darkPrimary",
-          "font-bold",
           "text-center",
           "text-sm",
           "normal-case",
           "leading-none",
+          "font-medium",
           valueClassName->Belt.Option.getWithDefault(""),
         ])}>
         {switch trait {

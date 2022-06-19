@@ -152,3 +152,13 @@ module Info = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module StarOutline = {
+  @react.component @module("@material-ui/icons/StarOutline")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

@@ -122,8 +122,8 @@ let make = (~openSeaAsset: Fragment_EventsListItem_Attributes_OpenSeaAsset.t, ~c
   }
 
   if attributes->Belt.Array.length > 0 {
-    <div className={Cn.make(["flex", "flex-row", "flex-2"])}>
-      <div className={Cn.make(["w-40", "flex-shrink-0", "pt-3"])}>
+    <div className={Cn.make(["flex", "flex-row", "flex-1", "items-center", "flex-shrink-0"])}>
+      <div className={Cn.make(["w-32", "flex-shrink-0", "pr-4", "text-right"])}>
         <Externals.MaterialUi_Icons.LabelOutlined
           style={ReactDOM.Style.make(~opacity="0.42", ~height="16px", ())}
         />
@@ -131,11 +131,11 @@ let make = (~openSeaAsset: Fragment_EventsListItem_Attributes_OpenSeaAsset.t, ~c
           {React.string("attributes")}
         </span>
       </div>
-      <ul className={Cn.make(["overflow-x-scroll", "space-x-2", "whitespace-nowrap"])}>
+      <ul className={Cn.make(["overflow-x-auto", "space-x-2", "whitespace-nowrap"])}>
         {attributes->React.array}
       </ul>
     </div>
   } else {
-    <div className={Cn.make(["flex", "flex-2"])} />
+    <div className={Cn.make(["flex", "flex-1"])} />
   }
 }

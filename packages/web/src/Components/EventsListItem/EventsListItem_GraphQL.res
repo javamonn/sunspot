@@ -1,6 +1,7 @@
 module OpenSeaAssetMedia_OpenSeaAsset = OpenSeaAssetMedia.Fragment_OpenSeaAssetMedia_OpenSeaAsset
 module EventsListItem_Attributes_OpenSeaAsset = EventsListItem_Attributes.Fragment_EventsListItem_Attributes_OpenSeaAsset
 module EventsListItem_EventFilters_AlertRulePartial = EventsListItem_EventFilters.Fragment_EventsListItem_EventFilters_AlertRulePartial
+module EventsListItem_RarityRank_OpenSeaAsset = EventsListItem_RarityRank.Fragment_EventsListItem_RarityRank_OpenSeaAsset
 
 module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
     fragment EventsListItem_AlertRuleSatisfiedEvent on AlertRuleSatisfiedEvent {
@@ -39,6 +40,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
             asset {
               ...OpenSeaAssetMedia_OpenSeaAsset
               ...EventsListItem_Attributes_OpenSeaAsset
+              ...EventsListItem_RarityRank_OpenSeaAsset
               id
               permalink
               name
@@ -66,6 +68,7 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
             asset {
               ...OpenSeaAssetMedia_OpenSeaAsset
               ...EventsListItem_Attributes_OpenSeaAsset
+              ...EventsListItem_RarityRank_OpenSeaAsset
               id
               permalink
               name

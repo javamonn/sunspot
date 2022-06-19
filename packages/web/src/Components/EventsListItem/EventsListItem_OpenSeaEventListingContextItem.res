@@ -53,6 +53,7 @@ let make = (
         paymentTokenDecimals={paymentToken
         ->Belt.Option.map(p => p.decimals)
         ->Belt.Option.getWithDefault(Services.PaymentToken.ethPaymentToken.decimals)}
+        openSeaAssetRarityRank={asset.eventsListItem_RarityRank_OpenSeaAsset}
         openSeaAssetAttributes={asset.eventsListItem_Attributes_OpenSeaAsset}
         alertRule={alertRule}
         action={<MaterialUi.Button

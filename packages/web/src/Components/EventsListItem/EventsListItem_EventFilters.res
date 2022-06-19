@@ -106,15 +106,20 @@ let make = (~alertRule: Fragment_EventsListItem_EventFilters_AlertRulePartial.t)
     }
   )
 
-  if Belt.Array.length(displayFilters) > 1 {
-    <div className={Cn.make(["flex", "flex-row", "flex-1", "items-center"])}>
-      <div className={Cn.make(["w-40", "flex-shrink-0"])}>
+  if Belt.Array.length(displayFilters) > 0 {
+    <div
+      className={Cn.make([
+        "flex",
+        "flex-row",
+        "flex-1",
+        "items-center",
+        "justify-end",
+        "overflow-x-hidden",
+      ])}>
+      <div className={Cn.make(["flex-shrink-0", "mr-2"])}>
         <Externals.MaterialUi_Icons.FilterList
-          style={ReactDOM.Style.make(~opacity="0.42", ~height="16px", ())}
+          style={ReactDOM.Style.make(~opacity="0.42", ~height="18px", ())}
         />
-        <span className={Cn.make(["text-darkSecondary", "text-sm", "whitespace-nowrap"])}>
-          {React.string("alert filters")}
-        </span>
       </div>
       <span
         className={Cn.make([

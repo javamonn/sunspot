@@ -11,6 +11,7 @@ let make = (
   ~paymentTokenDecimals,
   ~eventLabel,
   ~action,
+  ~openSeaAssetRarityRank,
   ~openSeaAssetAttributes,
   ~alertRule,
 ) => {
@@ -47,7 +48,7 @@ let make = (
       "flex-1",
       "grid",
       "xs:flex",
-      "overflow-hidden"
+      "overflow-hidden",
     ])}
     style={ReactDOM.Style.make(~gridTemplateColumns="1fr 2fr", ())}>
     <div className={Cn.make(["flex", "flex-col", "justify-between", "flex-1", "overflow-hidden"])}>
@@ -126,8 +127,11 @@ let make = (
       </div>
     </div>
     <div className={Cn.make(["flex", "flex-col", "overflow-x-hidden", "md:hidden"])}>
+      <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
+        <EventsListItem_RarityRank openSeaAsset={openSeaAssetRarityRank} />
+        <EventsListItem_EventFilters alertRule={alertRule} />
+      </div>
       <EventsListItem_Attributes openSeaAsset={openSeaAssetAttributes} />
-      <EventsListItem_EventFilters alertRule={alertRule} />
     </div>
   </div>
 }
