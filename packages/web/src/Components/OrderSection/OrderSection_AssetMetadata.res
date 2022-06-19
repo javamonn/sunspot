@@ -66,31 +66,39 @@ let make = (~openSeaEvent: Fragment_OrderSection_AssetMetadata_OpenSeaEvent.t) =
     ),
   ]
 
-  <div className={Cn.make(["grid-cols-2", "grid", "gap-2", "sm:grid-cols-1"])}>
-    {items
-    ->Belt.Array.map(((label, value, href)) => {
-      let text =
-        <MaterialUi.ListItemText primary={React.string(label)} secondary={React.string(value)} />
+  <>
+    <h1 className={Cn.make(["text-darkSecondary", "font-mono", "mb-2", "text-sm"])}>
+      <Externals.MaterialUi_Icons.AssessmentOutlined
+        style={ReactDOM.Style.make(~opacity="0.50", ~height="18px", ())}
+      />
+      {React.string("metadata")}
+    </h1>
+    <div className={Cn.make(["grid-cols-2", "grid", "gap-2", "sm:grid-cols-1"])}>
+      {items
+      ->Belt.Array.map(((label, value, href)) => {
+        let text =
+          <MaterialUi.ListItemText primary={React.string(label)} secondary={React.string(value)} />
 
-      switch href {
-      | None =>
-        <MaterialUi.ListItem
-          classes={MaterialUi.ListItem.Classes.make(~root=Cn.make(["bg-gray-100", "rounded"]), ())}>
-          {text}
-        </MaterialUi.ListItem>
-      | Some(href) =>
-        <a onClick={_ => handleClick(label)} href={href} target="_blank">
+        switch href {
+        | None =>
           <MaterialUi.ListItem
-            button={true}
-            classes={MaterialUi.ListItem.Classes.make(
-              ~root=Cn.make(["bg-gray-100", "rounded"]),
-              (),
-            )}>
+            classes={MaterialUi.ListItem.Classes.make(~root=Cn.make(["bg-gray-100", "rounded"]), ())}>
             {text}
           </MaterialUi.ListItem>
-        </a>
-      }
-    })
-    ->React.array}
-  </div>
+        | Some(href) =>
+          <a onClick={_ => handleClick(label)} href={href} target="_blank">
+            <MaterialUi.ListItem
+              button={true}
+              classes={MaterialUi.ListItem.Classes.make(
+                ~root=Cn.make(["bg-gray-100", "rounded"]),
+                (),
+              )}>
+              {text}
+            </MaterialUi.ListItem>
+          </a>
+        }
+      })
+      ->React.array}
+    </div>
+  </>
 }

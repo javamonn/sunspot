@@ -1,6 +1,8 @@
 exception InvalidOrder
 
 module OrderSection_AssetMetadata_OpenSeaEvent = OrderSection_AssetMetadata.Fragment_OrderSection_AssetMetadata_OpenSeaEvent
+module OrderSection_Attributes_OpenSeaAsset = OrderSection_Attributes.Fragment_OrderSection_Attributes_OpenSeaAsset
+module OrderSection_RarityRank_OpenSeaAsset = OrderSection_RarityRank.Fragment_OrderSection_RarityRank_OpenSeaAsset
 module OpenSeaAssetMedia_OpenSeaAsset = OpenSeaAssetMedia.Fragment_OpenSeaAssetMedia_OpenSeaAsset
 
 module Fragment_OrderSection_AssetDetail_OpenSeaEvent = %graphql(`
@@ -16,22 +18,9 @@ module Fragment_OrderSection_AssetDetail_OpenSeaEvent = %graphql(`
         imageUrl
         name
       }
-      attributes {
-        ... on OpenSeaAssetNumberAttribute {
-          traitType
-          displayType
-          numberValue
-          numberValueAlias: value
-          maxValue
-        }
-        ... on OpenSeaAssetStringAttribute {
-          traitType
-          displayType
-          stringValue
-          stringValueAlias: value
-          maxValue
-        }
-      }
+
+      ...OrderSection_RarityRank_OpenSeaAsset
+      ...OrderSection_Attributes_OpenSeaAsset
       ...OpenSeaAssetMedia_OpenSeaAsset
     }
     ...OrderSection_AssetMetadata_OpenSeaEvent
@@ -152,46 +141,8 @@ let make = (~openSeaEvent: Fragment_OrderSection_AssetDetail_OpenSeaEvent.t) => 
         </div>
       </div>
     </div>
-    {asset.attributes
-    ->Belt.Option.map(attributes =>
-      <div className={Cn.make(["grid-cols-4", "grid", "gap-2", "mb-8", "sm:grid-cols-2"])}>
-        {attributes
-        ->Belt.Array.keepMap(attribute =>
-          switch attribute {
-          | #OpenSeaAssetNumberAttribute({traitType, numberValue: Some(numberValue)})
-          | #OpenSeaAssetNumberAttribute({traitType, numberValueAlias: Some(numberValue)}) =>
-            Some(
-              Services.OpenSea.URL.NumberTrait({
-                name: traitType,
-                value: numberValue,
-              }),
-            )
-          | #OpenSeaAssetStringAttribute({traitType, stringValue: Some(stringValue)})
-            if Js.String2.length(stringValue) > 0 =>
-            Some(
-              Services.OpenSea.URL.StringTrait({
-                name: traitType,
-                value: stringValue,
-              }),
-            )
-          | #OpenSeaAssetStringAttribute({traitType, stringValueAlias: Some(stringValue)})
-            if Js.String2.length(stringValue) > 0 =>
-            Some(
-              Services.OpenSea.URL.StringTrait({
-                name: traitType,
-                value: stringValue,
-              }),
-            )
-          | #FutureAddedValue(_) | _ => None
-          }
-        )
-        ->Belt.Array.map(trait => {
-          <OpenSeaAssetAttibute collectionSlug={asset.collectionSlug} trait={trait} />
-        })
-        ->React.array}
-      </div>
-    )
-    ->Belt.Option.getWithDefault(React.null)}
+    <OrderSection_RarityRank openSeaAsset={asset.orderSection_RarityRank_OpenSeaAsset} />
+    <OrderSection_Attributes openSeaAsset={asset.orderSection_Attributes_OpenSeaAsset} />
     <OrderSection_AssetMetadata
       openSeaEvent={openSeaEvent.orderSection_AssetMetadata_OpenSeaEvent}
     />

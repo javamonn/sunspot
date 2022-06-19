@@ -28,7 +28,7 @@ let make = (
       variant=#Outlined
       classes={MaterialUi.Button.Classes.make(
         ~label=Cn.make([
-          labelClassName->Belt.Option.getWithDefault(Cn.make(["p-2"])),
+          labelClassName->Belt.Option.getWithDefault(Cn.make(["p-1"])),
           "flex",
           "flex-col",
           "border-darkBorder",
