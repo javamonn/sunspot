@@ -81,6 +81,10 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         emptyRelativeDiffAbsoluteValueChange
         direction
       }
+      ... on AlertRarityRankEventFilter {
+        numberValue: value
+        direction
+      }
       ... on AlertQuantityEventFilter {
         numberValue: value
         direction

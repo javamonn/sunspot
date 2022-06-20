@@ -24,12 +24,14 @@ let columns = [
 
 type quantityRule = {modifier: string, value: string}
 type priceRule = {modifier: string, price: string}
+type rarityRankRule = {modifier: string, value: string}
 type propertyRule = {traitType: string, displayValue: string}
 
 type rule =
   | PriceRule(priceRule)
   | PropertyRule(propertyRule)
   | QuantityRule(quantityRule)
+  | RarityRankRule(rarityRankRule)
   | RelativeChangeRule(string)
 
 @deriving(accessors)

@@ -14,6 +14,11 @@ module Fragment_EventsListItem_EventFilters_AlertRulePartial = %graphql(`
         intValue
         direction
       }
+      ... on AlertRarityRankEventFilter {
+        intValueAlias: value
+        intValue
+        direction
+      }
       ... on AlertPriceThresholdEventFilter {
         stringValueAlias: value
         stringValue
@@ -79,6 +84,17 @@ let make = (~alertRule: Fragment_EventsListItem_EventFilters_AlertRulePartial.t)
       let quantity = intValue->Belt.Int.toString
 
       displayModifier->Belt.Option.map(displayModifier => `quantity ${displayModifier} ${quantity}`)
+    | #AlertRarityRankEventFilter({direction, intValue: Some(intValue)})
+    | #AlertRarityRankEventFilter({direction, intValueAlias: Some(intValue)}) =>
+      let displayModifier = switch direction {
+      | #ALERT_ABOVE => Some(">")
+      | #ALERT_BELOW => Some("<")
+      | #ALERT_EQUAL => Some("=")
+      | _ => None
+      }
+      let quantity = intValue->Belt.Int.toString
+
+      displayModifier->Belt.Option.map(displayModifier => `rank ${displayModifier} ${quantity}`)
     | #AlertPriceThresholdEventFilter({
       direction,
       stringValueAlias: Some(stringValue),

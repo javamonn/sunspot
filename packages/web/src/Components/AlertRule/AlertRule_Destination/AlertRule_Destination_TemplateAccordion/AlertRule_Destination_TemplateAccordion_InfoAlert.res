@@ -14,6 +14,7 @@ let listingVariables = [
   ("collectionFloorUsdPrice", "formatted collection floor price in usd"),
   ("collectionImageUrl", "collection image url set on opensea"),
   ("assetImageUrl", "asset image url"),
+  ("assetRarityRank", "asset rarity rank"),
   ("satisfiedAlertRules", "formatted satisfied alert property and price rules (optional)"),
   ("quantity", "number of assets transacted (optional, null if 1)"),
 ]
@@ -37,6 +38,7 @@ let saleVariables = [
   ("collectionFloorUsdPrice", "formatted collection floor price in usd"),
   ("collectionImageUrl", "opensea collection image url"),
   ("assetImageUrl", "asset image url"),
+  ("assetRarityRank", "asset rarity rank"),
   ("satisfiedAlertRules", "formatted satisfied alert property and price rules (optional)"),
   ("quantity", "number of assets transacted (optional, null if 1)"),
 ]

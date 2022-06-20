@@ -25,6 +25,12 @@ let make = (
       quantityRule: quantityRule,
     })
   }
+  let handleRarityRankRuleChange = rarityRankRule => {
+    onChange(value => {
+      ...value,
+      rarityRankRule: rarityRankRule,
+    })
+  }
 
   <>
     <MaterialUi.Typography
@@ -47,6 +53,20 @@ let make = (
       renderDetails={(~expanded) =>
         <AlertRule_Price
           value=?{value->priceRule} onChange={handlePriceRuleChange} accordionExpanded={expanded}
+        />}
+    />
+    <AlertRule_Accordion
+      className={Cn.make(["mt-8"])}
+      summaryIcon={<Externals_MaterialUi_Icons.StarOutline
+        style={ReactDOM.Style.make(~opacity="0.42", ())}
+      />}
+      summaryTitle={React.string("rarity rank rule")}
+      summaryDescription={React.string("filter events by asset rarity rank")}
+      renderDetails={(~expanded) =>
+        <AlertRule_RarityRank
+          value=?{value->rarityRankRule}
+          onChange={handleRarityRankRuleChange}
+          accordionExpanded={expanded}
         />}
     />
     <AlertRule_Accordion

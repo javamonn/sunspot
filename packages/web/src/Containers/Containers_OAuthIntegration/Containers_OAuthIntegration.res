@@ -513,6 +513,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
         alertQuantityEventFilter: None,
         alertPriceThresholdEventFilter: None,
         alertAttributesEventFilter: None,
+        alertRarityRankEventFilter: None,
       })
     | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
       Some({
@@ -533,6 +534,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
         alertQuantityEventFilter: None,
         alertPriceThresholdEventFilter: None,
         alertAttributesEventFilter: None,
+        alertRarityRankEventFilter: None,
       })
     | _ => None
     }
@@ -558,10 +560,40 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
             alertAttributesEventFilter: None,
             alertPriceThresholdEventFilter: None,
             alertMacroRelativeChangeEventFilter: None,
+            alertRarityRankEventFilter: None,
           })
         | _ => None
         }
       })
+
+    let rarityRankEventFilter =
+      alertRuleValue
+      ->AlertModal.Value.rarityRankRule
+      ->Belt.Option.flatMap(rule => {
+        let direction = switch AlertRule_RarityRank.Value.modifier(rule) {
+        | ">" => Some(#ALERT_ABOVE)
+        | "<" => Some(#ALERT_BELOW)
+        | "=" => Some(#ALERT_EQUAL)
+        | _ => None
+        }
+        let value = rule->AlertRule_RarityRank.Value.value->Belt.Option.flatMap(Belt.Int.fromString)
+
+        switch (direction, value) {
+        | (Some(direction), Some(value)) =>
+          Some({
+            alertRarityRankEventFilter: Some({
+              direction: direction,
+              value: value,
+            }),
+            alertAttributesEventFilter: None,
+            alertPriceThresholdEventFilter: None,
+            alertMacroRelativeChangeEventFilter: None,
+            alertQuantityEventFilter: None,
+          })
+        | _ => None
+        }
+      })
+
     let priceEventFilter =
       alertRuleValue
       ->AlertModal.Value.priceRule
@@ -595,6 +627,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
             alertAttributesEventFilter: None,
             alertQuantityEventFilter: None,
             alertMacroRelativeChangeEventFilter: None,
+            alertRarityRankEventFilter: None,
           })
         | _ => None
         }
@@ -629,6 +662,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
           alertPriceThresholdEventFilter: None,
           alertQuantityEventFilter: None,
           alertMacroRelativeChangeEventFilter: None,
+          alertRarityRankEventFilter: None,
         }
       })
 
@@ -734,6 +768,7 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
           priceEventFilter,
           propertiesEventFilter,
           quantityEventFilter,
+          rarityRankEventFilter,
           macroRelativeChangeEventFilter,
         ]->Belt.Array.keepMap(i => i),
         destination: destination,

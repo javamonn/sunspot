@@ -61,6 +61,14 @@ let make = () => {
         item.eventFilters
         ->Belt.Array.keepMap(eventFilter =>
           switch eventFilter {
+          | #AlertRarityRankEventFilter({direction, numberValue: Some(value)}) =>
+            let modifier = switch direction {
+            | #ALERT_ABOVE => ">"
+            | #ALERT_BELOW => "<"
+            | #ALERT_EQUAL => "="
+            | #FutureAddedValue(v) => v
+            }
+            Some([AlertsTable.RarityRankRule({modifier: modifier, value: Belt.Int.toString(value)})])
           | #AlertQuantityEventFilter({direction, numberValue: Some(value)}) =>
             let modifier = switch direction {
             | #ALERT_ABOVE => ">"
@@ -455,6 +463,30 @@ let make = () => {
           }
         )
 
+      let rarityRankRule =
+        item.eventFilters
+        ->Belt.Array.getBy(eventFilter =>
+          switch eventFilter {
+          | #AlertRarityRankEventFilter(_) => true
+          | _ => false
+          }
+        )
+        ->Belt.Option.flatMap(eventFilter =>
+          switch eventFilter {
+          | #AlertRarityRankEventFilter({direction, numberValue: Some(value)}) =>
+            AlertRule_RarityRank.Value.make(
+              ~modifier=switch direction {
+              | #ALERT_ABOVE => ">"
+              | #ALERT_BELOW => "<"
+              | #ALERT_EQUAL => "="
+              | #FutureAddedValue(v) => v
+              },
+              ~value=Some(Belt.Int.toString(value)),
+            )->Js.Option.some
+          | _ => None
+          }
+        )
+
       let propertiesRule =
         item.eventFilters
         ->Belt.Array.getBy(eventFilter =>
@@ -617,6 +649,7 @@ let make = () => {
           ),
         ),
         ~quickbuy=item.quickbuy->Belt.Option.getWithDefault(false),
+        ~rarityRankRule,
         ~priceRule,
         ~propertiesRule,
         ~saleVolumeChangeRule,

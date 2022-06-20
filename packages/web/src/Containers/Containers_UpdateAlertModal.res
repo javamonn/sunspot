@@ -175,6 +175,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
       alertQuantityEventFilter: None,
       alertPriceThresholdEventFilter: None,
       alertAttributesEventFilter: None,
+      alertRarityRankEventFilter: None,
     })
   | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
     Some({
@@ -195,6 +196,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
       alertQuantityEventFilter: None,
       alertPriceThresholdEventFilter: None,
       alertAttributesEventFilter: None,
+      alertRarityRankEventFilter: None,
     })
   | _ => None
   }
@@ -221,6 +223,35 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
           alertAttributesEventFilter: None,
           alertPriceThresholdEventFilter: None,
           alertMacroRelativeChangeEventFilter: None,
+          alertRarityRankEventFilter: None,
+        })
+      | _ => None
+      }
+    })
+
+  let rarityRankEventFilter =
+    newValue
+    ->AlertModal.Value.rarityRankRule
+    ->Belt.Option.flatMap(rule => {
+      let direction = switch AlertRule_RarityRank.Value.modifier(rule) {
+      | ">" => Some(#ALERT_ABOVE)
+      | "<" => Some(#ALERT_BELOW)
+      | "=" => Some(#ALERT_EQUAL)
+      | _ => None
+      }
+      let value = rule->AlertRule_RarityRank.Value.value->Belt.Option.flatMap(Belt.Int.fromString)
+
+      switch (direction, value) {
+      | (Some(direction), Some(value)) =>
+        Some({
+          alertRarityRankEventFilter: Some({
+            direction: direction,
+            value: value,
+          }),
+          alertAttributesEventFilter: None,
+          alertPriceThresholdEventFilter: None,
+          alertMacroRelativeChangeEventFilter: None,
+          alertQuantityEventFilter: None,
         })
       | _ => None
       }
@@ -259,6 +290,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
           alertAttributesEventFilter: None,
           alertQuantityEventFilter: None,
           alertMacroRelativeChangeEventFilter: None,
+          alertRarityRankEventFilter: None,
         })
       | _ => None
       }
@@ -294,6 +326,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
         alertPriceThresholdEventFilter: None,
         alertQuantityEventFilter: None,
         alertMacroRelativeChangeEventFilter: None,
+        alertRarityRankEventFilter: None,
       }
     })
 
@@ -322,6 +355,7 @@ let getUpdateAlertRuleInput = (~oldValue, ~newValue, ~accountAddress, ~destinati
             propertiesRule,
             quantityEventFilter,
             macroRelativeChangeEventFilter,
+            rarityRankEventFilter,
           ]->Belt.Array.keepMap(i => i),
           destination: destination,
           eventType: newValue->AlertModal.Value.eventType,

@@ -9,10 +9,28 @@ module RelativeChangeRule = {
   }
 }
 
+module RarityRankRule = {
+  @react.component
+  let make = (~rule: rarityRankRule) => {
+    <MaterialUi.Typography
+      color=#TextPrimary
+      variant=#Body2
+      classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
+      {React.string("rank ")}
+      {React.string(rule.modifier)}
+      {React.string(` Ξ`)}
+      {React.string(rule.value)}
+    </MaterialUi.Typography>
+  }
+}
+
 module Price = {
   @react.component
-  let make = (~rule) => {
-    <MaterialUi.Typography color=#TextPrimary variant=#Body2 classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
+  let make = (~rule: priceRule) => {
+    <MaterialUi.Typography
+      color=#TextPrimary
+      variant=#Body2
+      classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
       {React.string("price ")}
       {React.string(rule.modifier)}
       {React.string(` Ξ`)}
@@ -140,18 +158,30 @@ let make = (~rules) => {
     ->Belt.Array.keepMap(rule =>
       switch rule {
       | PriceRule(s) => Some(s)
-      | PropertyRule(_) | QuantityRule(_) | RelativeChangeRule(_) => None
+      | PropertyRule(_) | QuantityRule(_) | RelativeChangeRule(_) | RarityRankRule(_) => None
       }
     )
     ->Belt.Array.get(0)
     ->Belt.Option.map(rule => <Price rule={rule} />)
     ->Belt.Option.getWithDefault(React.null)
+  let rarityRankRule =
+    rules
+    ->Belt.Array.keepMap(rule =>
+      switch rule {
+      | RarityRankRule(s) => Some(s)
+      | PropertyRule(_) | QuantityRule(_) | RelativeChangeRule(_) | PriceRule(_) => None
+      }
+    )
+    ->Belt.Array.get(0)
+    ->Belt.Option.map(rule => <RarityRankRule rule={rule} />)
+    ->Belt.Option.getWithDefault(React.null)
+
   let relativeChangeRule =
     rules
     ->Belt.Array.keepMap(rule =>
       switch rule {
       | RelativeChangeRule(s) => Some(s)
-      | PropertyRule(_) | QuantityRule(_) | PriceRule(_) => None
+      | PropertyRule(_) | QuantityRule(_) | PriceRule(_) | RarityRankRule(_) => None
       }
     )
     ->Belt.Array.get(0)
@@ -163,7 +193,7 @@ let make = (~rules) => {
       switch rule {
       | PropertyRule({traitType, displayValue}) =>
         Some({traitType: traitType, displayValue: displayValue})
-      | PriceRule(_) | QuantityRule(_) | RelativeChangeRule(_) => None
+      | PriceRule(_) | QuantityRule(_) | RelativeChangeRule(_) | RarityRankRule(_) => None
       }
     )
     if Belt.Array.length(rules) > 0 {
@@ -174,6 +204,6 @@ let make = (~rules) => {
   }
 
   <div className={Cn.make(["flex", "flex-row", "items-center", "space-x-4"])}>
-    {priceRule} {propertyRules} {relativeChangeRule}
+    {priceRule} {rarityRankRule} {propertyRules} {relativeChangeRule}
   </div>
 }

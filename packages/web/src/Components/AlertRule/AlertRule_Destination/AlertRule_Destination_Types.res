@@ -19,13 +19,13 @@ module WebPushTemplate = {
 
   let defaultSaleTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
-    body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
+    body: "rank {assetRarityRank}\n{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
   }
 
   let defaultListingTemplate = {
     title: "{eventType}: {assetName} - {tokenPrice}",
-    body: "{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
+    body: "rank {assetRarityRank}\n{collectionName} ({collectionFloorTokenPrice} floor)\n{alertRulesSatisfied}",
     isThumbnailImageSize: true,
   }
 
@@ -147,9 +147,14 @@ module DiscordTemplate = {
         inline: true,
       },
       {
+        name: "rank",
+        value: "{assetRarityRank}",
+        inline: true,
+      },
+      {
         name: "trailing 15 sales floor price",
         value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
-        inline: true,
+        inline: false,
       },
       {
         name: "transaction",
@@ -197,9 +202,14 @@ module DiscordTemplate = {
         inline: true,
       },
       {
+        name: "rank",
+        value: "{assetRarityRank}",
+        inline: true,
+      },
+      {
         name: "trailing 15 sales floor price",
         value: "{collectionFloorTokenPrice} ({collectionFloorUsdPrice})",
-        inline: true,
+        inline: false,
       },
       {
         name: "seller",

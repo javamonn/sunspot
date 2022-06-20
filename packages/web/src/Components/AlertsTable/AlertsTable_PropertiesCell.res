@@ -6,7 +6,7 @@ let make = (~row) => {
     switch rule {
     | PropertyRule({traitType, displayValue}) =>
       Some({traitType: traitType, displayValue: displayValue})
-    | PriceRule(_) | QuantityRule(_) | RelativeChangeRule(_) => None
+    | PriceRule(_) | QuantityRule(_) | RelativeChangeRule(_) | RarityRankRule(_) => None
     }
   )
   let displayValuesByTraitType =

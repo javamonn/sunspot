@@ -1,7 +1,7 @@
 type disabledReason =
   | DestinationRateLimitExceeded(option<Js.Json.t>)
   | DestinationMissingAccess
-  | AccountSubscriptionAlertLimitExceeded 
+  | AccountSubscriptionAlertLimitExceeded
   | AccountSubscriptionMissingFunctionality
   | Snoozed
 
@@ -13,6 +13,7 @@ type t = {
   priceRule: option<AlertRule_Price.t>,
   propertiesRule: option<AlertRule_Properties.Value.t>,
   quantityRule: option<AlertRule_Quantity.Value.t>,
+  rarityRankRule: option<AlertRule_RarityRank.Value.t>,
   saleVolumeChangeRule: option<AlertModal_AlertRules_SaleVolumeChange.t>,
   floorPriceChangeRule: option<AlertModal_AlertRules_FloorPriceChange.t>,
   destination: option<AlertRule_Destination.Types.Value.t>,
@@ -26,6 +27,7 @@ let make = (
   ~priceRule,
   ~propertiesRule,
   ~quantityRule,
+  ~rarityRankRule,
   ~saleVolumeChangeRule,
   ~floorPriceChangeRule,
   ~destination,
@@ -39,6 +41,7 @@ let make = (
   priceRule: priceRule,
   propertiesRule: propertiesRule,
   quantityRule: quantityRule,
+  rarityRankRule: rarityRankRule,
   destination: destination,
   saleVolumeChangeRule: saleVolumeChangeRule,
   floorPriceChangeRule: floorPriceChangeRule,
@@ -54,6 +57,7 @@ let empty = () => {
   quantityRule: None,
   saleVolumeChangeRule: None,
   floorPriceChangeRule: None,
+  rarityRankRule: None,
   eventType: #LISTING,
   destination: Config.isBrowser() && Services.PushNotification.isSupported()
     ? Some(AlertRule_Destination.Types.Value.WebPushAlertDestination({template: None}))
