@@ -18,7 +18,7 @@ module RarityRankRule = {
       classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
       {React.string("rank ")}
       {React.string(rule.modifier)}
-      {React.string(` Ξ`)}
+      {React.string(` #`)}
       {React.string(rule.value)}
     </MaterialUi.Typography>
   }
