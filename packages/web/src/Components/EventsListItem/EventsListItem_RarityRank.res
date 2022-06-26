@@ -17,8 +17,14 @@ let make = (~openSeaAsset: Fragment_EventsListItem_RarityRank_OpenSeaAsset.t) =>
   let rankText = switch openSeaAsset {
   | {
       rarityRank: Some(rarityRank),
-      collection: Some({lastCollectionIndexEvent: Some({completionReason: Some(#EXECUTED)})}),
-    } =>
+      collection: Some({
+        lastCollectionIndexEvent: Some({
+          completionReason: Some(#EXECUTED),
+          successfulAssetIndexEventCount: Some(s),
+          failedAssetIndexEventCount: Some(f),
+        }),
+      }),
+    } if Belt.Float.fromInt(s) /. (Belt.Float.fromInt(s) +. Belt.Float.fromInt(f)) >= 0.90 =>
     `#${Belt.Int.toString(rarityRank)}`
   | _ => "n/a"
   }
