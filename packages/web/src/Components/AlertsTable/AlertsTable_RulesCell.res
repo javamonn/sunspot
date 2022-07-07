@@ -31,7 +31,7 @@ module Price = {
       color=#TextPrimary
       variant=#Body2
       classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
-      {React.string("price ")}
+      {React.string(`${rule.label} `)}
       {React.string(rule.modifier)}
       {React.string(` Ξ`)}
       {React.string(rule.price)}

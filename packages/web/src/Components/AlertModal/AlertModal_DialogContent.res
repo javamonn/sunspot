@@ -206,14 +206,7 @@ let make = (
           })}
       />
     | #FLOOR_PRICE_CHANGE =>
-      <AlertModal_AlertRules_FloorPriceChange
-        value={AlertModal_Value.floorPriceChangeRule(value)}
-        onChange={newFloorPriceChangeRule =>
-          onChange(value => {
-            ...value,
-            AlertModal_Value.floorPriceChangeRule: Some(newFloorPriceChangeRule),
-          })}
-      />
+      <AlertModal_AlertRules_FloorPriceChange value={value} onChange={onChange} />
     }}
     <CreateTwitterIntegrationDialog
       isOpen={isCreateTwitterIntegrationDialogOpen}

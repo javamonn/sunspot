@@ -515,17 +515,21 @@ let make = (~onCreated, ~params, ~alertCount, ~accountSubscriptionType) => {
         alertAttributesEventFilter: None,
         alertRarityRankEventFilter: None,
       })
-    | (#FLOOR_PRICE_CHANGE, _, Some(s)) =>
+    | (
+        #FLOOR_PRICE_CHANGE,
+        _,
+        Some({timeWindow: Some(timeWindow), changeDirection: Some(changeDirection)} as s),
+      ) =>
       Some({
         alertMacroRelativeChangeEventFilter: Some({
-          timeWindow: s.timeWindow,
+          timeWindow: timeWindow,
           relativeValueChange: s.relativeValueChange,
           absoluteValueChange: s.absoluteValueChange
           ->Belt.Option.map(Belt.Float.fromString)
           ->Belt.Option.getWithDefault(None),
           emptyRelativeDiffAbsoluteValueChange: None,
           timeBucket: None,
-          direction: switch s.changeDirection {
+          direction: switch changeDirection {
           | #CHANGE_ALL => #ALERT_EQUAL
           | #CHANGE_INCREASE => #ALERT_ABOVE
           | #CHANGE_DECREASE => #ALERT_BELOW

@@ -23,7 +23,7 @@ let columns = [
 ]
 
 type quantityRule = {modifier: string, value: string}
-type priceRule = {modifier: string, price: string}
+type priceRule = {modifier: string, price: string, label: string}
 type rarityRankRule = {modifier: string, value: string}
 type propertyRule = {traitType: string, displayValue: string}
 
