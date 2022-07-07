@@ -135,6 +135,7 @@ let make = (
         ->Belt.Option.map(disabled => {
           let title = switch disabled {
           | Snoozed => "alert has been disabled."
+          | Satisfied => "alert has been satisfied and automatically disabled."
           | DestinationMissingAccess =>  "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
           | DestinationRateLimitExceeded(
               _,

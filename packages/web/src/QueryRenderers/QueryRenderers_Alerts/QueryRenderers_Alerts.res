@@ -68,7 +68,9 @@ let make = () => {
             | #ALERT_EQUAL => "="
             | #FutureAddedValue(v) => v
             }
-            Some([AlertsTable.RarityRankRule({modifier: modifier, value: Belt.Int.toString(value)})])
+            Some([
+              AlertsTable.RarityRankRule({modifier: modifier, value: Belt.Int.toString(value)}),
+            ])
           | #AlertQuantityEventFilter({direction, numberValue: Some(value)}) =>
             let modifier = switch direction {
             | #ALERT_ABOVE => ">"
@@ -89,7 +91,12 @@ let make = () => {
               ->Belt.Option.map(Belt.Float.toString)
               ->Belt.Option.getExn
 
-            Some([AlertsTable.PriceRule({modifier: modifier, price: formattedPrice})])
+            let label = switch item.eventType {
+            | #FLOOR_PRICE_CHANGE => "floor price"
+            | _ => "price"
+            }
+
+            Some([AlertsTable.PriceRule({modifier: modifier, price: formattedPrice, label: label})])
           | #AlertAttributesEventFilter({attributes}) =>
             attributes
             ->Belt.Array.keepMap(attribute =>
@@ -213,6 +220,8 @@ let make = () => {
           "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable.",
         )
       | (Some(true), Some(#SNOOZED)) => Some("alert has been disabled.")
+      | (Some(true), Some(#SATISFIED)) =>
+        Some("alert has been satisfied and automatically disabled.")
       | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_ALERT_LIMIT_EXCEEDED)) =>
         Some(
           "alert has been disabled due to exceeding your account alert limit. upgrade your account for increased limits.",
@@ -372,18 +381,25 @@ let make = () => {
               Some(e)
             }
 
-            timeWindow->Belt.Option.map(timeWindow => {
-              AlertModal_AlertRules_FloorPriceChange.timeWindow: timeWindow,
-              relativeValueChange: e.relativeValueChange,
-              absoluteValueChange: e.absoluteValueChange
-              ->Belt.Option.map(v => v->Belt.Float.toString->Js.Option.some)
-              ->Belt.Option.getWithDefault(None),
-              changeDirection: switch e.direction {
-              | #ALERT_ABOVE => #CHANGE_INCREASE
-              | #ALERT_BELOW => #CHANGE_DECREASE
-              | #ALERT_EQUAL | #FutureAddedValue(_) => #CHANGE_ALL
-              },
-            })
+            let changeDirection = switch e.direction {
+            | #ALERT_ABOVE => Some(#CHANGE_INCREASE)
+            | #ALERT_BELOW => Some(#CHANGE_DECREASE)
+            | #ALERT_EQUAL => Some(#CHANGE_ALL)
+            | #FutureAddedValue(_) => None
+            }
+
+            switch (timeWindow, changeDirection) {
+            | (Some(timeWindow), Some(changeDirection)) =>
+              Some({
+                AlertRule_MacroRelativeFloorPriceChange.timeWindow: Some(timeWindow),
+                relativeValueChange: e.relativeValueChange,
+                absoluteValueChange: e.absoluteValueChange
+                ->Belt.Option.map(v => v->Belt.Float.toString->Js.Option.some)
+                ->Belt.Option.getWithDefault(None),
+                changeDirection: Some(changeDirection),
+              })
+            | _ => None
+            }
           | _ => None
           }
         )
@@ -636,6 +652,7 @@ let make = () => {
       | (Some(true), Some(#ACCOUNT_SUBSCRIPTION_MISSING_FUNCTIONALITY)) =>
         Some(AlertModal.Value.AccountSubscriptionMissingFunctionality)
       | (Some(true), Some(#SNOOZED)) => Some(AlertModal.Value.Snoozed)
+      | (Some(true), Some(#SATISFIED)) => Some(AlertModal.Value.Satisfied)
       | _ => None
       }
 

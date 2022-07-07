@@ -4,6 +4,7 @@ type disabledReason =
   | AccountSubscriptionAlertLimitExceeded
   | AccountSubscriptionMissingFunctionality
   | Snoozed
+  | Satisfied
 
 @deriving(accessors)
 type t = {
@@ -15,7 +16,7 @@ type t = {
   quantityRule: option<AlertRule_Quantity.Value.t>,
   rarityRankRule: option<AlertRule_RarityRank.Value.t>,
   saleVolumeChangeRule: option<AlertModal_AlertRules_SaleVolumeChange.t>,
-  floorPriceChangeRule: option<AlertModal_AlertRules_FloorPriceChange.t>,
+  floorPriceChangeRule: option<AlertRule_MacroRelativeFloorPriceChange.t>,
   destination: option<AlertRule_Destination.Types.Value.t>,
   disabled: option<disabledReason>,
   quickbuy: bool,

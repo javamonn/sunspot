@@ -69,6 +69,8 @@ let validateValue = value => {
   | (_, Some({absoluteValueChange: Some(absoluteValueChange)}), _)
     if absoluteValueChange->Belt.Float.fromString->Js.Option.isNone =>
     Some("absolute value change must be a number")
+  | (_, Some({changeDirection: None}), _) => Some("type is required")
+  | (_, Some({timeWindow: None}), _) => Some("time window is required")
   | _ => None
   }
 

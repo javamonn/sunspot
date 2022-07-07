@@ -9,7 +9,7 @@ let makeRule = (~modifier, ~value) => {
 }
 
 @react.component
-let make = (~value=?, ~onChange, ~accordionExpanded) => {
+let make = (~ruleLabel="price", ~value=?, ~onChange, ~accordionExpanded) => {
   <div className={Cn.make(["flex", "flex-row", "flex-1"])}>
     <MaterialUi.FormControl
       classes={MaterialUi.FormControl.Classes.make(~root={Cn.make(["flex-1"])}, ())}>
@@ -18,11 +18,11 @@ let make = (~value=?, ~onChange, ~accordionExpanded) => {
       </MaterialUi.InputLabel>
       <MaterialUi.Select
         labelId={`CreateAlertModal_price_rule`}
-        value={MaterialUi.Select.Value.string("price")}
+        value={MaterialUi.Select.Value.string(ruleLabel)}
         disabled=true
         fullWidth=true>
-        <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string("price")}>
-          {React.string("price")}
+        <MaterialUi.MenuItem value={MaterialUi.MenuItem.Value.string(ruleLabel)}>
+          {React.string(ruleLabel)}
         </MaterialUi.MenuItem>
       </MaterialUi.Select>
     </MaterialUi.FormControl>
