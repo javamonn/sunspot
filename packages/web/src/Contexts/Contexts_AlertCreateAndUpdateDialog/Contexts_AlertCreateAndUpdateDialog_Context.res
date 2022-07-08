@@ -1,11 +1,11 @@
 exception MissingProvider
 
 type t = {
-  openCreateAlertModal: unit => unit,
+  openCreateAlertModal: option<AlertModal.Value.t> => unit,
   openUpdateAlertModal: AlertModal.Value.t => unit,
 }
 
 let context = React.createContext({
-  openCreateAlertModal: () => raise(MissingProvider),
+  openCreateAlertModal: _ => raise(MissingProvider),
   openUpdateAlertModal: _ => raise(MissingProvider),
 })

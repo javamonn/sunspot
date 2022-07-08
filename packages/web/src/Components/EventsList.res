@@ -22,7 +22,7 @@ module Empty = {
         "sm:mt-0",
       ])}>
       <MaterialUi.Button
-        onClick={_ => openCreateAlertModal()}
+        onClick={_ => openCreateAlertModal(None)}
         variant=#Outlined
         classes={MaterialUi.Button.Classes.make(
           ~label=Cn.make(["lowercase", "py-2", "px-2", "text-darkSecondary"]),

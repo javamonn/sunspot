@@ -172,3 +172,13 @@ module AssessmentOutlined = {
     ~style: ReactDOM.Style.t=?,
   ) => React.element = "default"
 }
+
+module FileCopy = {
+  @react.component @module("@material-ui/icons/FileCopy")
+  external make: (
+    ~color: string=?,
+    ~className: string=?,
+    ~fontSize: string=?,
+    ~style: ReactDOM.Style.t=?,
+  ) => React.element = "default"
+}

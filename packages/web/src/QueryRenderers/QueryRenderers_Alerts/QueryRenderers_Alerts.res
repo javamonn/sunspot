@@ -695,11 +695,11 @@ let make = () => {
       isLoading={isLoading}
       rows={tableRows}
       onRowClick={handleRowClick}
-      onCreateAlertClick={_ => openCreateAlertModal()}
+      onCreateAlertClick={_ => openCreateAlertModal(None)}
     />
     <CreateAlertFAB
       className={Cn.make(["hidden", "sm:block", "absolute", "bottom-0", "right-0", "mb-4", "mr-4"])}
-      onClick={_ => openCreateAlertModal()}
+      onClick={_ => openCreateAlertModal(None)}
     />
   </>
 }

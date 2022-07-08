@@ -20,7 +20,7 @@ let make = (~children) => {
     let _ = signIn()
   }
   let handleCreateAlertClicked = () => {
-    openCreateAlertModal()
+    openCreateAlertModal(None)
   }
 
   let isLoadingAccountSubscription = switch authentication {
