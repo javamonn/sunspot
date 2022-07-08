@@ -15,11 +15,18 @@ type updateAlertModalState =
   | UpdateAlertModalClosing(AlertModal.Value.t)
   | UpdateAlertModalClosed
 
+type createAlertModalState =
+  | CreateAlertModalOpen(option<AlertModal.Value.t>)
+  | CreateAlertModalClosing(option<AlertModal.Value.t>)
+  | CreateAlertModalClosed
+
 @react.component
 let make = (~children) => {
   let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
-  let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(Contexts_OpenSeaEventDialog_Context.context)
-  let (createAlertModalIsOpen, setCreateAlertModalIsOpen) = React.useState(_ => false)
+  let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
+    Contexts_OpenSeaEventDialog_Context.context,
+  )
+  let (createAlertModal, setCreateAlertModal) = React.useState(_ => CreateAlertModalClosed)
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
   let accountSubscriptionQuery = Query_AccountSubscription.GraphQL.Query_AccountSubscription.use(
@@ -66,17 +73,33 @@ let make = (~children) => {
 
   <ContextProvider
     value={{
-      Contexts_AlertCreateAndUpdateDialog_Context.openCreateAlertModal: () =>
-        setCreateAlertModalIsOpen(_ => true),
+      Contexts_AlertCreateAndUpdateDialog_Context.openCreateAlertModal: initialValue =>
+        setCreateAlertModal(_ => CreateAlertModalOpen(initialValue)),
       openUpdateAlertModal: value => setUpdateAlertModal(_ => UpdateAlertModalOpen(value)),
     }}>
-    <Containers.CreateAlertModal
-      isOpen={createAlertModalIsOpen}
-      onClose={_ => setCreateAlertModalIsOpen(_ => false)}
-      destinationOptions={integrationOptions}
-      accountSubscriptionType={accountSubscriptionType}
-      alertCount={enabledAlertRuleCount}
-    />
+    {switch createAlertModal {
+    | CreateAlertModalOpen(initialValue)
+    | CreateAlertModalClosing(initialValue) =>
+      <Containers.CreateAlertModal
+        initialValue=?{initialValue}
+        isOpen={switch createAlertModal {
+        | CreateAlertModalOpen(_) => true
+        | _ => false
+        }}
+        onClose={_ =>
+          setCreateAlertModal(alertModalValue =>
+            switch alertModalValue {
+            | CreateAlertModalOpen(v) => CreateAlertModalClosing(v)
+            | _ => alertModalValue
+            }
+          )}
+        onExited={_ => setCreateAlertModal(_ => CreateAlertModalClosed)}
+        destinationOptions={integrationOptions}
+        accountSubscriptionType={accountSubscriptionType}
+        alertCount={enabledAlertRuleCount}
+      />
+    | _ => React.null
+    }}
     {switch authentication {
     | Authenticated({jwt: {accountAddress}}) => <>
         <Containers.UpdateAlertModal
@@ -96,6 +119,14 @@ let make = (~children) => {
               | _ => alertModalValue
               }
             )}
+          onDuplicate={() => {
+            switch updateAlertModal {
+            | UpdateAlertModalOpen(v) =>
+              setUpdateAlertModal(_ => UpdateAlertModalClosing(v))
+              setCreateAlertModal(_ => CreateAlertModalOpen(Some(v)))
+            | _ => ()
+            }
+          }}
           destinationOptions={integrationOptions}
           accountAddress={accountAddress}
           accountSubscriptionType={accountSubscriptionType}

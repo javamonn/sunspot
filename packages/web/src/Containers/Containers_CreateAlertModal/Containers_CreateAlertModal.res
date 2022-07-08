@@ -410,15 +410,19 @@ let handleCreateAlertRule = (
 }
 
 @react.component
-let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~alertCount) => {
+let make = (
+  ~isOpen,
+  ~onClose,
+  ~onExited,
+  ~destinationOptions,
+  ~accountSubscriptionType,
+  ~alertCount,
+  ~initialValue=AlertModal.Value.empty(),
+) => {
   let (createAlertRuleMutation, _) = Mutation_CreateAlertRule.use()
-  let (value, setValue) = React.useState(() => AlertModal.Value.empty())
+  let (value, setValue) = React.useState(() => initialValue)
   let {signIn, authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
-
-  let handleExited = () => {
-    setValue(_ => AlertModal.Value.empty())
-  }
 
   let handleCreate = (~accountAddress) =>
     getCreateAlertRuleDestination(~value, ~onShowSnackbar=openSnackbar)
@@ -579,7 +583,7 @@ let make = (~isOpen, ~onClose, ~destinationOptions, ~accountSubscriptionType, ~a
   <AlertModal
     isOpen
     onClose
-    onExited={handleExited}
+    onExited={onExited}
     value={value}
     destinationOptions={destinationOptions}
     onChange={setterFn => setValue(value => value->setterFn)}

@@ -459,6 +459,7 @@ let defaultValue = AlertModal.Value.empty()
 let make = (
   ~isOpen,
   ~value=?,
+  ~onDuplicate,
   ~onClose,
   ~onExited,
   ~accountAddress,
@@ -675,6 +676,16 @@ let make = (
             />
           </MaterialUi.ListItemIcon>
           <MaterialUi.ListItemText> {React.string("enabled")} </MaterialUi.ListItemText>
+        </MaterialUi.MenuItem>,
+        <MaterialUi.MenuItem
+          onClick={_ => {
+            onClick()
+            onDuplicate()
+          }}>
+          <MaterialUi.ListItemIcon>
+            <Externals.MaterialUi_Icons.FileCopy />
+          </MaterialUi.ListItemIcon>
+          <MaterialUi.ListItemText> {React.string("duplicate")} </MaterialUi.ListItemText>
         </MaterialUi.MenuItem>,
         <MaterialUi.MenuItem
           onClick={_ => {
