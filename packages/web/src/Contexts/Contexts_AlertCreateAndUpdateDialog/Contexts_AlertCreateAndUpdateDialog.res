@@ -23,6 +23,7 @@ type createAlertModalState =
 @react.component
 let make = (~children) => {
   let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
+  let {openSnackbar}: Contexts_Snackbar.t = React.useContext(Contexts_Snackbar.context)
   let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
     Contexts_OpenSeaEventDialog_Context.context,
   )
@@ -124,6 +125,12 @@ let make = (~children) => {
             | UpdateAlertModalOpen(v) =>
               setUpdateAlertModal(_ => UpdateAlertModalClosing(v))
               setCreateAlertModal(_ => CreateAlertModalOpen(Some(v)))
+              openSnackbar(
+                ~message={React.string("alert rule duplicated, click \"create\" to save.")},
+                ~type_=Contexts_Snackbar.TypeWarning,
+                ~duration=6000,
+                (),
+              )
             | _ => ()
             }
           }}

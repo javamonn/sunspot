@@ -6,6 +6,7 @@ let defaultTemplate = eventType =>
   | #SALE => defaultSaleTemplate
   | #FLOOR_PRICE_CHANGE => defaultFloorPriceChangeTemplate
   | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
+  | #FLOOR_PRICE_THRESHOLD => defaultFloorPriceThresholdTemplate
   }
 
 @react.component

@@ -4,6 +4,7 @@ let defaultTemplate = eventType =>
   switch eventType {
   | #LISTING => defaultListingTemplate
   | #SALE => defaultSaleTemplate
+  | #FLOOR_PRICE_THRESHOLD => defaultFloorPriceThresholdTemplate
   | #FLOOR_PRICE_CHANGE => defaultFloorPriceChangeTemplate
   | #SALE_VOLUME_CHANGE => defaultSaleVolumeChangeTemplate
   }

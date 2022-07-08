@@ -40,6 +40,12 @@ module WebPushTemplate = {
     body: "{changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}",
     isThumbnailImageSize: false,
   }
+
+  let defaultFloorPriceThresholdTemplate = {
+    title: "floor {thresholdDirectionVerb} threshold: {collectionName}",
+    body: "current floor: {currentFloorPrice}\nthreshold floor: {targetFloorPrice}",
+    isThumbnailImageSize: false,
+  }
 }
 
 module TwitterTemplate = {
@@ -53,6 +59,10 @@ module TwitterTemplate = {
   }
   let defaultFloorPriceChangeTemplate = {
     text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}\n\n{eventsScatterPlotImageUrl}",
+  }
+
+  let defaultFloorPriceThresholdTemplate = {
+    text: "floor {thresholdDirectionVerb} threshold: {collectionName} floor is {currentFloorPrice}\ntarget floor: {targetFloorPrice}\n\n{eventsScatterPlotImageUrl}",
   }
 }
 
@@ -219,6 +229,21 @@ module DiscordTemplate = {
       {
         name: "alert rules satisfied",
         value: "{alertRulesSatisfied}",
+        inline: false,
+      },
+    ]),
+  }
+
+  let defaultFloorPriceThresholdTemplate = {
+    content: None,
+    title: "floor {thresholdDirectionVerb} threshold: {collectionName} floor is {currentFloorPrice}",
+    description: None,
+    displayProperties: false,
+    isThumbnailImageSize: false,
+    fields: Some([
+      {
+        name: "target floor price",
+        value: "{thresholdDirectionVerb} {targetFloorPrice}",
         inline: false,
       },
     ]),

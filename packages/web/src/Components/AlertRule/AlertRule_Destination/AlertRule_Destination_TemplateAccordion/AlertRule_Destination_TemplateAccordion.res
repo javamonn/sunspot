@@ -2,8 +2,16 @@ module DiscordTemplate = AlertRule_Destination_TemplateAccordion_DiscordTemplate
 module TwitterTemplate = AlertRule_Destination_TemplateAccordion_TwitterTemplate
 module WebPushTemplate = AlertRule_Destination_TemplateAccordion_WebPushTemplate
 
+type eventType = [
+  | #FLOOR_PRICE_CHANGE
+  | #FLOOR_PRICE_THRESHOLD
+  | #SALE_VOLUME_CHANGE
+  | #SALE
+  | #LISTING
+]
+
 @react.component
-let make = (~value=?, ~onChange, ~eventType: AlertRule_EventType.t, ~accordionExpanded) =>
+let make = (~value=?, ~onChange, ~eventType: eventType, ~accordionExpanded) =>
   switch value {
   | Some(AlertRule_Destination.Types.Value.DiscordAlertDestination({template} as destination)) =>
     <DiscordTemplate

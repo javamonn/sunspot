@@ -180,7 +180,13 @@ let make = (
         <AlertRule_Destination_TemplateAccordion
           onChange={handleDestinationChange}
           value=?{value->AlertModal_Value.destination}
-          eventType={value->AlertModal_Value.eventType}
+          eventType={switch value->AlertModal_Value.eventType {
+          | #FLOOR_PRICE_CHANGE if Js.Option.isSome(value.priceRule) => #FLOOR_PRICE_THRESHOLD
+          | #FLOOR_PRICE_CHANGE => #FLOOR_PRICE_CHANGE
+          | #SALE_VOLUME_CHANGE => #SALE_VOLUME_CHANGE
+          | #LISTING => #LISTING
+          | #SALE => #SALE
+          }}
           accordionExpanded={expanded}
         />}
     />
