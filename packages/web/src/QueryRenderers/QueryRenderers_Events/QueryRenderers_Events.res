@@ -265,6 +265,11 @@ let make = () => {
             {context: Some(#AlertRuleSatisfiedEvent_MacroRelativeChangeContext(_))} as event,
         } =>
         Some(event)
+      | {
+          eventsListItem_AlertRuleSatisfiedEvent:
+            {context: Some(#AlertRuleSatisfiedEvent_ThresholdFloorPriceContext(_))} as event,
+        } =>
+        Some(event)
       | _ => None
       }
     )

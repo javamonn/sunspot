@@ -32,6 +32,19 @@ module Fragment_EventsListItem_AlertRuleSatisfiedEvent = %graphql(`
           timeBucket
           targetCount
         }
+        ... on AlertRuleSatisfiedEvent_ThresholdFloorPriceContext {
+          paymentToken {
+            decimals
+            symbol
+            imageUrl
+          }
+          collectionFloorPrice
+          collection {
+            imageUrl
+            name
+            slug
+          }
+        }
         ... on AlertRuleSatisfiedEvent_SaleContext {
           __typename
           openSeaEvent {
