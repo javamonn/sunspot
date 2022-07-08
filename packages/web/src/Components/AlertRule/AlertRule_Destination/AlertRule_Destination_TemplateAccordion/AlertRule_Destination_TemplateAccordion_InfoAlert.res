@@ -56,8 +56,22 @@ let floorPriceChangeVariables = [
   ("target15mSaleChange", "formatted change of 15m sale events relative to previous 15m"),
   ("target15mListingCount", "count of listing events to occur in the last 15m"),
   ("target15mListingChange", "formatted change of 15m listing events relative to previous 15m"),
-  ("collectionImageUrl", "opensea collecti  n image url"),
+  ("collectionImageUrl", "opensea collection image url"),
   ("floorPrice", "floor price of collection derived from previous 15 events"),
+]
+
+let floorPriceThresholdVariables = [
+  ("collectionName", "collection name"),
+  ("collectionUrl", "opensea collection image url"),
+  ("currentFloorPrice", "floor price of collection derived from previous 15 events"),
+  ("targetFloorPrice", "target floor price of the alert rule"),
+  ("eventsScatterPlotImageUrl", "image url of most recent 1h events scatterplot"),
+  ("eventCreatedDateTime", "formatted event creation time"),
+  (
+    "thresholdDirectionVerb",
+    "one of (\"above\", \"below\", \"equal\") describing target cross direction",
+  ),
+  ("collectionImageUrl", "opensea collection image url"),
 ]
 
 let saleVolumeChangeVariables = [
@@ -81,6 +95,7 @@ let make = (~eventType, ~className=?) => {
   | #LISTING => listingVariables
   | #SALE => saleVariables
   | #FLOOR_PRICE_CHANGE => floorPriceChangeVariables
+  | #FLOOR_PRICE_THRESHOLD => floorPriceThresholdVariables
   | #SALE_VOLUME_CHANGE => saleVolumeChangeVariables
   }
 
