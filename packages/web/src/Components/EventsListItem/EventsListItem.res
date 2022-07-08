@@ -43,6 +43,19 @@ let make = (
       now={now}
       onAssetMediaClick={onAssetMediaClick}
     />
+  | Some({
+      createdAt,
+      alertRule,
+      context: Some(#AlertRuleSatisfiedEvent_ThresholdFloorPriceContext(context)),
+    }) =>
+    <EventsListItem_ThresholdFloorPriceContextItem
+      createdAt={createdAt}
+      alertRule={alertRule}
+      context={context}
+      style={style}
+      now={now}
+      onAssetMediaClick={onAssetMediaClick}
+    />
   | _ => <EventsListItem_Loading style={style} />
   }
 }
