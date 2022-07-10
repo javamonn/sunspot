@@ -85,7 +85,9 @@ let make = (
       Some(displayTimeElapsed),
       Some((changeVerb, changeIndicatorArrow)),
     ) =>
-    let displayAbsoluteChange = absoluteChangeValue->Belt.Float.toString
+    let displayAbsoluteChange = Belt.Float.toString(
+      Js.Math.round(absoluteChangeValue *. 1000.0) /. 1000.0,
+    )
     let displayChange =
       displayRelativeChange
       ->Belt.Option.map(displayRelativeChange =>

@@ -124,7 +124,12 @@ let make = (~children) => {
             switch updateAlertModal {
             | UpdateAlertModalOpen(v) =>
               setUpdateAlertModal(_ => UpdateAlertModalClosing(v))
-              setCreateAlertModal(_ => CreateAlertModalOpen(Some(v)))
+              setCreateAlertModal(_ => CreateAlertModalOpen(
+                Some({
+                  ...v,
+                  id: Externals.UUID.make(),
+                }),
+              ))
               openSnackbar(
                 ~message={React.string("alert rule duplicated, click \"create\" to save.")},
                 ~type_=Contexts_Snackbar.TypeWarning,
