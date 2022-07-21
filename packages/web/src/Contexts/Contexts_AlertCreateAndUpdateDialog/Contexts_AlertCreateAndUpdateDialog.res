@@ -30,6 +30,34 @@ let make = (~children) => {
   let (createAlertModal, setCreateAlertModal) = React.useState(_ => CreateAlertModalClosed)
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
+  let _ = React.useEffect1(() => {
+    let isOpen = switch createAlertModal {
+    | CreateAlertModalOpen(_) => true
+    | _ => false
+    }
+    Services.Logger.logWithData(
+      "alert modal",
+      "create",
+      [("open", Js.Json.boolean(isOpen))]->Js.Dict.fromArray->Js.Json.object_,
+    )
+
+    None
+  }, [createAlertModal])
+
+  let _ = React.useEffect1(() => {
+    let isOpen = switch updateAlertModal {
+    | UpdateAlertModalOpen(_) => true
+    | _ => false
+    }
+    Services.Logger.logWithData(
+      "alert modal",
+      "update",
+      [("open", Js.Json.boolean(isOpen))]->Js.Dict.fromArray->Js.Json.object_,
+    )
+
+    None
+  }, [updateAlertModal])
+
   let accountSubscriptionQuery = Query_AccountSubscription.GraphQL.Query_AccountSubscription.use(
     ~skip=switch authentication {
     | Authenticated(_) => false

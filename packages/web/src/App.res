@@ -64,6 +64,15 @@ let default = (props: props): React.element => {
   let elem = React.createElement(component, pageProps)
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
 
+  let _ = React.useEffect1(() => {
+    Services.Logger.logWithData(
+      "route",
+      "changed",
+      [("pathname", router.pathname->Js.Json.string)]->Js.Dict.fromArray->Js.Json.object_,
+    )
+    None
+  }, [router.pathname])
+
   <>
     <Externals.Next.Head>
       <title> {React.string("sunspot")} </title>

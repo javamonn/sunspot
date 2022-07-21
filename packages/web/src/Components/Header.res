@@ -47,7 +47,6 @@ let make = (
       <div className={Cn.make(["flex", "flex-row", "justify-center", "items-center"])}>
         <MaterialUi.Button
           onClick={_ => {
-            Services.Logger.log("create alert", "display modal")
             onCreateAlertClicked()
           }}
           startIcon={<Externals.MaterialUi_Icons.Add />}

@@ -495,6 +495,7 @@ let make = (
             ~mutation=updateAlertRuleMutation,
           ) |> Js.Promise.then_(_result => {
             onClose()
+            Services.Logger.log("alert", "updated")
             openSnackbar(
               ~message=React.string("alert updated."),
               ~type_=Contexts_Snackbar.TypeSuccess,
@@ -549,6 +550,7 @@ let make = (
         )
         |> Js.Promise.then_(_ => {
           onClose()
+          Services.Logger.log("alert", "deleted")
           openSnackbar(
             ~message=React.string("alert deleted."),
             ~type_=Contexts_Snackbar.TypeSuccess,
@@ -618,6 +620,7 @@ let make = (
             ? <MaterialUi.MenuItem
                 onClick={_ => {
                   onClick()
+                  Services.Logger.log("alert", "assets url clicked")
                   openSeaAssetsUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
                 }}>
                 <MaterialUi.ListItemIcon>
@@ -636,6 +639,7 @@ let make = (
             ? <MaterialUi.MenuItem
                 onClick={_ => {
                   onClick()
+                  Services.Logger.log("alert", "etherscan url clicked")
                   contractEtherscanUrl->Belt.Option.forEach(Externals.Webapi.Window.open_)
                 }}>
                 <MaterialUi.ListItemIcon>
@@ -662,6 +666,7 @@ let make = (
           | _ => false
           }}
           onClick={_ => {
+            Services.Logger.log("alert", "toggle disable clicked")
             handleToggleDisabled()
           }}>
           <MaterialUi.ListItemIcon>
