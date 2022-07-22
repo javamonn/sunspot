@@ -15,8 +15,14 @@ let validateValue = value => {
   | Some({value: None}) => Some("price rule value is required.")
   | Some({value: Some(value)}) =>
     switch Belt.Float.fromString(value) {
-    | Some(value) if value <= 0.00 => Some("price rule value must be a positive number.")
-    | None => Some("price rule value must be a positive number.")
+    | Some(value) if value <= 0.00 =>
+      Some(
+        "price rule value must be a positive number or an expression including the \'floorPrice\' variable.",
+      )
+    | None if !Js.String2.includes(value, "floorPrice") =>
+      Some(
+        "price rule value must be a positive number or an expression including the \'floorPrice\' variable.",
+      )
     | _ => None
     }
   | None => None

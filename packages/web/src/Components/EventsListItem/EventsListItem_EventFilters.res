@@ -101,10 +101,13 @@ let make = (~alertRule: Fragment_EventsListItem_EventFilters_AlertRulePartial.t)
       paymentToken,
     })
     | #AlertPriceThresholdEventFilter({direction, stringValue: Some(stringValue), paymentToken}) =>
-      let displayPrice =
+      let displayPrice = switch stringValue->Belt.Float.fromString {
+      | Some(_) =>
         stringValue
         ->Services.PaymentToken.parseTokenPrice(paymentToken.decimals)
-        ->Belt.Option.map(Belt.Float.toString)
+        ->Belt.Option.map(v => `Ξ${Belt.Float.toString(v)}`)
+      | None => Some(stringValue)
+      }
 
       let displayModifier = switch direction {
       | #ALERT_ABOVE => Some(">")
@@ -115,7 +118,7 @@ let make = (~alertRule: Fragment_EventsListItem_EventFilters_AlertRulePartial.t)
 
       switch (displayModifier, displayPrice) {
       | (Some(displayModifier), Some(displayPrice)) =>
-        Some(`price ${displayModifier} Ξ${displayPrice}`)
+        Some(`price ${displayModifier} ${displayPrice}`)
       | _ => None
       }
     | _ => None

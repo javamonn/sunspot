@@ -263,12 +263,19 @@ let getCreateAlertRuleInput = (~value, ~accountAddress, ~destination) => {
       | "=" => Some(#ALERT_EQUAL)
       | _ => None
       }
-      let value =
+
+      // parse value into decimals if its not a floorPrice expression
+      let value = if (
+        rule->AlertRule_Price.value->Belt.Option.flatMap(Belt.Float.fromString)->Js.Option.isSome
+      ) {
         rule
         ->AlertRule_Price.value
         ->Belt.Option.map(value =>
           value->Services.PaymentToken.formatPrice(Services.PaymentToken.ethPaymentToken)
         )
+      } else {
+        rule->AlertRule_Price.value
+      }
 
       switch (direction, value) {
       | (Some(direction), Some(value)) =>

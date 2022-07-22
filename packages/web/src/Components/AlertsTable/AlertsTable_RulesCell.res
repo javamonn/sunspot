@@ -27,14 +27,19 @@ module RarityRankRule = {
 module Price = {
   @react.component
   let make = (~rule: priceRule) => {
+    let displayPrice = switch Belt.Float.fromString(rule.price) {
+    | Some(_) => <> {React.string(`Ξ`)} {React.string(rule.price)} </>
+    | None => React.string(rule.price)
+    }
+
     <MaterialUi.Typography
       color=#TextPrimary
       variant=#Body2
       classes={MaterialUi.Typography.Classes.make(~body2=Cn.make(["whitespace-nowrap"]), ())}>
       {React.string(`${rule.label} `)}
       {React.string(rule.modifier)}
-      {React.string(` Ξ`)}
-      {React.string(rule.price)}
+      {React.string(` `)}
+      {displayPrice}
     </MaterialUi.Typography>
   }
 }

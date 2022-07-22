@@ -86,10 +86,15 @@ let make = () => {
             | #ALERT_EQUAL => "="
             | #FutureAddedValue(v) => v
             }
-            let formattedPrice =
+
+            // format decimal value into display, otherwise display expression directly
+            let formattedPrice = switch Belt.Float.fromString(value) {
+            | Some(_) =>
               Services.PaymentToken.parseTokenPrice(value, paymentToken.decimals)
               ->Belt.Option.map(Belt.Float.toString)
-              ->Belt.Option.getExn
+              ->Belt.Option.getWithDefault(value)
+            | _ => value
+            }
 
             let label = switch item.eventType {
             | #FLOOR_PRICE_CHANGE => "floor price"
@@ -176,17 +181,21 @@ let make = () => {
         ->Belt.Option.flatMap(eventFilter =>
           switch eventFilter {
           | #AlertPriceThresholdEventFilter({value: Some(value), paymentToken, direction}) =>
-            Services.PaymentToken.parseTokenPrice(
-              value,
-              paymentToken.decimals,
-            )->Belt.Option.flatMap(price =>
-              switch direction {
-              | #ALERT_ABOVE => Some(Services.OpenSea.URL.Min(price))
-              | #ALERT_BELOW => Some(Services.OpenSea.URL.Max(price))
-              | #ALERT_EQUAL => Some(Services.OpenSea.URL.Eq(price))
-              | #FutureAddedValue(_) => None
-              }
-            )
+            switch Belt.Float.fromString(value) {
+            | Some(_) =>
+              Services.PaymentToken.parseTokenPrice(
+                value,
+                paymentToken.decimals,
+              )->Belt.Option.flatMap(price =>
+                switch direction {
+                | #ALERT_ABOVE => Some(Services.OpenSea.URL.Min(price))
+                | #ALERT_BELOW => Some(Services.OpenSea.URL.Max(price))
+                | #ALERT_EQUAL => Some(Services.OpenSea.URL.Eq(price))
+                | #FutureAddedValue(_) => None
+                }
+              )
+            | _ => None
+            }
           | _ => None
           }
         ),
@@ -351,10 +360,16 @@ let make = () => {
               | #ALERT_EQUAL => "="
               | #FutureAddedValue(v) => v
               },
-              ~value=Services.PaymentToken.parseTokenPrice(
-                value,
-                paymentToken.decimals,
-              )->Belt.Option.map(Belt.Float.toString),
+              ~value={
+                switch Belt.Float.fromString(value) {
+                | Some(_) =>
+                  Services.PaymentToken.parseTokenPrice(
+                    value,
+                    paymentToken.decimals,
+                  )->Belt.Option.map(Belt.Float.toString)
+                | None => Some(value)
+                }
+              },
             )->Js.Option.some
           | _ => None
           }
