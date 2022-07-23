@@ -1,6 +1,13 @@
 @react.component
-let make = (~className=?, ~summaryIcon, ~summaryTitle, ~summaryDescription, ~renderDetails) => {
-  let (expanded, setExpanded) = React.useState(_ => false)
+let make = (
+  ~className=?,
+  ~summaryIcon,
+  ~summaryTitle,
+  ~summaryDescription,
+  ~initialExpanded=false,
+  ~renderDetails,
+) => {
+  let (expanded, setExpanded) = React.useState(_ => initialExpanded)
 
   <MaterialUi.Accordion
     variant=#Outlined

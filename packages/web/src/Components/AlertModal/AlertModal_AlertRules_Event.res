@@ -50,6 +50,7 @@ let make = (
       </MaterialUi.Typography>}
       summaryTitle={React.string("price rule")}
       summaryDescription={React.string("filter events by price threshold")}
+      initialExpanded={value->priceRule->Js.Option.isSome}
       renderDetails={(~expanded) =>
         <AlertRule_Price
           value=?{value->priceRule} onChange={handlePriceRuleChange} accordionExpanded={expanded}
@@ -62,6 +63,7 @@ let make = (
       />}
       summaryTitle={React.string("rarity rank rule")}
       summaryDescription={React.string("filter events by asset rarity rank")}
+      initialExpanded={value->rarityRankRule->Js.Option.isSome}
       renderDetails={(~expanded) =>
         <AlertRule_RarityRank
           value=?{value->rarityRankRule}
@@ -76,6 +78,7 @@ let make = (
       />}
       summaryTitle={React.string("properties rule")}
       summaryDescription={React.string("filter events by asset properties")}
+      initialExpanded={value->propertiesRule->Js.Option.isSome}
       renderDetails={(~expanded) =>
         <AlertRule_Properties
           accordionExpanded={expanded}
@@ -100,6 +103,7 @@ let make = (
       />}
       summaryTitle={React.string("quantity rule")}
       summaryDescription={React.string("filter events by quantity of assets")}
+      initialExpanded={value->quantityRule->Js.Option.isSome}
       renderDetails={(~expanded) =>
         <AlertRule_Quantity
           value=?{value->quantityRule}

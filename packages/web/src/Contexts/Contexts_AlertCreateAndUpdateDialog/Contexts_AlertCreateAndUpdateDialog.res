@@ -27,7 +27,37 @@ let make = (~children) => {
   let {isQuickbuyTxPending}: Contexts_OpenSeaEventDialog_Context.t = React.useContext(
     Contexts_OpenSeaEventDialog_Context.context,
   )
-  let (createAlertModal, setCreateAlertModal) = React.useState(_ => CreateAlertModalClosed)
+
+  let router = Externals.Next.Router.useRouter()
+
+  let (createAlertModal, setCreateAlertModal) = React.useState(_ => {
+    let queryParams = router.asPath->Services.Next.parseQuery
+
+    switch (
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+      ),
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")
+      ),
+    ) {
+    | (Some(contractAddress), Some(slug)) =>
+      let initialValue = {
+        ...AlertModal_Value.empty(),
+        collection: Some(
+          AlertModal_Types.CollectionOption.make(
+            ~contractAddress,
+            ~slug,
+            ~name=None,
+            ~imageUrl=None,
+          ),
+        ),
+        priceRule: Some(AlertRule_Price.makeRule(~modifier="<", ~value=Some("floorPrice * 1.1"))),
+      }
+      CreateAlertModalOpen(Some(initialValue))
+    | _ => CreateAlertModalClosed
+    }
+  })
   let (updateAlertModal, setUpdateAlertModal) = React.useState(_ => UpdateAlertModalClosed)
 
   let _ = React.useEffect1(() => {
@@ -35,6 +65,14 @@ let make = (~children) => {
     | CreateAlertModalOpen(_) => true
     | _ => false
     }
+
+    // remove initial create params if they exist when modal is closed
+    let _ = switch createAlertModal {
+    | CreateAlertModalClosed(_) if router.asPath->Services.Next.parseQuery->Js.Option.isSome =>
+      Externals.Next.Router.replaceWithParams(router, router.pathname, None, {shallow: true})
+    | _ => ()
+    }
+
     Services.Logger.logWithData(
       "alert modal",
       "create",

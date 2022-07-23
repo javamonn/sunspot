@@ -21,7 +21,15 @@ let make = (~isOpen, ~onClose) => {
   }
 
   <MaterialUi.Dialog _open={isOpen} onClose={(_, _) => onClose(false)}>
-    <MaterialUi.DialogTitle> {React.string("connect wallet")} </MaterialUi.DialogTitle>
+    <MaterialUi.DialogTitle>
+      {React.string("connect wallet")}
+      <InfoAlert
+        className={Cn.make(["mt-4"])}
+        text={React.string(
+          "sunspot requires a free account to use. connect your wallet and sign a message to sign in to get started.",
+        )}
+      />
+    </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(
         ~root=Cn.make(["flex", "flex-row", "items-center"]),

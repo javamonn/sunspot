@@ -1,5 +1,5 @@
 @react.component
-let make = (~text, ~className="", ~children=?) =>
+let make = (~text, ~className="", ~backgroundColorClassName="bg-gray-100", ~borderColorClassName="border-darkDisabled", ~style=?, ~children=?) =>
   <div
     className={Cn.make([
       "flex",
@@ -8,13 +8,14 @@ let make = (~text, ~className="", ~children=?) =>
       "text-darkSecondary",
       "border",
       "border-solid",
-      "border-darkDisabled",
       "rounded",
       "text-sm",
-      "bg-gray-100",
       "font-mono",
       className,
-    ])}>
+      backgroundColorClassName,
+      borderColorClassName
+    ])}
+    style=?{style}>
     <div className={Cn.make(["flex", "flex-row", "items-center", "p-6"])}>
       <Externals.MaterialUi_Icons.Error className={Cn.make(["w-5", "h-5", "mr-4", "opacity-50"])} />
       {text}

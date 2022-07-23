@@ -28,6 +28,7 @@ module Query_OpenSeaCollectionByContractAddress = %graphql(`
 let make = (~value, ~onChange) => {
   let (collectionQueryInput, setCollectionQueryInput) = React.useState(_ => "")
   let (autocompleteIsOpen, setAutocompleteIsOpen) = React.useState(_ => false)
+
   let resultsSource = React.useRef(None)
   let (
     executeCollectionNamePrefixQuery,
@@ -41,8 +42,45 @@ let make = (~value, ~onChange) => {
     contractAddressQueryResult,
   ) = Query_OpenSeaCollectionByContractAddress.useLazy(
     ~fetchPolicy=ApolloClient__React_Hooks_UseLazyQuery.WatchQueryFetchPolicy.NoCache,
+    ~onCompleted=result =>
+      switch (
+        value->Belt.Option.flatMap(CollectionOption.nameGet),
+        value->Belt.Option.flatMap(CollectionOption.imageUrlGet),
+        value->Belt.Option.map(CollectionOption.contractAddressGet),
+        result,
+      ) {
+      | (None, None, Some(contractAddress), Ok({collection}))
+        if collection.contractAddress === contractAddress =>
+        onChange(
+          Some(
+            CollectionOption.make(
+              ~name=collection.name,
+              ~imageUrl=collection.imageUrl,
+              ~contractAddress=collection.contractAddress,
+              ~slug=collection.slug,
+            ),
+          ),
+        )
+      | _ => ()
+      },
     (),
   )
+
+  let _ = React.useEffect0(() => {
+    switch (
+      value->Belt.Option.flatMap(CollectionOption.nameGet),
+      value->Belt.Option.flatMap(CollectionOption.imageUrlGet),
+      value->Belt.Option.map(CollectionOption.contractAddressGet),
+    ) {
+    | (None, None, Some(contractAddress)) =>
+      let _ = executeContractAddressQuery({
+        input: {contractAddress: Js.String2.toLowerCase(contractAddress)},
+      })
+    | _ => ()
+    }
+
+    None
+  })
 
   let debouncedExecuteQuery = React.useMemo0(() => Externals.Lodash.Debounce1.make((. input) => {
       let isAddress = Js.String2.startsWith(input, "0x") && Js.String2.length(input) == 42

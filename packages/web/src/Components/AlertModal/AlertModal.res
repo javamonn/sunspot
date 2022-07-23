@@ -26,6 +26,30 @@ let make = (
   let {openDialog: openAccountSubscriptionDialog} = React.useContext(
     Contexts_AccountSubscriptionDialog_Context.context,
   )
+  let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
+  let router = Externals.Next.Router.useRouter()
+
+  let showCreateAlertInfo = {
+    let queryParams = router.asPath->Services.Next.parseQuery
+    let hasCreateAlertQuery = switch (
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+      ),
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")
+      ),
+    ) {
+    | (Some(_), Some(_)) => true
+    | _ => false
+    }
+
+    switch authentication {
+    | Authenticated(_) => None
+    | _ if hasCreateAlertQuery =>
+      Some(`create an alert to receive real-time notifications when a new asset listing near the floor occurs. optionally tweak parameters to filter on properties, rarity, and more.`)
+    | _ => None
+    }
+  }
 
   let _ = React.useEffect1(() => {
     if isOpen {
@@ -105,8 +129,7 @@ let make = (
       classes={MaterialUi.DialogTitle.Classes.make(
         ~root=Cn.make([
           "flex",
-          "justify-between",
-          "items-center",
+          "flex-col",
           "sm:px-4",
           "sm:py-4",
           "border-b",
@@ -115,60 +138,75 @@ let make = (
         ]),
         (),
       )}>
-      <div className={Cn.make(["flex", "flex-row", "items-center"])}>
-        <MaterialUi.IconButton
-          onClick={_ => onClose()}
-          size=#Small
-          classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["mr-4"]), ())}>
-          <Externals.MaterialUi_Icons.Close />
-        </MaterialUi.IconButton>
-        <MaterialUi.Typography
-          color=#Primary
-          variant=#H6
-          classes={MaterialUi.Typography.Classes.make(~root=Cn.make(["leading-none", "mt-1"]), ())}>
-          {React.string(title)}
-        </MaterialUi.Typography>
-      </div>
-      <div className={Cn.make(["flex", "flex-row", "items-center"])}>
-        {value
-        ->Value.disabled
-        ->Belt.Option.map(disabled => {
-          let title = switch disabled {
-          | Snoozed => "alert has been disabled."
-          | Satisfied => "alert has been satisfied and automatically disabled."
-          | DestinationMissingAccess =>  "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
-          | DestinationRateLimitExceeded(
-              _,
-            ) => "alert has been disabled due to a ratelimit and will automatically re-enable after a period of time."
-          | AccountSubscriptionAlertLimitExceeded => "alert has been disabled due to exceeding your account alert limit. upgrade your account for increased limits."
-          | AccountSubscriptionMissingFunctionality => "alert has been disabled due to exceeding your account functionality. upgrade your account for advanced functionality."
-          }
-
-          <MaterialUi.Tooltip title={React.string(title)}>
-            <Externals.MaterialUi_Icons.Error
-              className={Cn.make(["w-6", "h-6", "mr-2", "text-red-400"])}
-            />
-          </MaterialUi.Tooltip>
-        })
-        ->Belt.Option.getWithDefault(React.null)}
-        {renderOverflowActionMenuItems
-        ->Belt.Option.map(renderOverflowActionMenuItems =>
-          <IconMenu
-            icon={<Externals.MaterialUi_Icons.MoreVert />}
-            renderItems={renderOverflowActionMenuItems}
-            anchorOrigin={
-              open MaterialUi.Menu
-              AnchorOrigin.make(
-                ~horizontal=Horizontal.enum(Horizontal_enum.left),
-                ~vertical=Vertical.enum(Vertical_enum.bottom),
-                (),
-              )
+      <div className={Cn.make(["flex", "flex-row", "flex-1", "justify-between", "items-center"])}>
+        <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+          <MaterialUi.IconButton
+            onClick={_ => onClose()}
+            size=#Small
+            classes={MaterialUi.IconButton.Classes.make(~root=Cn.make(["mr-4"]), ())}>
+            <Externals.MaterialUi_Icons.Close />
+          </MaterialUi.IconButton>
+          <MaterialUi.Typography
+            color=#Primary
+            variant=#H6
+            classes={MaterialUi.Typography.Classes.make(
+              ~root=Cn.make(["leading-none", "mt-1"]),
+              (),
+            )}>
+            {React.string(title)}
+          </MaterialUi.Typography>
+        </div>
+        <div className={Cn.make(["flex", "flex-row", "items-center"])}>
+          {value
+          ->Value.disabled
+          ->Belt.Option.map(disabled => {
+            let title = switch disabled {
+            | Snoozed => "alert has been disabled."
+            | Satisfied => "alert has been satisfied and automatically disabled."
+            | DestinationMissingAccess => "alert has been disabled due to being unable to connect to the destination. try reconnecting or adjusting permissions and re-enable."
+            | DestinationRateLimitExceeded(
+                _,
+              ) => "alert has been disabled due to a ratelimit and will automatically re-enable after a period of time."
+            | AccountSubscriptionAlertLimitExceeded => "alert has been disabled due to exceeding your account alert limit. upgrade your account for increased limits."
+            | AccountSubscriptionMissingFunctionality => "alert has been disabled due to exceeding your account functionality. upgrade your account for advanced functionality."
             }
-            menuClasses={MaterialUi.Menu.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
-          />
-        )
-        ->Belt.Option.getWithDefault(React.null)}
+
+            <MaterialUi.Tooltip title={React.string(title)}>
+              <Externals.MaterialUi_Icons.Error
+                className={Cn.make(["w-6", "h-6", "mr-2", "text-red-400"])}
+              />
+            </MaterialUi.Tooltip>
+          })
+          ->Belt.Option.getWithDefault(React.null)}
+          {renderOverflowActionMenuItems
+          ->Belt.Option.map(renderOverflowActionMenuItems =>
+            <IconMenu
+              icon={<Externals.MaterialUi_Icons.MoreVert />}
+              renderItems={renderOverflowActionMenuItems}
+              anchorOrigin={
+                open MaterialUi.Menu
+                AnchorOrigin.make(
+                  ~horizontal=Horizontal.enum(Horizontal_enum.left),
+                  ~vertical=Vertical.enum(Vertical_enum.bottom),
+                  (),
+                )
+              }
+              menuClasses={MaterialUi.Menu.Classes.make(~paper=Cn.make(["bg-gray-100"]), ())}
+            />
+          )
+          ->Belt.Option.getWithDefault(React.null)}
+        </div>
       </div>
+      {showCreateAlertInfo
+      ->Belt.Option.map(text =>
+        <InfoAlert
+          className={Cn.make(["mt-4"])}
+          backgroundColorClassName="bg-themeSecondaryDivider"
+          borderColorClassName="border-themeSecondaryDisabled"
+          text={React.string(text)}
+        />
+      )
+      ->Belt.Option.getWithDefault(React.null)}
     </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(

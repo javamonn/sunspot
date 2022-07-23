@@ -24,6 +24,9 @@ module.exports = {
       },
       colors: {
         themePrimary: "#212121",
+        themeSecondary: "#e64a19",
+        themeSecondaryDivider: "rgba(230, 74, 25, .12)",
+        themeSecondaryDisabled: "rgba(230, 74, 25, .38)",
         black: "#000",
         alertRed: "#fdecea",
         darkPrimary: "rgba(0, 0, 0, .87)",
