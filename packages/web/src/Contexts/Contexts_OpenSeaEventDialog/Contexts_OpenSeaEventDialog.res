@@ -52,12 +52,10 @@ let make = (~children) => {
     | _ => None
     }
   }
-  Js.log2("params", params)
   let (isOpen, setIsOpen) = React.useState(_ => Js.Option.isSome(params))
   let (isQuickbuyTxPending, setIsQuickbuyTxPending) = React.useState(_ => isOpen)
 
   let handleClose = ev => {
-    Js.log2("handleClose", ev)
     setIsOpen(_ => false)
   }
   let handleClosed = _ => {
