@@ -43,7 +43,7 @@ let make = (~children) => {
     router.asPath
     ->Services.Next.parseQuery
     ->Belt.Option.flatMap(q =>
-      q->Externals.Webapi.URLSearchParams.get("prompt-account-subscription")
+      q->Externals.Webapi.URLSearchParams.get("prompt-account-subscription")->Js.Nullable.toOption
     )
   let (dialogState, setDialogState) = React.useState(_ =>
     switch prompt {

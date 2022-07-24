@@ -45,7 +45,7 @@ module URLSearchParams = {
   type t
 
   @new external make: string => t = "URLSearchParams"
-  @send external get: (t, string) => option<string> = "get"
+  @send external get: (t, string) => Js.Nullable.t<string> = "get"
 }
 
 module Element = {

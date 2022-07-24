@@ -35,10 +35,12 @@ let make = (~children) => {
 
     switch (
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        q
+        ->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        ->Js.Nullable.toOption
       ),
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")->Js.Nullable.toOption
       ),
     ) {
     | (Some(contractAddress), Some(slug)) =>
@@ -67,8 +69,20 @@ let make = (~children) => {
     }
 
     // remove initial create params if they exist when modal is closed
-    let _ = switch createAlertModal {
-    | CreateAlertModalClosed(_) if router.asPath->Services.Next.parseQuery->Js.Option.isSome =>
+    let queryParams = router.asPath->Services.Next.parseQuery
+    let _ = switch (
+      createAlertModal,
+      queryParams->Belt.Option.flatMap(q =>
+        q
+        ->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        ->Js.Nullable.toOption
+      ),
+      queryParams->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")->Js.Nullable.toOption
+      ),
+    ) {
+    | (CreateAlertModalClosed(_), Some(_), _)
+    | (CreateAlertModalClosed(_), _, Some(_)) =>
       Externals.Next.Router.replaceWithParams(router, router.pathname, None, {shallow: true})
     | _ => ()
     }

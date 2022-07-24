@@ -22,36 +22,42 @@ type params = {
 @react.component
 let make = (~children) => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
-  let (
-    {data: useAccountData}: Externals.Wagmi.UseAccount.result,
-    _,
-  ) = Externals.Wagmi.UseAccount.use()
-  let {authentication}: Contexts_Auth.t = React.useContext(Contexts_Auth.context)
   let params = {
     let queryParams = router.asPath->Services.Next.parseQuery
     switch (
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("openSeaEventContractAddress")
+        q->Externals.Webapi.URLSearchParams.get("openSeaEventContractAddress")->Js.Nullable.toOption
       ),
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("openSeaEventTokenId")
+        q->Externals.Webapi.URLSearchParams.get("openSeaEventTokenId")->Js.Nullable.toOption
       ),
       queryParams
-      ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("openSeaEventId"))
+      ->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("openSeaEventId")->Js.Nullable.toOption
+      )
       ->Belt.Option.flatMap(Belt.Float.fromString),
-      queryParams
-      ->Belt.Option.flatMap(q => q->Externals.Webapi.URLSearchParams.get("openSeaEventQuickbuy"))
-      ->Belt.Option.map(q => q === "true"),
     ) {
-    | (Some(contractAddress), Some(tokenId), Some(id), Some(quickbuy)) =>
-      Some({contractAddress: contractAddress, tokenId: tokenId, id: id, quickbuy: quickbuy})
+    | (Some(contractAddress), Some(tokenId), Some(id)) =>
+      Some({
+        contractAddress: contractAddress,
+        tokenId: tokenId,
+        id: id,
+        quickbuy: queryParams
+        ->Belt.Option.flatMap(q =>
+          q->Externals.Webapi.URLSearchParams.get("openSeaEventQuickbuy")->Js.Nullable.toOption
+        )
+        ->Belt.Option.map(q => q === "true")
+        ->Belt.Option.getWithDefault(false),
+      })
     | _ => None
     }
   }
+  Js.log2("params", params)
   let (isOpen, setIsOpen) = React.useState(_ => Js.Option.isSome(params))
   let (isQuickbuyTxPending, setIsQuickbuyTxPending) = React.useState(_ => isOpen)
 
   let handleClose = ev => {
+    Js.log2("handleClose", ev)
     setIsOpen(_ => false)
   }
   let handleClosed = _ => {

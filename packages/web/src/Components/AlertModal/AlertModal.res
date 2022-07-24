@@ -33,10 +33,12 @@ let make = (
     let queryParams = router.asPath->Services.Next.parseQuery
     let hasCreateAlertQuery = switch (
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        q
+        ->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        ->Js.Nullable.toOption
       ),
       queryParams->Belt.Option.flatMap(q =>
-        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")->Js.Nullable.toOption
       ),
     ) {
     | (Some(_), Some(_)) => true
