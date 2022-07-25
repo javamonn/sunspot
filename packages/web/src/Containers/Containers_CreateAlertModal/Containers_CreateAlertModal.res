@@ -448,6 +448,7 @@ let make = (
           ~mutation=createAlertRuleMutation,
         ) |> Js.Promise.then_(_result => {
           onClose()
+          Services.Logger.log("alert", "created")
           openSnackbar(
             ~message=React.string("alert created."),
             ~type_=Contexts_Snackbar.TypeSuccess,
@@ -457,6 +458,13 @@ let make = (
           Js.Promise.resolve()
         })
       | Error(Services.PushNotification.PushNotificationPermissionDenied) =>
+        Services.Logger.logWithData(
+          "alert",
+          "created error",
+          [("error", Js.Json.string("PushNotificationPermissionDenied"))]
+          ->Js.Dict.fromArray
+          ->Js.Json.object_,
+        )
         openSnackbar(
           ~message=React.string(
             "browser push notification permission has been denied. enable permission or select an alternate destination.",
@@ -467,6 +475,13 @@ let make = (
         )
         Js.Promise.resolve()
       | Error(_) =>
+        Services.Logger.logWithData(
+          "alert",
+          "created error",
+          [("error", Js.Json.string("UnknownError"))]
+          ->Js.Dict.fromArray
+          ->Js.Json.object_,
+        )
         openSnackbar(
           ~message=<>
             {React.string("an unknown error occurred. try creating the alert again and ")}

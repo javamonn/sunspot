@@ -31,24 +31,29 @@ let make = (
 
   let showCreateAlertInfo = {
     let queryParams = router.asPath->Services.Next.parseQuery
-    let hasCreateAlertQuery = switch (
+
+    switch (
+      authentication,
       queryParams->Belt.Option.flatMap(q =>
-        q
-        ->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
-        ->Js.Nullable.toOption
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionType")->Js.Nullable.toOption
       ),
       queryParams->Belt.Option.flatMap(q =>
         q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")->Js.Nullable.toOption
       ),
     ) {
-    | (Some(_), Some(_)) => true
-    | _ => false
-    }
+    | (Authenticated(_), _, _) => None
+    | (_, Some(createAlertCollectionType), Some(createAlertCollectionSlug)) =>
+      let baseText = "sunspot notifies you in real-time when nft marketplace events occur. use sunspot to snipe rare assets, monitor collection floor prices, and more.\n\n"
+      let typeText =
+        createAlertCollectionType === "rarity"
+          ? `this alert will send you a push notification when an ${createAlertCollectionSlug} asset of the top 500 rarity rank is listed.`
+          : `this alert will send you a push notification when an ${createAlertCollectionSlug} asset is listed for a price within 10% of the collection floor price or below.`
 
-    switch authentication {
-    | Authenticated(_) => None
-    | _ if hasCreateAlertQuery =>
-      Some(`create an alert to receive real-time notifications when a new asset listing near the floor occurs. optionally tweak parameters to filter on properties, rarity, and more.`)
+      Some(
+        <span className={Cn.make(["whitespace-pre-line"])}>
+          {React.string(baseText)} {React.string(typeText)}
+        </span>,
+      )
     | _ => None
     }
   }
@@ -202,10 +207,11 @@ let make = (
       {showCreateAlertInfo
       ->Belt.Option.map(text =>
         <InfoAlert
+          hideIcon={true}
           className={Cn.make(["mt-4"])}
           backgroundColorClassName="bg-themeSecondaryDivider"
           borderColorClassName="border-themeSecondaryDisabled"
-          text={React.string(text)}
+          text={text}
         />
       )
       ->Belt.Option.getWithDefault(React.null)}

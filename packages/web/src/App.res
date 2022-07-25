@@ -65,10 +65,37 @@ let default = (props: props): React.element => {
   let router: Externals.Next.Router.router = Externals.Next.Router.useRouter()
 
   let _ = React.useEffect1(() => {
+    let query = router.asPath->Services.Next.parseQuery
+    let isFlareCTA = switch (
+      query->Belt.Option.flatMap(q =>
+        q
+        ->Externals.Webapi.URLSearchParams.get("createAlertCollectionContractAddress")
+        ->Js.Nullable.toOption
+      ),
+      query->Belt.Option.flatMap(q =>
+        q->Externals.Webapi.URLSearchParams.get("createAlertCollectionSlug")->Js.Nullable.toOption
+      ),
+    ) {
+    | (Some(_), Some(_)) => true
+    | _ => false
+    }
+
     Services.Logger.logWithData(
       "route",
       "changed",
-      [("pathname", router.pathname->Js.Json.string)]->Js.Dict.fromArray->Js.Json.object_,
+      [
+        ("pathname", router.pathname->Js.Json.string),
+        ("isFlareCTA", isFlareCTA->Js.Json.boolean),
+        (
+          "query",
+          query
+          ->Belt.Option.map(Externals.Webapi.URLSearchParams.toString)
+          ->Belt.Option.getWithDefault("")
+          ->Js.Json.string,
+        ),
+      ]
+      ->Js.Dict.fromArray
+      ->Js.Json.object_,
     )
     None
   }, [router.pathname])

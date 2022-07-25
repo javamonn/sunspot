@@ -44,6 +44,13 @@ let make = (~children) => {
       ),
     ) {
     | (Some(contractAddress), Some(slug)) =>
+      let type_ =
+        queryParams
+        ->Belt.Option.flatMap(q =>
+          q->Externals.Webapi.URLSearchParams.get("createAlertCollectionType")->Js.Nullable.toOption
+        )
+        ->Belt.Option.getWithDefault("floor")
+
       let initialValue = {
         ...AlertModal_Value.empty(),
         collection: Some(
@@ -54,7 +61,12 @@ let make = (~children) => {
             ~imageUrl=None,
           ),
         ),
-        priceRule: Some(AlertRule_Price.makeRule(~modifier="<", ~value=Some("floorPrice * 1.1"))),
+        priceRule: type_ === "floor"
+          ? Some(AlertRule_Price.makeRule(~modifier="<", ~value=Some("floorPrice * 1.1")))
+          : None,
+        rarityRankRule: type_ === "rarity"
+          ? Some(AlertRule_RarityRank.Value.make(~modifier="<", ~value=Some("500")))
+          : None,
       }
       CreateAlertModalOpen(Some(initialValue))
     | _ => CreateAlertModalClosed

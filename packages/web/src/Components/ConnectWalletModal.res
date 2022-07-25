@@ -5,6 +5,12 @@ let make = (~isOpen, ~onClose) => {
     connect,
   ) = Externals.Wagmi.UseConnect.use()
 
+  let _ = React.useEffect1(() => {
+    Services.Logger.log("connect wallet", isOpen ? "open" : "closed")
+
+    None
+  }, [isOpen])
+
   let handleConnect = connector => {
     let _ = connect(
       connector,

@@ -1,6 +1,21 @@
 @react.component
 let make = (~isOpen, ~onClose) => {
-  <MaterialUi.Dialog _open={isOpen} onClose={(_, _) => onClose(false)}>
+  let signatureAccepted = React.useRef(false)
+  let _ = React.useEffect1(() => {
+    Services.Logger.log(
+      "authentication challenge dialog",
+      isOpen ? "open" : signatureAccepted.current ? "closed - accepted" : "closed - declined",
+    )
+
+    None
+  }, [isOpen])
+
+  let handleClose = accepted => {
+    signatureAccepted.current = accepted
+    onClose(accepted)
+  }
+
+  <MaterialUi.Dialog _open={isOpen} onClose={(_, _) => handleClose(false)}>
     <MaterialUi.DialogTitle> {React.string("sign message to sign in")} </MaterialUi.DialogTitle>
     <MaterialUi.DialogContent
       classes={MaterialUi.DialogContent.Classes.make(
@@ -13,7 +28,7 @@ let make = (~isOpen, ~onClose) => {
     </MaterialUi.DialogContent>
     <MaterialUi.DialogActions>
       <MaterialUi.Button
-        onClick={_ => onClose(false)}
+        onClick={_ => handleClose(false)}
         classes={MaterialUi.Button.Classes.make(
           ~root=Cn.make(["mr-2"]),
           ~label=Cn.make(["lowercase"]),
@@ -24,7 +39,7 @@ let make = (~isOpen, ~onClose) => {
       <MaterialUi.Button
         variant=#Contained
         color=#Primary
-        onClick={_ => onClose(true)}
+        onClick={_ => handleClose(true)}
         classes={MaterialUi.Button.Classes.make(~label=Cn.make(["lowercase"]), ())}>
         {React.string("sign in")}
       </MaterialUi.Button>
