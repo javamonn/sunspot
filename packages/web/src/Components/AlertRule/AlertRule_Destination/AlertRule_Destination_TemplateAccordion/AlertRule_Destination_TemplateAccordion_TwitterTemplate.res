@@ -35,5 +35,27 @@ let make = (~value=?, ~onChange, ~eventType) => {
         )
       }}
     />
+    <MaterialUi.TextField
+      label={React.string("image url")}
+      value={valueWithDefault
+      ->imageUrl
+      ->Belt.Option.getWithDefault("")
+      ->MaterialUi.TextField.Value.string}
+      classes={MaterialUi.TextField.Classes.make(~root=Cn.make(["mt-4"]), ())}
+      _InputProps={
+        "classes": MaterialUi.Input.Classes.make(~input=Cn.make(["leading-normal"]), ()),
+      }
+      fullWidth={true}
+      onChange={ev => {
+        let target = ev->ReactEvent.Form.target
+        let newValue = target["value"]
+        onChange(
+          Some({
+            ...valueWithDefault,
+            imageUrl: Js.String2.length(newValue) > 0 ? Some(newValue) : None,
+          }),
+        )
+      }}
+    />
   </div>
 }

@@ -125,6 +125,7 @@ let getUpdateAlertRuleDestination = (~value, ~onShowSnackbar) => {
           userId: userId,
           template: template->Belt.Option.map(template => {
             text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+            imageUrl: template->AlertRule_Destination.Types.TwitterTemplate.imageUrl,
           }),
           accessToken: accessToken->Belt.Option.map(accessToken => {
             accessToken: accessToken.accessToken,

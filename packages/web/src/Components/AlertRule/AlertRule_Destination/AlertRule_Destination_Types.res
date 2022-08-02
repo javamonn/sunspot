@@ -50,19 +50,31 @@ module WebPushTemplate = {
 
 module TwitterTemplate = {
   @deriving(accessors)
-  type t = {text: string}
+  type t = {
+    text: string,
+    imageUrl: option<string>,
+  }
 
-  let defaultListingTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
-  let defaultSaleTemplate = {text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}"}
+  let defaultListingTemplate = {
+    text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}",
+    imageUrl: Some("{assetImageUrl}"),
+  }
+  let defaultSaleTemplate = {
+    text: "{eventType}: {assetName} - {tokenPrice}\n\n{assetUrl}",
+    imageUrl: Some("{assetImageUrl}"),
+  }
   let defaultSaleVolumeChangeTemplate = {
-    text: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}\n\n{eventsScatterPlotImageUrl}",
+    text: "sales {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent {targetBucket} sales: {targetCount}",
+    imageUrl: Some("{eventsScatterPlotImageUrl}"),
   }
   let defaultFloorPriceChangeTemplate = {
-    text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}\n\n{eventsScatterPlotImageUrl}",
+    text: "floor {changeVerb}: {collectionName} {changeIndicatorArrow} {changeValue} in {timeElapsed}\ncurrent floor: {floorPrice}",
+    imageUrl: Some("{eventsScatterPlotImageUrl}"),
   }
 
   let defaultFloorPriceThresholdTemplate = {
-    text: "floor {thresholdDirectionVerb} threshold: {collectionName} floor is {currentFloorPrice}\ntarget floor: {targetFloorPrice}\n\n{eventsScatterPlotImageUrl}",
+    text: "floor {thresholdDirectionVerb} threshold: {collectionName} floor is {currentFloorPrice}\ntarget floor: {targetFloorPrice}",
+    imageUrl: Some("{eventsScatterPlotImageUrl}"),
   }
 }
 

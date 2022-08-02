@@ -629,6 +629,7 @@ let make = () => {
             userId: userId,
             template: template->Belt.Option.map(template => {
               AlertRule_Destination.Types.TwitterTemplate.text: template.text,
+              imageUrl: template.imageUrl,
             }),
             accessToken: accessToken->Belt.Option.map(accessToken => {
               AlertRule_Destination.Types.accessToken: accessToken.accessToken,

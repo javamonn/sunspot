@@ -117,6 +117,7 @@ let getCreateAlertRuleDestination = (~value, ~onShowSnackbar) => {
           userId: userId,
           template: template->Belt.Option.map(template => {
             text: template->AlertRule_Destination.Types.TwitterTemplate.text,
+            imageUrl: template->AlertRule_Destination.Types.TwitterTemplate.imageUrl,
           }),
           accessToken: accessToken->Belt.Option.map(accessToken => {
             accessToken: accessToken.accessToken,
@@ -478,9 +479,7 @@ let make = (
         Services.Logger.logWithData(
           "alert",
           "created error",
-          [("error", Js.Json.string("UnknownError"))]
-          ->Js.Dict.fromArray
-          ->Js.Json.object_,
+          [("error", Js.Json.string("UnknownError"))]->Js.Dict.fromArray->Js.Json.object_,
         )
         openSnackbar(
           ~message=<>

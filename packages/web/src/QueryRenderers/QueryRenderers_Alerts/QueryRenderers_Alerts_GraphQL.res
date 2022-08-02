@@ -56,6 +56,7 @@ module Query_AlertRulesAndOAuthIntegrationsByAccountAddress = %graphql(
         userId
         template {
           text
+          imageUrl
         }
         userAuthenticationToken {
           apiKey
