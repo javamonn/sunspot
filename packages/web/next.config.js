@@ -103,6 +103,11 @@ const config = {
         "https://slack.com/oauth/v2/authorize?client_id=2851595757074.2853916229636&scope=incoming-webhook&user_scope=",
       permanent: false,
     },
+    {
+      source: "/via",
+      destination: "/api/via",
+      permanent: false
+    }
   ],
 };
 
