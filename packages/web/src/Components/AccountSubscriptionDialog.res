@@ -35,9 +35,7 @@ let plans = [
 
 @react.component
 let make = (
-  ~accountSubscription: option<
-    Query_AccountSubscription.GraphQL.AccountSubscription.t,
-  >=?,
+  ~accountSubscription: option<Query_AccountSubscription.GraphQL.AccountSubscription.t>=?,
   ~isOpen,
   ~onClose,
   ~onClickPurchase,
@@ -167,77 +165,30 @@ let make = (
           | Some(#OBSERVATORY) if title === "observatory" => true
           | _ => false
           }
+          let disabled = title === "stargazer" || Js.Option.isSome(pendingPurchase)
+          let onClick = () =>
+            switch title {
+            | "telescope" => onClickPurchase(#TELESCOPE)
+            | "observatory" => onClickPurchase(#OBSERVATORY)
+            | _ => ()
+            }
+          let labelText = if title == "stargazer" {
+            "free"
+          } else if isPending {
+            "purchasing..."
+          } else {
+            "purchase"
+          }
 
-          <div
-            className={Cn.make([
-              "border",
-              "border-solid",
-              "border-darkBorder",
-              "rounded",
-              "flex",
-              "flex-col",
-              "flex-1",
-            ])}>
-            <div className={Cn.make(["flex-1", "flex", "flex-col", "pb-10"])}>
-              <div
-                className={Cn.make([
-                  "border-b",
-                  "border-solid",
-                  "border-darkBorder",
-                  "text-lg",
-                  "p-4",
-                ])}>
-                <h2 className={Cn.make(["underline"])}> {React.string(title)} </h2>
-                <h1 className={Cn.make(["font-bold", "mt-4"])}> {React.string(subtitle)} </h1>
-              </div>
-              <ul
-                className={Cn.make([
-                  "list-disc",
-                  "list-outside",
-                  "pl-10",
-                  "pr-4",
-                  "pt-4",
-                  "space-y-2",
-                ])}>
-                {features
-                ->Belt.Array.map(feature => <li> {React.string(feature)} </li>)
-                ->React.array}
-              </ul>
-            </div>
-            <MaterialUi.Button
-              disabled={title === "stargazer" || Js.Option.isSome(pendingPurchase)}
-              variant=#Contained
-              color=#Primary
-              size=#Large
-              classes={MaterialUi.Button.Classes.make(
-                ~label=Cn.make(["lowercase", "font-bold", "py-2"]),
-                (),
-              )}
-              onClick={_ =>
-                switch title {
-                | "telescope" => onClickPurchase(#TELESCOPE)
-                | "observatory" => onClickPurchase(#OBSERVATORY)
-                | _ => ()
-                }}>
-              {if title === "stargazer" {
-                React.string("free")
-              } else if isPending {
-                <>
-                  {React.string("purchasing...")}
-                  <MaterialUi.LinearProgress
-                    color=#Primary
-                    classes={MaterialUi.LinearProgress.Classes.make(
-                      ~root=Cn.make(["absolute", "left-0", "bottom-0", "right-0"]),
-                      (),
-                    )}
-                    variant=#Indeterminate
-                  />
-                </>
-              } else {
-                React.string("purchase")
-              }}
-            </MaterialUi.Button>
-          </div>
+          <AccountSubscriptionCard
+            title={title}
+            subtitle={subtitle}
+            features={features}
+            disabled={disabled}
+            onClick={onClick}
+            labelText={labelText}
+            isActioning={isPending}
+          />
         })
         ->React.array}
       </div>

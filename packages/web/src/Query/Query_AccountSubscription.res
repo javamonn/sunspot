@@ -9,3 +9,7 @@ module GraphQL = %graphql(`
     }
   }
 `)
+
+let makeVariables = (~accountAddress) => {
+  GraphQL.Query_AccountSubscription.accountAddress: accountAddress,
+}

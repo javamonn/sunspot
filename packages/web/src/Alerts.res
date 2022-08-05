@@ -12,5 +12,6 @@ let default = () => {
       "bg-white",
     ])}>
     <QueryRenderers_Alerts />
+    <Containers_PromotionClaimModal />
   </section>
 }
