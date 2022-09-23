@@ -77,41 +77,6 @@ let make = (
         anchorEl=?{menuAnchor->Belt.Option.map(e => MaterialUi_Types.Any(e))}
         _open={Js.Option.isSome(menuAnchor)}
         onClose={handleMenuClose}>
-        <MaterialUi.MenuItem onClick={handleUpgradeAccountClick}>
-          {
-            let (primary, secondary) = switch accountSubscription {
-            | Some({type_: #TELESCOPE, ttl}) =>
-              let displayTTL = Externals.DateFns.formatDistanceStrict(
-                ttl->Js.Json.decodeNumber->Belt.Option.getExn *. 1000.0,
-                Js.Date.now(),
-                Externals.DateFns.formatDistanceStrictOptions(
-                  ~unit_="day",
-                  ~roundingMethod="ceil",
-                  (),
-                ),
-              )
-
-              ("account status", `telescope · ${displayTTL} remaining`)
-            | Some({type_: #OBSERVATORY, ttl}) =>
-              let displayTTL = Externals.DateFns.formatDistanceStrict(
-                ttl->Js.Json.decodeNumber->Belt.Option.getExn *. 1000.0,
-                Js.Date.now(),
-                Externals.DateFns.formatDistanceStrictOptions(
-                  ~unit_="day",
-                  ~roundingMethod="ceil",
-                  (),
-                ),
-              )
-
-              ("account status", `observatory · ${displayTTL} remaining`)
-            | _ => ("upgrade account", "upgrade account to access premium features")
-            }
-
-            <MaterialUi.ListItemText
-              primary={React.string(primary)} secondary={React.string(secondary)}
-            />
-          }
-        </MaterialUi.MenuItem>
         <MaterialUi.MenuItem onClick={handleDisconnect}>
           <MaterialUi.ListItemText primary={React.string("log out")} />
         </MaterialUi.MenuItem>

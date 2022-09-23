@@ -62,23 +62,6 @@ let make = (
         {switch account {
         | _ if connecting => <LoadingButton />
         | Some({address}) => <>
-            {switch accountSubscription {
-            | None if !isLoadingAccountSubscription =>
-              <MaterialUi.Button
-                variant=#Outlined
-                onClick={handleUpgradeAccess}
-                classes={MaterialUi.Button.Classes.make(
-                  ~root=Cn.make(["mr-8", "sm:mr-2"]),
-                  ~label=Cn.make(["lowercase"]),
-                  (),
-                )}>
-                {React.string("upgrade")}
-                <span className={Cn.make(["sm:hidden", "whitespace-pre"])}>
-                  {React.string(" account")}
-                </span>
-              </MaterialUi.Button>
-            | _ => React.null
-            }}
             <WalletButton
               authentication={authentication}
               address={address}

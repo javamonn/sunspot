@@ -315,10 +315,7 @@ let make = (~children) => {
     }}>
     <AccountSubscriptionDialog
       pendingPurchase
-      isOpen={switch dialogState {
-      | Open(_) => true
-      | Closed(_) => false
-      }}
+      isOpen={false}
       onClose={handleClose}
       accountSubscription=?{accountSubscription}
       onClickPurchase={handleClickPurchase}
